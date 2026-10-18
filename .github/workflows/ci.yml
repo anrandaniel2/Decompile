@@ -1,0 +1,19 @@
+name: decompile
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  equivalence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Luau 0.743
+        run: |
+          git clone --depth 1 --branch 0.743 https://github.com/luau-lang/luau.git /tmp/luau
+          make -C /tmp/luau config=release luau -j"$(nproc)"
+
+      - name: Check decompilation against the protected build
+        run: python3 tests/check.py --luau /tmp/luau/luau
