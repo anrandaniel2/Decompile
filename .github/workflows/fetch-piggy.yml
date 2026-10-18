@@ -1,0 +1,31 @@
+name: fetch piggy
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/fetch-piggy.yml
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the published Piggy vault URL
+        run: |
+          set -u
+          url="https://vss.pandauth.com/kv/62dcfcad9c9438a6"
+          mkdir -p out
+          curl -sS -L --max-time 60 -D out/headers.txt -o out/body.bin -w "code=%{http_code} size=%{size_download}\n" "$url" || echo "curl_failed=$?"
+          echo "----- headers -----"
+          cat out/headers.txt
+          echo "----- body head -----"
+          head -c 400 out/body.bin || true
+          echo
+          echo "----- size -----"
+          wc -c out/body.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: piggy-vault
+          path: out/
+          if-no-files-found: error
