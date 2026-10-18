@@ -6,26 +6,36 @@ on:
     paths:
       - .github/workflows/fetch-piggy.yml
 
+permissions:
+  contents: write
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download the published Piggy vault URL
         run: |
           set -u
           url="https://vss.pandauth.com/kv/62dcfcad9c9438a6"
-          mkdir -p out
-          curl -sS -L --max-time 60 -D out/headers.txt -o out/body.bin -w "code=%{http_code} size=%{size_download}\n" "$url" || echo "curl_failed=$?"
+          mkdir -p input
+          curl -sS -L --max-time 60 -D input/PiggyVault.headers -o input/PiggyVault.txt -w "code=%{http_code} size=%{size_download}\n" "$url" || echo "curl_failed=$?"
           echo "----- headers -----"
-          cat out/headers.txt
+          cat input/PiggyVault.headers
           echo "----- body head -----"
-          head -c 400 out/body.bin || true
+          head -c 240 input/PiggyVault.txt || true
           echo
-          echo "----- size -----"
-          wc -c out/body.bin
+          wc -c input/PiggyVault.txt
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: piggy-vault
-          path: out/
-          if-no-files-found: error
+      - name: Commit the response so it can be read back
+        run: |
+          git config user.name "arena-ai-coding-agent[bot]"
+          git config user.email "298482267+arena-ai-coding-agent[bot]@users.noreply.github.com"
+          git add input/PiggyVault.txt input/PiggyVault.headers
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "Save the Piggy vault HTTP response."
+          git push origin HEAD:arena/ba48f04b-decompile
