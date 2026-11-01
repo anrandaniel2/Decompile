@@ -7,6 +7,7 @@
     "check": "npm run analyze:banana"
   },
   "devDependencies": {
+    "lua-format": "1.6.1-b",
     "luau-web": "1.5.1"
   }
 }

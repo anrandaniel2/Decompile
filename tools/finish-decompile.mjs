@@ -1,4 +1,8 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { Minify } = require('lua-format');
 
 const [inputPath, outputPath] = process.argv.slice(2);
 if (!inputPath || !outputPath) {
@@ -88,5 +92,18 @@ for (const [obfuscated, descriptive] of Object.entries(names)) {
   source = source.replace(new RegExp(`\\b${obfuscated}\\b`, 'g'), descriptive);
 }
 
-const header = `-- Recovered/devirtualized from the attached Prometheus-obfuscated Luau.\n-- Static output cleaned and helper functions renamed by behavior; original\n-- Roblox/executor runtime and WindUI's mutable remote dependency are required.\n-- Decompiled, not byte-for-byte source recovery: review before use.\n\n`;
-fs.writeFileSync(outputPath, header + source);
+// Parse and re-emit the source with only whitespace/comment minification enabled.
+// Keep variable and global names; do not solve/rewrite math expressions.
+const minifierOptions = {
+  RenameVariables: false,
+  RenameGlobals: false,
+  SolveMath: false,
+};
+const stripMinifierBanner = (code) => code.replace(/^--\[\[[\s\S]*?--\]\]\s*/, '');
+const minified = stripMinifierBanner(Minify(source, minifierOptions));
+const secondPass = stripMinifierBanner(Minify(minified, minifierOptions));
+if (secondPass !== minified) {
+  throw new Error('Minifier output is not idempotent; refusing to write recovered source.');
+}
+const header = `-- Recovered/devirtualized from the attached Prometheus-obfuscated Luau.\n-- Whitespace-minified with lua-format; helper/global names are preserved.\n-- Roblox/executor runtime and mutable remote WindUI dependency are required.\n-- Syntax-checked, not behaviorally verified; review before use.\n`;
+fs.writeFileSync(outputPath, header + minified);
