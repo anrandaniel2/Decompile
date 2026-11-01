@@ -1,0 +1,42 @@
+name: Banana Eats decompilation and validation
+
+on:
+  push:
+    paths:
+      - 'inputs/banana_eats.obfuscated.luau.txt'
+      - 'banana_eats.deobfuscated.luau'
+      - 'tools/inspect-banana-eats.mjs'
+      - 'tools/finish-decompile.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/banana-eats-analysis.yml'
+  pull_request:
+    paths:
+      - 'inputs/banana_eats.obfuscated.luau.txt'
+      - 'banana_eats.deobfuscated.luau'
+      - 'tools/inspect-banana-eats.mjs'
+      - 'tools/finish-decompile.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/banana-eats-analysis.yml'
+
+jobs:
+  decompile-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fetch pinned Prometheus static lifter
+        run: |
+          git clone https://github.com/prostone4/Prometheus-Deobfuscator.git /tmp/prometheus-deobfuscator
+          git -C /tmp/prometheus-deobfuscator checkout --detach 6ee3291ec83fdc58c04e17bb1f1703386619711a
+      - name: Recreate the recovered source
+        run: |
+          node /tmp/prometheus-deobfuscator/bin/pdeobf.js inputs/banana_eats.obfuscated.luau.txt -o /tmp/banana_eats.raw.lua --force -q
+          node tools/finish-decompile.mjs /tmp/banana_eats.raw.lua banana_eats.deobfuscated.luau
+          git diff --exit-code -- banana_eats.deobfuscated.luau
+      - run: npm run check

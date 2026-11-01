@@ -1,0 +1,80 @@
+First-pass decoded readable string constants from `inputs/banana_eats.obfuscated.luau.txt`.
+This is evidence from the encoded constant pool, not source order or proof every name is used.
+
+UI / helper labels:
+  CreateWindow
+  CreateTab
+  CreatePath
+  ToggleVisibility
+  Toggle
+  Button
+  Slider
+  Paragraph
+  Notify
+  Tab
+
+Roblox and runtime APIs:
+  game
+  GetService
+  GetPlayers
+  GetChildren
+  GetDescendants
+  FindFirstChild
+  FindFirstChildOfClass
+  FindFirstChildWhichIsA
+  WaitForChild
+  IsA
+  GetPartBoundsInBox
+  ComputeAsync
+  GetWaypoints
+  Raycast
+  RaycastParams
+  OverlapParams
+  InvokeServer
+  ChangeState
+  Connect
+  Disconnect
+  Destroy
+  Vector2
+  Vector3
+  CFrame
+  Color3
+  UDim2
+  Enum
+  Instance
+  WorldToViewportPoint
+
+Executor-specific or dynamically loaded APIs:
+  gethui
+  firetouchinterest
+  fireclickdetector
+  HttpGet
+  loadstring
+
+Other recovered identifiers / Lua helpers:
+  solvePicture
+  getCombinationPuzzleSolution
+  tostring
+  tonumber
+  type
+  typeof
+  pcall
+  pairs
+  ipairs
+  next
+  random
+  tick
+  floor
+  string
+  table
+  match
+  gmatch
+  gsub
+  lower
+  find
+  char
+  byte
+  concat
+  unpack
+  remove
+  error

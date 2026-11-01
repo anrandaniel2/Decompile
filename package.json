@@ -1,0 +1,12 @@
+{
+  "name": "decompile-analysis",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "analyze:banana": "node tools/inspect-banana-eats.mjs",
+    "check": "npm run analyze:banana"
+  },
+  "devDependencies": {
+    "luau-web": "1.5.1"
+  }
+}
