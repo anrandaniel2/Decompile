@@ -6,7 +6,7 @@ const { Minify } = require('lua-format');
 
 const [inputPath, outputPath] = process.argv.slice(2);
 if (!inputPath || !outputPath) {
-  throw new Error('Usage: node tools/finish-decompile.mjs <raw-lift.lua> <output.luau>');
+  throw new Error('Usage: node tools/finish-decompile.mjs <raw-lift.lua> <output.luau> [--readable]');
 }
 
 let source = fs.readFileSync(inputPath, 'utf8');
@@ -90,6 +90,12 @@ const names = {
 };
 for (const [obfuscated, descriptive] of Object.entries(names)) {
   source = source.replace(new RegExp(`\\b${obfuscated}\\b`, 'g'), descriptive);
+}
+
+if (process.argv[4] === '--readable') {
+  const readableHeader = `-- Recovered/devirtualized from the attached Prometheus-obfuscated Luau.\n-- Static output cleaned and helper functions renamed by behavior; original\n-- Roblox/executor runtime and WindUI's mutable remote dependency are required.\n-- Decompiled, not byte-for-byte source recovery: review before use.\n\n`;
+  fs.writeFileSync(outputPath, readableHeader + source);
+  process.exit(0);
 }
 
 // Parse and re-emit the source with only whitespace/comment minification enabled.

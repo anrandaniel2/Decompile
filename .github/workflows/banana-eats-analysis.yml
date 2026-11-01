@@ -5,6 +5,7 @@ on:
     paths:
       - 'inputs/banana_eats.obfuscated.luau.txt'
       - 'banana_eats.deobfuscated.luau'
+      - 'banana_eats.deobfuscated.readable.luau'
       - 'tools/inspect-banana-eats.mjs'
       - 'tools/finish-decompile.mjs'
       - 'package.json'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'inputs/banana_eats.obfuscated.luau.txt'
       - 'banana_eats.deobfuscated.luau'
+      - 'banana_eats.deobfuscated.readable.luau'
       - 'tools/inspect-banana-eats.mjs'
       - 'tools/finish-decompile.mjs'
       - 'package.json'
@@ -34,9 +36,10 @@ jobs:
         run: |
           git clone https://github.com/prostone4/Prometheus-Deobfuscator.git /tmp/prometheus-deobfuscator
           git -C /tmp/prometheus-deobfuscator checkout --detach 6ee3291ec83fdc58c04e17bb1f1703386619711a
-      - name: Recreate the recovered source
+      - name: Recreate both readable and compact recovered sources
         run: |
           node /tmp/prometheus-deobfuscator/bin/pdeobf.js inputs/banana_eats.obfuscated.luau.txt -o /tmp/banana_eats.raw.lua --force -q
+          node tools/finish-decompile.mjs /tmp/banana_eats.raw.lua banana_eats.deobfuscated.readable.luau --readable
           node tools/finish-decompile.mjs /tmp/banana_eats.raw.lua banana_eats.deobfuscated.luau
-          git diff --exit-code -- banana_eats.deobfuscated.luau
+          git diff --exit-code -- banana_eats.deobfuscated.luau banana_eats.deobfuscated.readable.luau
       - run: npm run check

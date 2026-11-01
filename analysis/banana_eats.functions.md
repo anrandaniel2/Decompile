@@ -1,6 +1,6 @@
 # Recovered helper function inventory
 
-Names below describe behavior inferred from the static-lifted implementations and call sites. They are descriptive reconstructions, not original source identifiers. Confidence is generally high for direct API wrappers and moderate where the lifter flattened multi-branch control flow. All definitions are in [`../banana_eats.deobfuscated.luau`](../banana_eats.deobfuscated.luau).
+Names below describe behavior inferred from the static-lifted implementations and call sites. They are descriptive reconstructions, not original source identifiers. Confidence is generally high for direct API wrappers and moderate where the lifter flattened multi-branch control flow. All definitions appear in both [`../banana_eats.deobfuscated.readable.luau`](../banana_eats.deobfuscated.readable.luau) and [`../banana_eats.deobfuscated.luau`](../banana_eats.deobfuscated.luau).
 
 | Recovered name | Behavior inferred from the lift |
 |---|---|

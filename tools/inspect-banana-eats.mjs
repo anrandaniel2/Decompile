@@ -22,10 +22,14 @@ const state = await LuauState.createAsync();
 try {
   state.loadstring(source, 'banana_eats_compile_check', true);
   const decompiledPath = path.resolve(root, 'banana_eats.deobfuscated.luau');
+  const readablePath = path.resolve(root, 'banana_eats.deobfuscated.readable.luau');
   const decompiled = fs.readFileSync(decompiledPath, 'utf8');
-  state.loadstring(decompiled, 'banana_eats_decompiled_compile_check', true);
-  if (/\\bf\\d+\\b/.test(decompiled)) {
-    throw new Error('Decompiled source still contains generic f1-f59 helper names.');
+  const readable = fs.readFileSync(readablePath, 'utf8');
+  state.loadstring(decompiled, 'banana_eats_compact_compile_check', true);
+  state.loadstring(readable, 'banana_eats_readable_compile_check', true);
+  const genericFunctionName = /\bf\d+\b/;
+  if (genericFunctionName.test(decompiled) || genericFunctionName.test(readable)) {
+    throw new Error('Recovered source still contains generic f1-f59 helper names.');
   }
   const decoder = state.loadstring(firstStage, 'banana_eats_string_table', true);
   const [pool] = await decoder();
@@ -55,12 +59,13 @@ try {
   }
 
   console.log(`Input Luau compile check: passed (${Buffer.byteLength(source)} bytes)`);
-  console.log(`Recovered Luau compile check: passed (${Buffer.byteLength(decompiled)} bytes)`);
+  console.log(`Compact recovered Luau compile check: passed (${Buffer.byteLength(decompiled)} bytes)`);
+  console.log(`Readable recovered Luau compile check: passed (${Buffer.byteLength(readable)} bytes)`);
   console.log('Recovered helper naming check: passed (no generic f1-f59 identifiers).');
   console.log(`First-stage string-table decode: ${values.length} entries`);
   console.log('Relevant constants:');
   for (const value of expected) console.log(`  ${value}`);
-  console.log('The checked-in recovered source is a static VM lift; runtime equivalence is not established.');
+  console.log('Both checked-in versions are static VM lifts; runtime equivalence is not established.');
 } finally {
   state.destroy();
 }
