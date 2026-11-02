@@ -399,6 +399,10 @@ def lift_listing(listing: dict) -> tuple[str, dict]:
                    f"{len(emitter.blocks)} blocks, {executed} executed in the captured run")
         out.append(f"local function {entry['id'].lower()}(...)")
         out.append("    local R = {}")
+        out.append("    -- VM scratch: the interpreter's own temporaries, kept verbatim")
+        out.append("    local z, x, J, F, U, i, t, P, S, y, E, Q")
+        out.append("    -- VM environment: constants, globals, numeric stdlib table, registers, pc")
+        out.append("    local D, B, d, k, H")
         out.extend("    " + line if line else line for line in body)
         out.append("end\n")
     return "\n".join(out), stats

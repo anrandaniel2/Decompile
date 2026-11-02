@@ -90,15 +90,15 @@ The token stream check re-lexes both files and compares every token (numbers com
 | `out/pools/pool1.bin` | 430,656 | `50e3350f2b106e0475637ae819d26173` |
 | `out/pools/pools.json` | 847 | `67c46e0cc32c608d7a89e0d2c97def13` |
 | `out/inventory.json` | 416,708 | `890ea09905cd42b10428b8b3a1dd2e56` |
-| `out/runtime/A/runtime.json` | 193,137 | `8cfc1cecf6e5af1db8f90260622a18a7` |
-| `out/runtime/B/runtime.json` | 908,023 | `1b8f35a7c4429ab8e158e63b37749004` |
-| `out/runtime/Btrace/runtime.json` | 1,958,644 | `be82a25610a611be12c1d2a56f1f6f17` |
+| `out/runtime/A/runtime.json` | 193,138 | `1b0b185c9cc8d2833b17d4c60a68bab7` |
+| `out/runtime/B/runtime.json` | 908,023 | `383d89323a5d8224b33c0aa8c4bf8966` |
+| `out/runtime/Btrace/runtime.json` | 1,958,639 | `eec2cebb1590b13d12f9ebf8bc2ecdc8` |
 | `out/payload/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
 | `reports/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
-| `out/payload/program.json` | 2,183,338 | `86c877532cf271ff58618b2bff73d453` |
+| `out/payload/program.json` | 2,183,338 | `5f1d06d5d62ecd4efcda3d7770ae750d` |
 | `reports/PROGRAM.md` | 7,785 | `da9a151ccf4f0b8c5b2b8cf81a73b8f5` |
-| `out/deobfuscated/payload.luau` | 506,626 | `332eacff9e8eb412fa6740e4f10ed940` |
-| `reports/payload.luau` | 506,626 | `332eacff9e8eb412fa6740e4f10ed940` |
+| `out/deobfuscated/payload.luau` | 510,946 | `dc69ebfe2d8b0bfd8684c8613067ebef` |
+| `reports/payload.luau` | 510,946 | `dc69ebfe2d8b0bfd8684c8613067ebef` |
 | `out/identification.json` | 2,344 | `f62d6f12eb948cee519ed8dd19bc0c8c` |
 | `out/function_map.json` | 149,479 | `e283027a7a58c1901f37baab95fe409d` |
 | `out/opcodes.json` | 23,085 | `3e4e944c1ac54ba40006f0bc671be4ce` |
@@ -107,4 +107,4 @@ The token stream check re-lexes both files and compares every token (numbers com
 | `reports/IDENTIFICATION.md` | 2,023 | `a5f79616775c0ab4addf9776e2b862e7` |
 | `reports/FUNCTION_MAP.md` | 45,121 | `cbf14a65183de0c080aaa8dd03897a97` |
 | `reports/STRINGS.md` | 5,884 | `bc63be20f0c67cadecfd8c187d226c7b` |
-| `reports/BEHAVIOR.md` | 4,783 | `d3dd24dcce943c21def7e47b5e6166c1` |
+| `reports/BEHAVIOR.md` | 4,784 | `7cb197670eb711c3ac958b0e2e385b1b` |

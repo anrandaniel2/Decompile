@@ -19,6 +19,10 @@
 -- proto P1: 5739 instructions, 3265 blocks, 1133 executed in the captured run
 local function p1(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -13872,6 +13876,10 @@ end
 -- proto P2: 331 instructions, 87 blocks, 326 executed in the captured run
 local function p2(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 5 instructions
@@ -14290,6 +14298,10 @@ end
 -- proto P3: 217 instructions, 137 blocks, 144 executed in the captured run
 local function p3(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 2 instructions
@@ -14832,6 +14844,10 @@ end
 -- proto P4: 195 instructions, 125 blocks, 135 executed in the captured run
 local function p4(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -15323,6 +15339,10 @@ end
 -- proto P5: 185 instructions, 131 blocks, 90 executed in the captured run
 local function p5(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -15825,6 +15845,10 @@ end
 -- proto P6: 153 instructions, 52 blocks, 135 executed in the captured run
 local function p6(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16072,6 +16096,10 @@ end
 -- proto P7: 129 instructions, 49 blocks, 9 executed in the captured run
 local function p7(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16305,6 +16333,10 @@ end
 -- proto P8: 68 instructions, 27 blocks, 43 executed in the captured run
 local function p8(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16441,6 +16473,10 @@ end
 -- proto P9: 65 instructions, 36 blocks, 42 executed in the captured run
 local function p9(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16599,6 +16635,10 @@ end
 -- proto P10: 63 instructions, 24 blocks, 38 executed in the captured run
 local function p10(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 5 instructions
@@ -16708,6 +16748,10 @@ end
 -- proto P11: 56 instructions, 25 blocks, 32 executed in the captured run
 local function p11(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16814,6 +16858,10 @@ end
 -- proto P12: 53 instructions, 17 blocks, 13 executed in the captured run
 local function p12(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -16909,6 +16957,10 @@ end
 -- proto P13: 49 instructions, 26 blocks, 48 executed in the captured run
 local function p13(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17021,6 +17073,10 @@ end
 -- proto P14: 45 instructions, 23 blocks, 29 executed in the captured run
 local function p14(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17129,6 +17185,10 @@ end
 -- proto P15: 45 instructions, 15 blocks, 10 executed in the captured run
 local function p15(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17212,6 +17272,10 @@ end
 -- proto P16: 43 instructions, 9 blocks, 10 executed in the captured run
 local function p16(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17280,6 +17344,10 @@ end
 -- proto P17: 41 instructions, 18 blocks, 37 executed in the captured run
 local function p17(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 5 instructions
@@ -17352,6 +17420,10 @@ end
 -- proto P18: 39 instructions, 10 blocks, 8 executed in the captured run
 local function p18(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17420,6 +17492,10 @@ end
 -- proto P19: 38 instructions, 11 blocks, 37 executed in the captured run
 local function p19(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
@@ -17482,6 +17558,10 @@ end
 -- proto P20: 37 instructions, 13 blocks, 23 executed in the captured run
 local function p20(...)
     local R = {}
+    -- VM scratch: the interpreter's own temporaries, kept verbatim
+    local z, x, J, F, U, i, t, P, S, y, E, Q
+    -- VM environment: constants, globals, numeric stdlib table, registers, pc
+    local D, B, d, k, H
     local PC = 1
     while true do
         -- block @ 1: 1 instruction
