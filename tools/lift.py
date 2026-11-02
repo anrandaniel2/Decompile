@@ -402,6 +402,11 @@ HEADER = """-- Recovered Luau source for the protected payload of Key.luau.
 -- skips its header) are emitted as a small numeric dispatch loop marked with
 -- `local _s<n>, _x<n>`, so no structure is invented where the CFG has none.
 --
+-- tools/simplify.py then folds the interpreter's scratch locals (`z`, `x`, `J`,
+-- `F`, `U`, `i`, `t`) back into the statement they compute, so
+-- `z=R; x=(5); J=R[1] % 2; z[x]=J` reads as `R[5] = R[1] % 2`. A scratch local
+-- still appears where a value has to survive across a block boundary or a call.
+--
 -- Constants were pre-resolved by the obfuscator and appear inline as literals.
 """
 
@@ -484,7 +489,7 @@ def lift_listing(listing: dict, luau_ast: str | None = None) -> tuple[str, dict]
                    + ("" if structured else f" -- control flow kept flat ({reason})"))
         out.append(f"local function {entry['id'].lower()}(...)")
         out.append("    local R = {}")
-        out.append("    -- VM scratch: the interpreter's own temporaries, kept verbatim")
+        out.append("    -- VM scratch: the interpreter's own temporaries (folded in the body below)")
         out.append("    local z, x, J, F, U, i, t, P, S, y, E, Q")
         out.append("    -- VM environment: constants, globals, numeric stdlib table, registers, pc")
         out.append("    local D, B, d, k, H")

@@ -193,9 +193,19 @@ The listing proves what each instruction does; this step makes it *runnable Luau
      small numeric dispatch loop (`local _s<n>, _x<n>`) and labelled as such. Nothing is invented
      where the CFG has no structure, and every proto is re-parsed with `luau-ast` before it is
      accepted: a body that does not parse is replaced by the flat state machine for that proto.
-5. **Emit Luau.** Every proto becomes `local function pN(...)` with `local R = {}` and per-proto
-   `local` declarations. Result: 20/20 protos de-flattened, 2,944 blocks, 1,705 `if`, 299 `while`,
-   109 `break`, 475 `continue`, 28,635 lines — accepted by `luau-ast`.
+5. **Fold the interpreter's scratch away — `tools/simplify.py`.** The handler renders one VM
+   operation as several statements over its own temporaries:
+   `z=R; x=(5); J=R[1] % 2; z[x]=J`. A local value-numbering pass inside each basic block
+   substitutes those temporaries into the statement that consumes them, so that becomes
+   `R[5] = R[1] % 2`. It also folds `x=(5)` parentheses, `J%=F` into `J = J % F`, consecutive
+   constants (`z+186-1` → `z+185`), identities (`+0`, `*1`) and the obfuscator's double negations
+   (`not(not(x))` → `x`). Safety rules: never cross a `function`, a branch or a loop (an
+   assignment there may not happen), write a value back when it is live out of the block
+   (computed by liveness over the CFG), and forget a folded value when a call or an aliasing store
+   could change what it would read.
+6. **Emit Luau.** Every proto becomes `local function pN(...)` with `local R = {}` and per-proto
+   `local` declarations. Result: 20/20 protos de-flattened, 2,944 blocks, 1,683 `if`, 277 `while`,
+   109 `break`, 475 `continue`, ~35k lines — accepted by `luau-ast`.
 
 ## 8. Annotated output + verification — `tools/normalize.py`, `tools/verify.py`
 

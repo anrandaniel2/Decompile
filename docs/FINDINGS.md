@@ -129,7 +129,9 @@ executor, the interpreter can be instrumented where it already runs. See
   dominant/post-dominant analysis plus a follow-set walk restores `if`/`while`/`break`/`continue`,
   giving 20/20 protos structured (1,705 `if`, 299 `while`, 28.6k lines). The two regions that are
   genuinely irreducible are emitted as labelled numeric dispatch loops rather than pretending
-  they are structured.
+  they are structured. A further pass folds the interpreter's scratch locals back into the
+  operations they compute (`z=R; x=5; J=R[1]%2; z[x]=J` → `R[5] = R[1] % 2`), so the recovered
+  source reads as register-level Luau rather than as handler fragments.
 * The recovered program is **block-flattened**: 2,944 basic blocks for 7,591 instructions, joined
   by ~2,200 explicit jumps with almost no fall-through. That is a deobfuscation pass applied
   *before* Luraph — the source ran inside a control-flow flattening obfuscator, and Luraph then

@@ -24,6 +24,8 @@ CFG does not have.
 from __future__ import annotations
 
 import re
+
+import simplify
 from collections import defaultdict
 
 EXIT = -1  # virtual exit node
@@ -224,6 +226,7 @@ class Structurer:
         self.island_of: dict[int, frozenset[int]] = {}
         self.contained = False
         self.parse_check = None
+        self.live_out = self._liveness()
         self.line_budget = 20 * max(len(self.nodes), 1) + 2000
         self._find_islands()
 
@@ -300,11 +303,62 @@ class Structurer:
         return "    " * self.depth + text
 
     def block_statements(self, block) -> list[str]:
-        out = []
+        texts = []
         for ins in block:
-            if ins.pre:
-                out.append(self.indent(ins.pre.rstrip(";") + ";"))
-        return out
+            # for a control instruction only `pre` is a statement; its branch is
+            # emitted separately, so never fall back to the full text there
+            text = ins.pre if ins.kind != "stmt" else (ins.pre or ins.text)
+            if text:
+                texts.append(text if text.endswith(";") else text + ";")
+        if not texts:
+            return []
+        carried = self.live_out.get(block[0].pc) if block else None
+        try:
+            simplified = simplify.simplify_block(texts, carried)
+        except Exception:               # never let the tidy pass lose the code
+            simplified = [text.rstrip(";") + ";" for text in texts]
+        return [self.indent(line) for line in simplified if line.strip()]
+
+    def _block_use_def(self) -> tuple[dict[int, set[str]], dict[int, set[str]]]:
+        """Scratch locals a block reads before writing, and the ones it writes."""
+        uses: dict[int, set[str]] = {}
+        defs: dict[int, set[str]] = {}
+        for node, block in self.blocks.items():
+            use: set[str] = set()
+            defined: set[str] = set()
+            for ins in block:
+                text = ins.pre if ins.kind != "stmt" else (ins.pre or ins.text)
+                if not text:
+                    continue
+                for kind, statement in simplify.split_statements(text):
+                    for name in simplify.SCRATCH:
+                        if not re.search(rf"\b{name}\b", statement):
+                            continue
+                        if re.match(rf"^\s*{name}\s*=(?!=)", statement) or \
+                                re.match(rf"^\s*{name}\s*[-+*/%^]=", statement):
+                            defined.add(name)
+                        elif name not in defined:
+                            use.add(name)
+            uses[node] = use
+            defs[node] = defined
+        return uses, defs
+
+    def _liveness(self) -> dict[int, set[str]]:
+        """Which scratch locals each block must leave behind for its successors."""
+        uses, defs = self._block_use_def()
+        live_out: dict[int, set[str]] = {node: set() for node in self.nodes}
+        changed = True
+        while changed:
+            changed = False
+            for node in self.nodes:
+                live: set[str] = set()
+                for succ in self.succ.get(node, []):
+                    if succ in uses:
+                        live |= uses[succ] | (live_out.get(succ, set()) - defs[succ])
+                if live != live_out[node]:
+                    live_out[node] = live
+                    changed = True
+        return live_out
 
     def _meet(self, take: int, other: int, stop: int) -> int | None:
         """The earliest block both arms can reach without passing the merge."""
@@ -342,6 +396,9 @@ class Structurer:
         return False
 
     def cond_text(self, last, swapped: bool) -> str:
+        return simplify.simplify_expr(self._raw_cond(last))
+
+    def _raw_cond(self, last) -> str:
         if last.kind in ("condtrue", "condfalse"):
             text = last.cond
             return text
@@ -479,10 +536,10 @@ class Structurer:
         cond = self.cond_text(last, False)
         if last.kind in ("condtrue", "condfalse", "condboth", "condbody", "guardbody"):
             if last.kind == "condbody" and last.body:
-                cond = f"{last.cond}"
+                cond = simplify.simplify_expr(last.cond)
             if last.kind == "guardbody":
                 take, other = other, take
-                cond = last.cond
+                cond = simplify.simplify_expr(last.cond)
 
         leave_take = self._leave(loop, take) if loop is not None else None
         leave_other = self._leave(loop, other) if loop is not None else None
@@ -566,7 +623,7 @@ class Structurer:
 
         if while_form:
             branch_into_body = [s for s in self.succ.get(header, []) if s in body][0]
-            cond = head.cond
+            cond = simplify.simplify_expr(head.cond)
             if head.kind == "condfalse":
                 cond = f"not ({cond})"
             self.lines.append(self.indent(f"while {cond} do"))

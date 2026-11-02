@@ -181,6 +181,6 @@ The VM pre-resolves constants into the operand slots, so **119** string constant
 
 ## Lifted Luau source
 
-`reports/payload.luau` contains the same program as runnable Luau: **20** functions, 2,944 basic blocks, 28,635 lines. `luau-ast` accepts the file (yes). **20/20** protos are de-flattened (1,705 `if`, 299 `while`, 109 `break`, 475 `continue`); 86 irreducible region(s) run as numeric dispatch loops.
+`reports/payload.luau` contains the same program as runnable Luau: **20** functions, 2,944 basic blocks, 35,122 lines. `luau-ast` accepts the file (yes). **20/20** protos are de-flattened (1,683 `if`, 277 `while`, 109 `break`, 475 `continue`); 64 irreducible region(s) run as numeric dispatch loops.
 
 Conventions: `R[n]` is the proto's register file, `Protos[n]` the proto table, `PC` the next block. The payload's basic blocks were laid out in permuted order and connected by explicit jumps (a block-flattening pass ran before Luraph did); `tools/lift.py` re-lays them out in reverse postorder and `tools/structurize.py` restores the `if`/`while` structure, so the code reads in execution order with the flattening undone.

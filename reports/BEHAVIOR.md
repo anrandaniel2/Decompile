@@ -7,7 +7,7 @@ stops once the time budget is reached.
 ## Stage `A`
 
 - run completed within the budget
-- snapshot: reason=`budget`, buffers=2, buffer calls=86016, seconds=10.542155922000347
+- snapshot: reason=`budget`, buffers=2, buffer calls=86016, seconds=10.543874674999643
 - captured `buffer` objects: #1 (69,880 bytes), #2 (2,048 bytes)
 - globals the emulator had to stub: `Path2DControlPoint`
 
@@ -55,22 +55,22 @@ The VM indexes its stdlib table numerically, so the slots are all that is visibl
 
 | slot | resolved |
 |---|---|
-| `1` | `table: 0x000055d1cdb54d60` |
+| `1` | `table: 0x0000561d3650cd60` |
 | `2` | `4294967296` |
-| `3` | `table: 0x000055d1cdb54d30` |
-| `4` | `table: 0x000055d1cdb54a30` |
-| `5` | `function: 0x000055d1cd9fa790` |
-| `6` | `function: 0x000055d1cd9f9810` |
+| `3` | `table: 0x0000561d3650cd30` |
+| `4` | `table: 0x0000561d3650ca30` |
+| `5` | `function: 0x0000561d363b2790` |
+| `6` | `function: 0x0000561d363b1810` |
 | `7` | `4503599627370496` |
-| `8` | `function: 0x000055d1cd9f9a10` |
+| `8` | `function: 0x0000561d363b1a10` |
 | `9` | `0` |
 | `10` | `buffer.create (instrumented)` |
 | `11` | `buffer.readu8 (instrumented)` |
 | `12` | `buffer.readi16 (instrumented)` |
 | `13` | `buffer.readu16 (instrumented)` |
 | `14` | `_G.select` |
-| `15` | `function: 0x000055d1cd9fd090` |
-| `16` | `function: 0x000055d1cd9f9410` |
+| `15` | `function: 0x0000561d363b5090` |
+| `16` | `function: 0x0000561d363b1410` |
 | `17` | `buffer.readi32 (instrumented)` |
 | `18` | `2147483648` |
 | `19` | `buffer.readu32 (instrumented)` |
@@ -78,13 +78,13 @@ The VM indexes its stdlib table numerically, so the slots are all that is visibl
 | `21` | `string.gsub` |
 | `22` | `buffer.readf64 (instrumented)` |
 | `24` | `buffer.writeu32 (instrumented)` |
-| `25` | `function: 0x000055d1cd9fb690` |
+| `25` | `function: 0x0000561d363b3690` |
 | `26` | `buffer.copy (instrumented)` |
-| `27` | `function: 0x000055d1cd9fa710` |
-| `28` | `function: 0x000055d1cdb67900` |
-| `29` | `function: 0x000055d1cdb67840` |
-| `30` | `function: 0x000055d1cdb5f720` |
-| `31` | `table: 0x000055d1cdb67810` |
+| `27` | `function: 0x0000561d363b2710` |
+| `28` | `function: 0x0000561d3651f900` |
+| `29` | `function: 0x0000561d3651f840` |
+| `30` | `function: 0x0000561d36517720` |
+| `31` | `table: 0x0000561d3651f810` |
 | `32` | `45` |
 
 ### Obfuscator library table (`bq`)
@@ -93,22 +93,22 @@ The VM indexes its stdlib table numerically, so the slots are all that is visibl
 
 | slot | resolved |
 |---|---|
-| `1` | `table: 0x000055d1cdb54d60` |
+| `1` | `table: 0x0000561d3650cd60` |
 | `2` | `4294967296` |
-| `3` | `table: 0x000055d1cdb54d30` |
-| `4` | `table: 0x000055d1cdb54a30` |
-| `5` | `function: 0x000055d1cd9fa790` |
-| `6` | `function: 0x000055d1cd9f9810` |
+| `3` | `table: 0x0000561d3650cd30` |
+| `4` | `table: 0x0000561d3650ca30` |
+| `5` | `function: 0x0000561d363b2790` |
+| `6` | `function: 0x0000561d363b1810` |
 | `7` | `4503599627370496` |
-| `8` | `function: 0x000055d1cd9f9a10` |
+| `8` | `function: 0x0000561d363b1a10` |
 | `9` | `0` |
 | `10` | `buffer.create (instrumented)` |
 | `11` | `buffer.readu8 (instrumented)` |
 | `12` | `buffer.readi16 (instrumented)` |
 | `13` | `buffer.readu16 (instrumented)` |
 | `14` | `_G.select` |
-| `15` | `function: 0x000055d1cd9fd090` |
-| `16` | `function: 0x000055d1cd9f9410` |
+| `15` | `function: 0x0000561d363b5090` |
+| `16` | `function: 0x0000561d363b1410` |
 | `17` | `buffer.readi32 (instrumented)` |
 | `18` | `2147483648` |
 | `19` | `buffer.readu32 (instrumented)` |
@@ -116,20 +116,20 @@ The VM indexes its stdlib table numerically, so the slots are all that is visibl
 | `21` | `string.gsub` |
 | `22` | `buffer.readf64 (instrumented)` |
 | `24` | `buffer.writeu32 (instrumented)` |
-| `25` | `function: 0x000055d1cd9fb690` |
+| `25` | `function: 0x0000561d363b3690` |
 | `26` | `buffer.copy (instrumented)` |
-| `27` | `function: 0x000055d1cd9fa710` |
-| `28` | `function: 0x000055d1cdb67900` |
-| `29` | `function: 0x000055d1cdb67840` |
-| `30` | `function: 0x000055d1cdb5f720` |
-| `31` | `table: 0x000055d1cdb67810` |
+| `27` | `function: 0x0000561d363b2710` |
+| `28` | `function: 0x0000561d3651f900` |
+| `29` | `function: 0x0000561d3651f840` |
+| `30` | `function: 0x0000561d36517720` |
+| `31` | `table: 0x0000561d3651f810` |
 | `32` | `45` |
-| `33` | `function: 0x000055d1cdb66880` |
+| `33` | `function: 0x0000561d3651e880` |
 
 ## Stage `B`
 
 - run completed within the budget
-- snapshot: reason=`budget`, buffers=2, buffer calls=180224, seconds=10.932466158999887
+- snapshot: reason=`budget`, buffers=2, buffer calls=180224, seconds=10.847162175999983
 - captured `buffer` objects: #1 (430,656 bytes), #2 (2,048 bytes)
 - globals the emulator had to stub: `Path2DControlPoint`
 

@@ -53,7 +53,7 @@ reports/STRINGS.md           decrypted string table per stage
 reports/BEHAVIOR.md          API trace, hottest handlers, resolved stdlib slots
 reports/PROGRAM.md           the payload's own program: protos, instruction mix, constants, sample listing
 reports/program.disasm.txt   the full disassembly (every instruction, per proto)
-reports/payload.luau         the same program lifted to Luau source and de-flattened (20 functions, parses)
+reports/payload.luau         the same program lifted to Luau source, de-flattened and tidied (20 functions, parses)
 reports/PIPELINE.md          stage split, plaintext config, artifact hashes, verification
 out/stages/                  the two obfuscated stages, split out of the file
 out/pools/                   decoded LPH pools (+ metadata)
@@ -121,6 +121,7 @@ tools/
   disasm.py               opcode ladder decoded by evaluation + program disassembly
   lift.py                 disassembly -> Luau source (reverse-postorder block layout)
   structurize.py          de-flattener: dominators/post-dominators -> if/while/break/continue
+  simplify.py             folds the interpreter's scratch locals back into one statement
   normalize.py            annotations + numeric canonicalisation (semantics preserving)
   verify.py               token-equality + parse verification
   identify.py             obfuscator/version verdict with evidence
