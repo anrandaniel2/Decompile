@@ -130,10 +130,13 @@ executor, the interpreter can be instrumented where it already runs. See
   creations (the UI callback layer), 92 adds, 70 conditional jumps, 33 table reads, 25 calls,
   22 numeric `for` loops — and one `NEWCLOSURE` body that is a full upvalue-capture loop with
   `[1]=k`, `[3]=_` cells, i.e. the classic Luau closure-instantiation bytecode.
-* Constants are still VM operand numbers (`R[4]=(31)`): the actual values live in the LPH pools, so
-  the listing recovers control flow and register data flow, not literals. Pairing an operand with
-  the decrypted string table would require resolving the proto constant table, which is the next
-  step if literal recovery is wanted.
+* Constants come for free: Luraph pre-resolves them into the operand slots, so the capture is
+  type-tagged and the listing shows real literals — `R[123]=("delay")`, `R[68]=(B["debug"])`,
+  `R[3]=(R[3]["char"])`, `R[2][112]=("The debug library is required on Luau platforms…")`. The
+  constant-pool stores (`R[t][slot]=(literal)`) yield **119 named constant slots**, listed in
+  [`reports/PROGRAM.md`](../reports/PROGRAM.md): `isyieldable`, `GetAsync`, `FromValue`,
+  `NextUnitVector`, `pack`, `isvararg`, `gmatch`, `readu32`, … — i.e. exactly the surface a Roblox
+  loader touches (executor introspection, `Path2D` UI, datastore calls).
 
 ## 7. What is *not* recovered, and what it would take
 

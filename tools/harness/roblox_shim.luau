@@ -918,7 +918,15 @@ function dumpVm()
             local out = {}
             for i = 1, parts.n do
                 local v = parts.data[i]
-                out[i] = (type(v) == "number") and tostring(math.floor(v)) or "-"
+                local t = type(v)
+                if t == "number" then
+                    out[i] = "n:" .. tostring(math.floor(v))
+                elseif t == "string" then
+                    -- constants arrive pre-resolved in the operand slots; keep them
+                    out[i] = "s:" .. string.sub(v, 1, 160)
+                else
+                    out[i] = "-"
+                end
             end
             emit("@@VM", tostring(site), tostring(pc), table.concat(out, "\t"))
         end

@@ -134,7 +134,9 @@ Section 7 recovers the opcode *table*; this step recovers the *program*. Two pie
    site, exactly at `local N = X[H]; if N < …` — the moment before the ladder decides what to do —
    and passes the code array plus the six operand arrays. `__vmop` records one tuple per
    `(proto, pc)`: `record[pc] = {n, data}`, with an explicit operand count so that nil operands do
-   not truncate the dump line. The hook fires ~1.6 × 10⁸ times per run, so it is opt-in
+   not truncate the dump line. Operands are type-tagged (`n:12`, `s:IsA`, `-`), because the VM
+   pre-resolves constants into those slots — which is how string constants survive into the
+   listing. The hook fires ~1.6 × 10⁸ times per run, so it is opt-in
    (`cfg.vmTrace`) and gets its own short-budget pass (`DISASM_BUDGET = 10`); the capture saturates
    well before any larger budget does.
 2. **Decode by evaluation.** Guessing at tree shapes is fragile (the generator mixes `~=`,
@@ -144,6 +146,9 @@ Section 7 recovers the opcode *table*; this step recovers the *program*. Two pie
    Bodies are then rendered with the recorded operands substituted (`K[H]`→A, `j[H]`→B, …) and
    with `H = <pc>` rewritten as `goto <pc>`, which turns `k[m[H]][Y[H]]=(D[H])` into
    `R[62][4]=(3)` and `H=m[H]` into `goto 214`.
+
+Instructions shaped `R[<table>][<slot>] = ("literal")` are a constant-pool store, so the tool also
+collects them into a slot → value table (119 named constants in the current sample).
 
 Output: `out/payload/program.disasm.txt` (full listing, per proto), `out/payload/program.json`
 (machine readable) and `reports/PROGRAM.md` (summary + sample). Protos are labelled `P1..Pn` by

@@ -15,7 +15,7 @@ pipeline + CI workflow** that does it, so the analysis is reproducible instead o
 | String table | decrypted live — 167 unique strings from the executed path |
 | Verification | annotated output is token-identical to the input and parses with `luau-ast` |
 | Payload | a Roblox key-system / loader ("PandaAuth" key gate + `Kryptic` loader, `devoidhub` service) |
-| Recovered program | 2,342 executed VM instructions across 20 protos, disassembled into readable pseudocode |
+| Recovered program | 2,342 executed VM instructions across 20 protos, disassembled into readable pseudocode, plus 119 named constant slots |
 
 📄 Reports: [identification](reports/IDENTIFICATION.md) ·
 [function map](reports/FUNCTION_MAP.md) ·

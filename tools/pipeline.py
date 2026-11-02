@@ -230,6 +230,7 @@ def render_pipeline_report(manifest: dict) -> str:
         lines.append(f"- instructions: **{dis['instructions']:,}** "
                      f"({dis['decoded']:,} decoded) across **{dis['protos']}** protos, "
                      f"{dis['opcodes']} distinct opcodes")
+        lines.append(f"- constant slots recovered: {dis.get('constant_slots', 0)}")
         lines.append(f"- listing: `{dis['artifacts']['disassembly']}`")
         lines.append("")
         lines.append("| semantics | count |")

@@ -327,7 +327,7 @@ emulation harness (budgeted run, see `docs/METHOD.md`).
 | 145 | `WS` | `lib_bit32_rshift` | library | — | 12 | 2 | alias of `bit32.rshift` |
 | 146 | `X` | `lib_bit32_lshift_2` | library | — | 12 | 0 | alias of `bit32.lshift` |
 | 147 | `nS` | `lib_bit32_lshift` | library | — | 12 | 7 | alias of `bit32.lshift` |
-| 148 | `q` | `lib_table_create` | library | — | 12 | 3,820,112 | alias of `table.create` |
+| 148 | `q` | `lib_table_create` | library | — | 12 | 5,610,079 | alias of `table.create` |
 | 149 | `B` | `lib_string_char` | library | — | 11 | 256 | alias of `string.char` |
 | 150 | `j` | `lib_string_byte` | library | — | 11 | 13,245 | alias of `string.byte` |
 | 151 | `CS` | `lib_bit32_bxor` | library | — | 10 | 11 | alias of `bit32.bxor` |
@@ -335,12 +335,12 @@ emulation harness (budgeted run, see `docs/METHOD.md`).
 | 153 | `IS` | `lib_bit32_bnot` | library | — | 10 | 11 | alias of `bit32.bnot` |
 | 154 | `V` | `lib_bit32_band` | library | — | 10 | 0 | alias of `bit32.band` |
 | 155 | `fS` | `lib_bit32_band_2` | library | — | 10 | 9 | alias of `bit32.band` |
-| 156 | `n` | `lib_table_move` | library | — | 10 | 28,061 | alias of `table.move` |
+| 156 | `n` | `lib_table_move` | library | — | 10 | 41,320 | alias of `table.move` |
 | 157 | `TS` | `lib_bit32_bor` | library | — | 9 | 5 | alias of `bit32.bor` |
 | 158 | `c` | `lib_bit32_bor_2` | library | — | 9 | 0 | alias of `bit32.bor` |
-| 159 | `I` | `lib_getfenv` | library | — | 7 | 3,791,591 | alias of `getfenv` |
+| 159 | `I` | `lib_getfenv` | library | — | 7 | 5,568,299 | alias of `getfenv` |
 | 160 | `k` | `lib_setfenv` | library | — | 7 | 31 | alias of `setfenv` |
-| 161 | `T` | `lib_unpack_2` | library | — | 6 | 1,069,423 | alias of `unpack` |
+| 161 | `T` | `lib_unpack_2` | library | — | 6 | 1,573,266 | alias of `unpack` |
 | 162 | `z` | `lib_unpack` | library | — | 6 | 0 | alias of `unpack` |
 | 163 | `l` | `lib_bit32` | library | — | 5 | 0 | alias of `bit32` |
 | 164 | `Q` | `lib_type` | library | — | 4 | 0 | alias of `type` |

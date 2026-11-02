@@ -66,6 +66,53 @@ reads like `R[545] = R[66] ~= R[2]` rather than `k[K[H]]=(k[j[H]]~=k[m[H]])`.
 | POW | 5 |
 | CONCAT | 2 |
 
+## Constant slots recovered from the listing
+
+The VM pre-resolves constants into the operand slots, so **119** string constants appear directly in the disassembly, keyed by their slot in the proto's constant table.
+
+| proto | slot | value |
+|---|---|---|
+| `P2` | 2 | `"isyieldable"` |
+| `P2` | 3 | `"info"` |
+| `P2` | 5 | `"GetAsync"` |
+| `P2` | 7 | `"Size"` |
+| `P2` | 15 | `"FromValue"` |
+| `P2` | 16 | `"NextUnitVector"` |
+| `P2` | 18 | `"Instance"` |
+| `P2` | 19 | `"pack"` |
+| `P2` | 22 | `"Random"` |
+| `P2` | 24 | `"isvararg"` |
+| `P2` | 26 | `"NextNumber"` |
+| `P2` | 28 | `"writeu16"` |
+| `P2` | 30 | `"Connect"` |
+| `P2` | 32 | `"__index"` |
+| `P2` | 33 | `"The metatable is locked"` |
+| `P2` | 34 | `"gsub"` |
+| `P2` | 35 | `"Clone"` |
+| `P2` | 36 | `"tostring"` |
+| `P2` | 37 | `"=[C]"` |
+| `P2` | 38 | `"linedefined"` |
+| `P2` | 39 | `"writeu32"` |
+| `P2` | 40 | `"assert"` |
+| `P2` | 41 | `"ScreenGui"` |
+| `P2` | 42 | `"rawget"` |
+| `P2` | 45 | `"IsClient"` |
+| `P2` | 47 | `"pcall"` |
+| `P2` | 49 | `"string"` |
+| `P2` | 50 | `"Y"` |
+| `P2` | 51 | `"insert"` |
+| `P2` | 52 | `"nparams"` |
+| `P2` | 55 | `"Changed"` |
+| `P2` | 56 | `"find"` |
+| `P2` | 57 | `"typeof"` |
+| `P2` | 59 | `"EnumType"` |
+| `P2` | 60 | `"what"` |
+| `P2` | 61 | `"Parent"` |
+| `P2` | 62 | `"RequestAsync"` |
+| `P2` | 63 | `"GetChildren"` |
+| `P2` | 64 | `"delay"` |
+| `P2` | 65 | `"getmetatable"` |
+
 ## `P1` — first 60 instructions
 
 ```lua

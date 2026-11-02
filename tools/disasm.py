@@ -254,6 +254,19 @@ def build_listing(runtime: dict, inventories: dict, stage_texts: dict | None = N
         instructions.sort(key=lambda r: r["pc"])
         proto_list.append({"id": f"P{i}", "site": site, "instructions": instructions})
 
+    # constant slots that can be read straight out of the listing:
+    #   R[<proto table>][<slot>] = ("literal")   -- the VM pre-resolves constants
+    const_re = re.compile(r'^R\[\d+\]\[(\d+)\]=\((".*")\);$')
+    constants: dict[str, dict[str, str]] = {}
+    for proto in proto_list:
+        table: dict[str, str] = {}
+        for ins in proto["instructions"]:
+            match = const_re.match(ins["text"] or "")
+            if match:
+                table.setdefault(match.group(1), match.group(2))
+        if table:
+            constants[proto["id"]] = dict(sorted(table.items(), key=lambda kv: int(kv[0])))
+
     histogram = Counter(i["semantics"] for p in proto_list for i in p["instructions"])
     opcodes = Counter(i["op"] for p in proto_list for i in p["instructions"] if i["op"] is not None)
     covered = sum(1 for p in proto_list for i in p["instructions"] if i["text"])
@@ -264,6 +277,8 @@ def build_listing(runtime: dict, inventories: dict, stage_texts: dict | None = N
         "protos": proto_list,
         "instruction_count": sum(len(p["instructions"]) for p in proto_list),
         "decoded_count": covered,
+        "constants": constants,
+        "constant_count": sum(len(v) for v in constants.values()),
         "histogram": dict(histogram.most_common()),
         "opcode_histogram": {str(k): v for k, v in sorted(opcodes.items())},
     }
@@ -315,6 +330,25 @@ def render_markdown(listing: dict, sample: int = 60) -> str:
     for name, count in list(listing["histogram"].items())[:25]:
         lines.append(f"| {name} | {count} |")
     lines.append("")
+    if listing.get("constants"):
+        lines.append("## Constant slots recovered from the listing")
+        lines.append("")
+        lines.append("The VM pre-resolves constants into the operand slots, so "
+                     f"**{listing['constant_count']}** string constants appear directly in the "
+                     "disassembly, keyed by their slot in the proto's constant table.")
+        lines.append("")
+        lines.append("| proto | slot | value |")
+        lines.append("|---|---|---|")
+        shown = 0
+        for proto_id, table in listing["constants"].items():
+            for slot, value in table.items():
+                if shown >= 40:
+                    break
+                lines.append(f"| `{proto_id}` | {slot} | `{value}` |")
+                shown += 1
+            if shown >= 40:
+                break
+        lines.append("")
     biggest = listing["protos"][0] if listing["protos"] else None
     if biggest:
         lines.append(f"## `{biggest['id']}` — first {sample} instructions")

@@ -46,6 +46,17 @@ def _unescape(s: str) -> str:
              .replace("\\t", "\t").replace("\\0", "\x00").replace("\x00", "\\"))
 
 
+def _vm_field(raw: str):
+    """Decode one recorded VM operand: `n:<num>`, `s:<string>` or `-` (nil)."""
+    if raw in ("", "-"):
+        return None
+    if raw.startswith("n:"):
+        return raw[2:]
+    if raw.startswith("s:"):
+        return json.dumps(raw[2:])  # Luau-compatible quoting
+    return raw
+
+
 def parse_output(stdout: str) -> dict:
     result = {
         "strings": {},          # origin -> list of unique strings (insertion ordered)
@@ -117,8 +128,7 @@ def parse_output(stdout: str) -> dict:
             result["vm"].append({
                 "site": parts[1],
                 "pc": int(parts[2]),
-                "fields": [None if f in ("", "-") else f
-                           for f in _unescape(parts[3]).split("\t")],
+                "fields": [_vm_field(f) for f in _unescape(parts[3]).split("\t")],
             })
         elif kind == "@@ERROR" and len(parts) >= 3:
             result["errors"].append({"phase": parts[1], "message": _unescape(parts[2])})
