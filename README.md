@@ -50,7 +50,8 @@ reports/IDENTIFICATION.md    obfuscator + version + evidence table
 reports/FUNCTION_MAP.md      every handler: obfuscated name -> recovered name/role/evidence
 reports/STRINGS.md           decrypted string table per stage
 reports/BEHAVIOR.md          API trace, hottest handlers, resolved stdlib slots
-reports/PROGRAM.md           the payload's own program: protos, instruction mix, sample listing
+reports/PROGRAM.md           the payload's own program: protos, instruction mix, constants, sample listing
+reports/program.disasm.txt   the full disassembly (every executed instruction, per proto)
 reports/PIPELINE.md          stage split, plaintext config, artifact hashes, verification
 out/stages/                  the two obfuscated stages, split out of the file
 out/pools/                   decoded LPH pools (+ metadata)

@@ -372,8 +372,12 @@ def write_outputs(listing: dict, out_dir, reports_dir) -> dict:
     prog_dir = out_dir / "payload"
     prog_dir.mkdir(parents=True, exist_ok=True)
 
+    listing_text = render_text(listing)
     text_path = prog_dir / "program.disasm.txt"
-    text_path.write_text(render_text(listing), encoding="utf-8", errors="surrogateescape")
+    text_path.write_text(listing_text, encoding="utf-8", errors="surrogateescape")
+    # keep a copy next to the reports: this is the reviewable deliverable
+    committed = reports_dir / "program.disasm.txt"
+    committed.write_text(listing_text, encoding="utf-8", errors="surrogateescape")
     json_path = prog_dir / "program.json"
     payload = dict(listing)
     payload["protos"] = [
@@ -382,8 +386,8 @@ def write_outputs(listing: dict, out_dir, reports_dir) -> dict:
     json_path.write_text(json.dumps(payload, indent=1), encoding="utf-8", errors="surrogateescape")
     report_path = reports_dir / "PROGRAM.md"
     report_path.write_text(render_markdown(listing), encoding="utf-8", errors="surrogateescape")
-    return {"disassembly": str(text_path), "program_json": str(json_path),
-            "report": str(report_path)}
+    return {"disassembly": str(text_path), "committed_listing": str(committed),
+            "program_json": str(json_path), "report": str(report_path)}
 
 
 def main(argv: list[str]) -> int:
