@@ -119,10 +119,18 @@ Route 1 of section 7 turned out to be unnecessary: instead of running the payloa
 executor, the interpreter can be instrumented where it already runs. See
 [`reports/PROGRAM.md`](../reports/PROGRAM.md) and `out/payload/program.disasm.txt`.
 
-* The harness hooks the dispatch site (`local N = X[H]; if N < …`) and records one tuple per
-  executed `(proto, pc)`: opcode plus the six operand slots. ~1.64 × 10⁸ dispatches produce
-  **2,342 distinct instructions across 20 protos** — one dominant proto of 1,133 instructions
-  (the loader's main body) and 19 smaller ones (43–326).
+* The harness hooks the dispatch site (`local N = X[H]; if N < …`) and, from the first dispatch of
+  each proto, dumps that proto's **whole code array**. ~1.64 × 10⁸ dispatches touch 2,342 distinct
+  instructions, and those reach **7,591 instructions across 20 protos** — one dominant proto of
+  5,739 instructions (the loader's main body) plus 19 of 37–331. That is the entire program, not a
+  sample of the executed path.
+* `tools/lift.py` turns the listing into Luau source (`reports/payload.luau`, 20 functions,
+  4,100 basic blocks, 17k lines) that `luau-ast` accepts.
+* The recovered program is **block-flattened**: 4,100 basic blocks for 7,591 instructions, joined
+  by ~2,200 explicit jumps with almost no fall-through. That is a deobfuscation pass applied
+  *before* Luraph — the source ran inside a control-flow flattening obfuscator, and Luraph then
+  compiled and virtualised the result. It explains the instruction mix (few calls, many jumps) and
+  it is why the lifted source is a state machine over block numbers.
 * The opcode ladder is decoded by *evaluating* it for every candidate value, not by pattern
   matching, which is why it yields 2337/2342 decoded instructions with no manual table.
 * The instruction mix is what a Roblox key-loader should look like: 650 jumps (the flattened

@@ -125,6 +125,59 @@ def dispatch_tree(src: str, start: int) -> tuple[dict[int, str], str | None]:
     return out, var
 
 
+KEYWORDS = ("then", "do", "end", "else", "elseif")
+
+VALID_SIMPLE_ESCAPES = set('abfnrtvz\\"\'0`')
+
+
+def _sanitize_strings(text: str) -> str:
+    """Repair escape sequences that Luau would reject (the payload has some)."""
+    def fix(match: re.Match) -> str:
+        body = match.group(1)
+        out = []
+        i = 0
+        while i < len(body):
+            ch = body[i]
+            if ch != "\\" or i + 1 >= len(body):
+                out.append(ch)
+                i += 1
+                continue
+            nxt = body[i + 1]
+            if nxt == "u" and re.match(r"[0-9a-fA-F]{4}", body[i + 2:i + 6]):
+                try:
+                    out.append(chr(int(body[i + 2:i + 6], 16)))
+                except ValueError:
+                    out.append("")
+                i += 6
+                continue
+            if nxt == "u" and body[i + 2:i + 3] == "{":
+                close = body.find("}", i + 3)
+                out.append(body[i:close + 1] if close > 0 else "")
+                i = close + 1 if close > 0 else i + 2
+                continue
+            if nxt.isdigit() or nxt in VALID_SIMPLE_ESCAPES:
+                out.append(body[i:i + 2])
+                i += 2
+                continue
+            out.append("\\\\" + nxt)
+            i += 2
+        return '"' + "".join(out) + '"'
+
+    return re.sub(r'"((?:[^"\\]|\\.)*)"', fix, text)
+
+
+def _space_keywords(text: str) -> str:
+    """Make sure `do`/`then`/`end` are separate tokens (but not inside strings)."""
+    parts = re.split(r'("(?:[^"\\]|\\.)*")', text)
+    for index in range(0, len(parts), 2):
+        chunk = parts[index]
+        for keyword in KEYWORDS:
+            chunk = re.sub(rf"(?<=\d){keyword}", f" {keyword} ", chunk)
+            chunk = re.sub(rf"(?<=[\)\]}}]){keyword}", f" {keyword} ", chunk)
+        parts[index] = chunk
+    return "".join(parts)
+
+
 def render_instruction(template: str, op: int, fields: list[str | None]) -> str:
     """Substitute the recorded operands into a branch body."""
     values = dict(zip(OPERAND_ARRAYS, fields[1:]))
@@ -144,12 +197,13 @@ def render_instruction(template: str, op: int, fields: list[str | None]) -> str:
 
     # jumps: `H = <literal>` means "next pc is <literal>"
     text = re.sub(r"\bH=(\d+)\b", lambda m: f"goto {m.group(1)}", text)
+    text = re.sub(r"\bH=\((\d+)\)", lambda m: f"goto {m.group(1)}", text)
+    text = re.sub(r"\bH=\((\d+)\)\b", lambda m: f"goto {m.group(1)}", text)
     text = re.sub(r"\(k\)", "R", text)
     text = re.sub(r"\bk\b(?=\[)", "R", text)
     text = re.sub(r"\bs\b(?=\[)", "Protos", text)
-    text = re.sub(r"(?<=[\w)\]])then\b", " then", text)
-    text = re.sub(r"(?<=[\w)\]])do\b", " do", text)
-    text = re.sub(r"(?<=[\w)\]])end\b", " end", text)
+    text = _space_keywords(text)
+    text = _sanitize_strings(text)
     text = text.replace(";", "; ")
 
     def num(match: re.Match) -> str:
@@ -233,20 +287,31 @@ def build_listing(runtime: dict, inventories: dict, stage_texts: dict | None = N
                 break
 
     protos: dict[str, list[dict]] = defaultdict(list)
-    for record in runtime.get("vm", []):
-        fields = record.get("fields") or []
+    executed = {(r["site"], r["pc"]) for r in runtime.get("vm", [])}
+    full = runtime.get("protos") or {}
+
+    def add(site: str, pc: int, fields: list[str | None]) -> None:
         op_int = None
-        if fields and (fields[0] or "").lstrip("-").isdigit():
+        if fields and fields[0] is not None and str(fields[0]).lstrip("-").isdigit():
             op_int = int(fields[0])
         template = templates.get(op_int, "") if op_int is not None else ""
-        protos[record["site"]].append({
-            "pc": record["pc"],
+        protos[site].append({
+            "pc": pc,
             "op": op_int,
             "operands": fields[1:],
+            "executed": (site, pc) in executed,
             "semantics": label_instruction(template, fields) if template else "unclassified",
             "template": template,
             "text": render_instruction(template, op_int, fields) if template else "",
         })
+
+    if full:  # complete protos, straight from the interpreter's code arrays
+        for site, entry in full.items():
+            for index, fields in enumerate(entry.get("code") or [], 1):
+                add(site, index, list(fields))
+    else:  # fall back to the executed trace only
+        for record in runtime.get("vm", []):
+            add(record["site"], record["pc"], record.get("fields") or [])
 
     ordered = sorted(protos.items(), key=lambda kv: (-len(kv[1]), kv[0]))
     proto_list = []
@@ -277,6 +342,8 @@ def build_listing(runtime: dict, inventories: dict, stage_texts: dict | None = N
         "protos": proto_list,
         "instruction_count": sum(len(p["instructions"]) for p in proto_list),
         "decoded_count": covered,
+        "executed_count": sum(1 for p in proto_list for i in p["instructions"] if i["executed"]),
+        "complete": bool(full),
         "constants": constants,
         "constant_count": sum(len(v) for v in constants.values()),
         "histogram": dict(histogram.most_common()),
@@ -289,7 +356,8 @@ def render_text(listing: dict) -> str:
     lines.append("-- Disassembly of the Luraph VM program (decoded from the interpreter's")
     lines.append("-- own dispatch: opcode array X, operand arrays K/j/m/l/D/Y).")
     lines.append(f"-- {listing['instruction_count']} instructions across "
-                 f"{len(listing['protos'])} protos.")
+                 f"{len(listing['protos'])} protos "
+                 f"({listing.get('executed_count', 0)} executed in the captured run).")
     lines.append("")
     for proto in listing["protos"]:
         lines.append(f"proto {proto['id']}  ({len(proto['instructions'])} instructions)")
@@ -312,7 +380,10 @@ def render_markdown(listing: dict, sample: int = 60) -> str:
              "comparison tree, and operands are substituted into the branch body, so a line",
              "reads like `R[545] = R[66] ~= R[2]` rather than `k[K[H]]=(k[j[H]]~=k[m[H]])`.",
              "",
-             f"- instructions recovered: **{listing['instruction_count']:,}**",
+             f"- instructions recovered: **{listing['instruction_count']:,}**"
+             + (" (whole protos, including paths this run never executed)"
+                if listing.get("complete") else " (executed path only)"),
+             f"- executed in the captured run: {listing.get('executed_count', 0):,}",
              f"- protos (functions): **{len(listing['protos'])}**",
              f"- opcode variable: `{listing['opcode_var']}`",
              ""]

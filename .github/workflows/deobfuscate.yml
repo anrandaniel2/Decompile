@@ -106,6 +106,9 @@ jobs:
             --luau .tools/luau \
             --luau-ast .tools/luau-ast
 
+      - name: Verify the lifted source parses
+        run: .tools/luau-ast reports/payload.luau > /dev/null
+
       - name: Verify the annotated stages
         run: |
           set -e

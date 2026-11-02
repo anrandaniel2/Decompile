@@ -155,6 +155,28 @@ Output: `out/payload/program.disasm.txt` (full listing, per proto), `out/payload
 descending instruction count, because the runtime identity of a proto (`tostring` of its code
 array) is an address and changes between runs — within one run it is a stable key.
 
+## 7c. Lifting to source — `tools/lift.py`
+
+The listing proves what each instruction does; this step makes it *runnable Luau*
+(`reports/payload.luau`, verified with `luau-ast`).
+
+1. **Whole program, not just the trace.** `__vmop` keeps a reference to the code array and the
+   six operand arrays of every proto it sees, and `dumpVm` walks the *entire* array
+   (`@@PR`/`@@PRLEN`). One executed instruction is enough to recover the whole proto: 7,591
+   instructions across 20 protos instead of the 2,342 the run touched.
+2. **Parse the control effect out of each rendered instruction.** A rendered line is
+   `<statements> <control>`; `TAIL_PATTERNS` extracts the trailing `goto N`, `if C then goto N`,
+   `if C then else goto N` (jump-if-false), guarded bodies and `return`. String literals are
+   masked first, because the payload's constants contain the words `if`, `return` and `goto`.
+3. **Re-lay out the blocks.** The payload's basic blocks are permuted and joined by explicit
+   jumps — a block-flattening pass ran before Luraph did. `linearize()` splits the proto into
+   basic blocks and re-emits them in reverse postorder, so the emitted order follows control flow
+   and reads top to bottom.
+4. **Emit Luau.** Every proto becomes `local function pN(...)` with `local R = {}`; each region
+   becomes `if PC == n then ... continue end`, and jumps become `PC = n`. Luau has no `goto`, so
+   a faithful translation of a flattened CFG is a block state machine — the honest shape, not a
+   prettier one that would mean inventing structure the bytecode does not have.
+
 ## 8. Annotated output + verification — `tools/normalize.py`, `tools/verify.py`
 
 The annotated stage files are the input with three semantics-preserving changes:

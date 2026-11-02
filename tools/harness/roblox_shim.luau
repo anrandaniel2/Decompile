@@ -879,6 +879,17 @@ local VM_LIMIT = 400000
 local vmopCalls = 0
 local vmopBadPc = 0
 
+local function vmTag(v)
+    local t = type(v)
+    if t == "number" then
+        return "n:" .. tostring(math.floor(v))
+    elseif t == "string" then
+        -- constants arrive pre-resolved in the operand slots; keep them
+        return "s:" .. string.sub(v, 1, 200)
+    end
+    return "-"
+end
+
 local function vmop(site, pc, code, ...)
     vmopCalls += 1
     if type(pc) ~= "number" then vmopBadPc += 1 return end
@@ -886,48 +897,51 @@ local function vmop(site, pc, code, ...)
     site = tostring(site) .. ":" .. tostring(code)
     local record = vmSites[site]
     if not record then
-        record = {}
+        local n = select("#", ...)
+        local arrays = table.create(n)
+        for i = 1, n do arrays[i] = select(i, ...) end
+        record = {code = code, arrays = arrays, n = n, seen = {}}
         vmSites[site] = record
     end
-    if record[pc] ~= nil then return end
+    if record.seen[pc] ~= nil then return end
     if vmCount >= VM_LIMIT then return end
     vmCount += 1
-    local n = select("#", ...)
-    local parts = table.create(n)
-    for i = 1, n do
-        local arr = select(i, ...)
-        local v = nil
-        if type(arr) == "table" then
-            v = arr[pc]
-        end
-        parts[i] = v
+    local parts = table.create(record.n)
+    for i = 1, record.n do
+        local arr = record.arrays[i]
+        parts[i] = (type(arr) == "table") and arr[pc] or nil
     end
     -- keep the operand count: nils would otherwise truncate the dump line
-    record[pc] = {n = n, data = parts}
+    record.seen[pc] = {n = record.n, data = parts}
 end
 env.__vmop = vmop
 
 function dumpVm()
     emit("@@VMSTATS", tostring(vmopCalls), tostring(vmopBadPc), tostring(vmCount))
     for site, record in pairs(vmSites) do
+        -- 1. the whole code array: every instruction, executed or not
+        local code = record.code
+        if type(code) == "table" then
+            local total = #code
+            emit("@@PRLEN", tostring(site), tostring(total))
+            for pc = 1, total do
+                -- arrays[1] is the opcode array itself, so no extra column
+                local out = table.create(record.n)
+                for i = 1, record.n do
+                    local arr = record.arrays[i]
+                    out[i] = (type(arr) == "table") and vmTag(arr[pc]) or "-"
+                end
+                emit("@@PR", tostring(site), tostring(pc), table.concat(out, "\t"))
+            end
+        end
+        -- 2. the executed subset, with pcs that the run actually reached
         local pcs = {}
-        for pc in pairs(record) do pcs[#pcs + 1] = pc end
+        for pc in pairs(record.seen) do pcs[#pcs + 1] = pc end
         table.sort(pcs)
         for _, pc in ipairs(pcs) do
-            local parts = record[pc]
+            local parts = record.seen[pc]
             local out = {}
-            for i = 1, parts.n do
-                local v = parts.data[i]
-                local t = type(v)
-                if t == "number" then
-                    out[i] = "n:" .. tostring(math.floor(v))
-                elseif t == "string" then
-                    -- constants arrive pre-resolved in the operand slots; keep them
-                    out[i] = "s:" .. string.sub(v, 1, 160)
-                else
-                    out[i] = "-"
-                end
-            end
+            for i = 1, parts.n do out[i] = vmTag(parts.data[i]) end
             emit("@@VM", tostring(site), tostring(pc), table.concat(out, "\t"))
         end
     end

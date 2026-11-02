@@ -231,6 +231,12 @@ def render_pipeline_report(manifest: dict) -> str:
                      f"({dis['decoded']:,} decoded) across **{dis['protos']}** protos, "
                      f"{dis['opcodes']} distinct opcodes")
         lines.append(f"- constant slots recovered: {dis.get('constant_slots', 0)}")
+        lift = dis.get("lift") or {}
+        if lift:
+            parsed = (lift.get("parse") or {}).get("ok")
+            lines.append(f"- lifted to Luau: **{lift.get('protos', 0)}** protos, "
+                         f"{lift.get('blocks', 0):,} blocks, {lift.get('lines', 0):,} lines, "
+                         f"parses with luau-ast: {'yes' if parsed else parsed}")
         lines.append(f"- listing: `{dis['artifacts']['disassembly']}`")
         lines.append("")
         lines.append("| semantics | count |")
@@ -367,11 +373,44 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
             "protos": len(listing["protos"]),
             "ladder_values": len(listing["templates"]),
             "opcodes": len(listing["opcode_histogram"]),
+            "constant_slots": listing["constant_count"],
             "histogram": listing["histogram"],
             "artifacts": paths,
         }
-        print(f"[disasm] {listing['instruction_count']} executed instructions, "
+        print(f"[disasm] {listing['instruction_count']} instructions, "
               f"{listing['decoded_count']} decoded, {len(listing['protos'])} protos")
+
+        # ---- 5c. lift the program back to Luau source ---------------------
+        import lift
+        lifted, lift_stats = lift.lift_listing(listing)
+        lift_path = out_dir / "deobfuscated" / "payload.luau"
+        lift_path.parent.mkdir(parents=True, exist_ok=True)
+        lift_path.write_text(lifted + "\n", encoding="utf-8", errors="surrogateescape")
+        record(lift_path)
+        published = reports_dir / "payload.luau"
+        published.write_text(lifted + "\n", encoding="utf-8", errors="surrogateescape")
+        record(published)
+        lift_parse = verify_mod.check_parse(published, luau_ast)
+        disassembly["lift"] = {
+            **lift_stats,
+            "parse": lift_parse,
+            "artifacts": {"source": str(lift_path), "published": str(published)},
+        }
+        print(f"[lift] {lift_stats['protos']} protos, {lift_stats['blocks']} blocks, "
+              f"{lift_stats['lines']} lines, parses: {lift_parse.get('ok')}")
+        with open(reports_dir / "PROGRAM.md", "a", encoding="utf-8") as handle:
+            handle.write(
+                "\n## Lifted Luau source\n\n"
+                f"`reports/payload.luau` contains the same program as runnable Luau: "
+                f"**{lift_stats['protos']}** functions, {lift_stats['blocks']:,} basic blocks, "
+                f"{lift_stats['lines']:,} lines. `luau-ast` accepts the file "
+                f"({'yes' if lift_parse.get('ok') else 'no'}).\n\n"
+                "Conventions: `R[n]` is the proto's register file, `Protos[n]` the proto table, "
+                "`PC` the next block. Because the payload's basic blocks are laid out in "
+                "permuted order and connected by explicit jumps (a block-flattening pass ran "
+                "before Luraph did), control flow is a block dispatch loop; `tools/lift.py` "
+                "re-lays the blocks out in reverse postorder first so the code reads in "
+                "execution order.\n")
 
     # ---- 1b. identification (uses runtime evidence) -----------------------
     detector_notes = ""

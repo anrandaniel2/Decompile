@@ -46,6 +46,29 @@ def _unescape(s: str) -> str:
              .replace("\\t", "\t").replace("\\0", "\x00").replace("\x00", "\\"))
 
 
+def _luau_quote(text: str) -> str:
+    """Quote a constant the way Luau source wants it (json.dumps is not enough)."""
+    out = ['"']
+    for ch in text:
+        code = ord(ch)
+        if ch == '"':
+            out.append('\\"')
+        elif ch == "\\":
+            out.append("\\\\")
+        elif ch == "\n":
+            out.append("\\n")
+        elif ch == "\r":
+            out.append("\\r")
+        elif ch == "\t":
+            out.append("\\t")
+        elif code < 32 or code == 127:
+            out.append(f"\\{code:03d}")
+        else:
+            out.append(ch)
+    out.append('"')
+    return "".join(out)
+
+
 def _vm_field(raw: str):
     """Decode one recorded VM operand: `n:<num>`, `s:<string>` or `-` (nil)."""
     if raw in ("", "-"):
@@ -53,7 +76,7 @@ def _vm_field(raw: str):
     if raw.startswith("n:"):
         return raw[2:]
     if raw.startswith("s:"):
-        return json.dumps(raw[2:])  # Luau-compatible quoting
+        return _luau_quote(raw[2:])
     return raw
 
 
@@ -74,6 +97,7 @@ def parse_output(stdout: str) -> dict:
         "stats": None,
         "vm": [],              # {site, pc, fields:[op, K, j, m, l, D, Y]}
         "vmstats": None,
+        "protos": {},           # site -> {length, code:[[op, operands...]]}  (whole proto)
         "missing_globals": {},
     }
 
@@ -123,6 +147,12 @@ def parse_output(stdout: str) -> dict:
         elif kind == "@@VMSTATS" and len(parts) >= 4:
             result["vmstats"] = {"dispatches": int(parts[1]), "bad_pc": int(parts[2]),
                                  "instructions": int(parts[3])}
+        elif kind == "@@PRLEN" and len(parts) >= 3:
+            result["protos"].setdefault(parts[1], {"length": int(parts[2]), "code": []})
+            result["protos"][parts[1]]["length"] = int(parts[2])
+        elif kind == "@@PR" and len(parts) >= 4:
+            entry = result["protos"].setdefault(parts[1], {"length": 0, "code": []})
+            entry["code"].append([_vm_field(f) for f in _unescape(parts[3]).split("\t")])
         elif kind == "@@VM" and len(parts) >= 4:
             # @@VM \t site \t pc \t <op \t operands...>  (inner separators escaped)
             result["vm"].append({

@@ -2,7 +2,7 @@
 
 - input: `input/Key.luau.txt` (796,511 bytes, sha256 `ea6275aceba86689c5f3a4643c4e3f93`)
 - luau: `.tools/luau`
-- budget per stage: 20s
+- budget per stage: 10s
 
 ## Stages
 
@@ -60,24 +60,25 @@ The token stream check re-lexes both files and compares every token (numbers com
 
 - capture budget: 10 (dispatch hook, stage `B`)
 - dispatches observed: 164,406,420
-- instructions: **2,342** (2,337 decoded) across **20** protos, 107 distinct opcodes
+- instructions: **7,591** (7,574 decoded) across **20** protos, 172 distinct opcodes
 - constant slots recovered: 119
+- lifted to Luau: **20** protos, 4,100 blocks, 17,430 lines, parses with luau-ast: yes
 - listing: `out/payload/program.disasm.txt`
 
 | semantics | count |
 |---|---|
-| JUMP | 650 |
-| register move / read | 257 |
-| register read / table index | 235 |
-| LOADK / LOADN | 221 |
-| SETTABLE | 194 |
-| MOVE | 167 |
-| NEWCLOSURE | 134 |
-| NOT | 100 |
-| ADD | 92 |
-| conditional jump | 70 |
-| GETTABLE | 33 |
-| compare (le) | 30 |
+| JUMP | 2142 |
+| register move / read | 825 |
+| LOADK / LOADN | 780 |
+| MOVE | 759 |
+| register read / table index | 666 |
+| ADD | 541 |
+| SETTABLE | 365 |
+| NOT | 279 |
+| NEWCLOSURE | 266 |
+| conditional jump | 261 |
+| GETTABLE | 131 |
+| compare (le) | 105 |
 
 ## Artefacts
 
@@ -89,18 +90,21 @@ The token stream check re-lexes both files and compares every token (numbers com
 | `out/pools/pool1.bin` | 430,656 | `50e3350f2b106e0475637ae819d26173` |
 | `out/pools/pools.json` | 847 | `67c46e0cc32c608d7a89e0d2c97def13` |
 | `out/inventory.json` | 416,708 | `890ea09905cd42b10428b8b3a1dd2e56` |
-| `out/runtime/A/runtime.json` | 193,136 | `da63ab08020760f35d3baab1e2f89d69` |
-| `out/runtime/B/runtime.json` | 908,008 | `1f4b74c0101ee25cb44982c366ede31f` |
-| `out/runtime/Btrace/runtime.json` | 1,271,380 | `4ca20b1bc8beb954bb5faccdc72113ba` |
-| `out/payload/program.disasm.txt` | 200,679 | `c73bc5b7185dc2b515141449612739e6` |
-| `out/payload/program.json` | 635,471 | `c3f80e4b59bf9ea8c8dc1acf4506cf03` |
-| `reports/PROGRAM.md` | 8,464 | `38b73872dafb3dc01c56083e15e381ee` |
+| `out/runtime/A/runtime.json` | 193,137 | `8cfc1cecf6e5af1db8f90260622a18a7` |
+| `out/runtime/B/runtime.json` | 908,023 | `1b8f35a7c4429ab8e158e63b37749004` |
+| `out/runtime/Btrace/runtime.json` | 1,958,644 | `be82a25610a611be12c1d2a56f1f6f17` |
+| `out/payload/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
+| `reports/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
+| `out/payload/program.json` | 2,183,338 | `86c877532cf271ff58618b2bff73d453` |
+| `reports/PROGRAM.md` | 7,785 | `da9a151ccf4f0b8c5b2b8cf81a73b8f5` |
+| `out/deobfuscated/payload.luau` | 506,626 | `332eacff9e8eb412fa6740e4f10ed940` |
+| `reports/payload.luau` | 506,626 | `332eacff9e8eb412fa6740e4f10ed940` |
 | `out/identification.json` | 2,344 | `f62d6f12eb948cee519ed8dd19bc0c8c` |
-| `out/function_map.json` | 149,480 | `e92becf468ca0b58cbf07c3e64d33bce` |
+| `out/function_map.json` | 149,479 | `e283027a7a58c1901f37baab95fe409d` |
 | `out/opcodes.json` | 23,085 | `3e4e944c1ac54ba40006f0bc671be4ce` |
 | `out/deobfuscated/stageA.annotated.luau` | 164,653 | `71b622a25fc4b3de23ea287778e809b3` |
 | `out/deobfuscated/stageB.annotated.luau` | 633,020 | `8f5a3e0b9354366550db06a576ad243e` |
 | `reports/IDENTIFICATION.md` | 2,023 | `a5f79616775c0ab4addf9776e2b862e7` |
-| `reports/FUNCTION_MAP.md` | 45,123 | `33a88af701478698ee0fc2f748dffc0f` |
+| `reports/FUNCTION_MAP.md` | 45,121 | `cbf14a65183de0c080aaa8dd03897a97` |
 | `reports/STRINGS.md` | 5,884 | `bc63be20f0c67cadecfd8c187d226c7b` |
-| `reports/BEHAVIOR.md` | 4,786 | `a9f6b6449a25d22f69b2da490f842481` |
+| `reports/BEHAVIOR.md` | 4,783 | `d3dd24dcce943c21def7e47b5e6166c1` |
