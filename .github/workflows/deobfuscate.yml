@@ -107,7 +107,12 @@ jobs:
             --luau-ast .tools/luau-ast
 
       - name: Verify the lifted source parses
-        run: .tools/luau-ast reports/payload.luau > /dev/null
+        run: |
+          set -e
+          .tools/luau-ast reports/payload.luau > /dev/null
+          # the trace-derived copy carries the run's observed values as comments
+          .tools/luau-ast reports/payload.traced.luau > /dev/null
+          echo "lifted + trace-derived sources both parse"
 
       - name: Verify the annotated stages
         run: |
@@ -133,6 +138,8 @@ jobs:
             echo
             sed -n '/## Protos/,/^$/p' reports/PROGRAM.md | head -8
             grep -m1 "instructions recovered" reports/PROGRAM.md || true
+            echo
+            sed -n '/## Dynamic trace/,/^$/p' reports/TRACE.md | head -12
             echo "full listing: reports/PROGRAM.md, out/payload/program.disasm.txt (artifact)"
           } >> "$GITHUB_STEP_SUMMARY"
 

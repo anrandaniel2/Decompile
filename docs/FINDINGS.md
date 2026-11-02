@@ -152,6 +152,27 @@ executor, the interpreter can be instrumented where it already runs. See
   `NextUnitVector`, `pack`, `isvararg`, `gmatch`, `readu32`, … — i.e. exactly the surface a Roblox
   loader touches (executor introspection, `Path2D` UI, datastore calls).
 
+## 6c. What the run actually did — dynamic trace
+
+The listing says what the program *can* do. Running it says what it *did*, and the two agree:
+the harness logs every dispatch (`proto, pc, opcode, operand registers, values`) and
+`tools/trace_lift.py` turns the log into `reports/TRACE.md`, `out/trace/B/trace.json` and a
+register-annotated copy of the source, `reports/payload.traced.luau`.
+
+* 20,968 dispatches were logged (the first 20,000 plus the first visit to every pc), covering
+  **2,342 of the 7,591 instructions across all 20 protos** — the same executed set the static
+  capture reports, which is the cross-check that the two captures see the same program.
+* Registers carried real data: **58 distinct string values** were read out of operand registers
+  while the payload ran, and they are the executor/task surface the loader probes —
+  `spawn`, `defer`, `delay`, `cancel`, `status`, `running`, `isyieldable`, `resume`, `yield`,
+  `close`, `create`, `sub`, `gsub`. These are runtime *observations*, not constant-pool guesses.
+* API traffic in order: `task.spawn`, `task.spawn`, `task.delay` — the loader's two watcher
+  coroutines and the 600 s poll timer, matching the plaintext `KwInterval = 600`.
+* The annotated source is the *same* code as `reports/payload.luau` with `-- trace: @pc n: R[..] = …`
+  comments above the blocks the run reached (1,501 pcs annotated). Removing those comment lines
+  reproduces `reports/payload.luau` byte for byte, so the trace documents the lift instead of
+  altering it; `luau-ast` accepts both files.
+
 ## 7. What is *not* recovered, and what it would take
 
 The original script text is not recovered: stage `B` is bytecode for the VM, not Luau source, and

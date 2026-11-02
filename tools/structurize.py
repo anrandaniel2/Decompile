@@ -206,8 +206,10 @@ def _predecessors(nodes: list[int], succ: dict[int, list[int]], node: int) -> li
 
 
 class Structurer:
-    def __init__(self, proto, blocks, following):
+    def __init__(self, proto, blocks, following, annotations=None):
         self.proto = proto
+        # pc -> comment describing the values the run observed there
+        self.annotations = annotations or {}
         self.blocks = blocks
         self.following = following
         self.nodes = sorted(blocks)
@@ -228,6 +230,9 @@ class Structurer:
         self.parse_check = None
         self.live_out = self._liveness()
         self.line_budget = 20 * max(len(self.nodes), 1) + 2000
+        # trace comments must not eat into the budget that guards the walk, or
+        # annotating a proto would change how much of it gets structured
+        self.comment_lines = 0
         self._find_islands()
 
     def _find_islands(self) -> None:
@@ -303,6 +308,11 @@ class Structurer:
         return "    " * self.depth + text
 
     def block_statements(self, block) -> list[str]:
+        notes: list[str] = []
+        for ins in block:
+            note = self.annotations.get(ins.pc)
+            if note and note not in notes:
+                notes.append(note)
         texts = []
         for ins in block:
             # for a control instruction only `pre` is a statement; its branch is
@@ -310,6 +320,7 @@ class Structurer:
             text = ins.pre if ins.kind != "stmt" else (ins.pre or ins.text)
             if text:
                 texts.append(text if text.endswith(";") else text + ";")
+        # a comment cannot stand in for a body, so only annotate real statements
         if not texts:
             return []
         carried = self.live_out.get(block[0].pc) if block else None
@@ -317,7 +328,10 @@ class Structurer:
             simplified = simplify.simplify_block(texts, carried)
         except Exception:               # never let the tidy pass lose the code
             simplified = [text.rstrip(";") + ";" for text in texts]
-        return [self.indent(line) for line in simplified if line.strip()]
+        out = [self.indent(f"-- trace: {note}") for note in notes[:3]]
+        self.comment_lines += len(out)
+        out.extend(self.indent(line) for line in simplified if line.strip())
+        return out
 
     def _block_use_def(self) -> tuple[dict[int, set[str]], dict[int, set[str]]]:
         """Scratch locals a block reads before writing, and the ones it writes."""
@@ -419,7 +433,7 @@ class Structurer:
             guard += 1
             if guard > 100000:
                 raise StructError("walk did not terminate")
-            if len(self.lines) > self.line_budget:
+            if len(self.lines) - self.comment_lines > self.line_budget:
                 raise StructError(f"structured output exceeded {self.line_budget} lines")
             if node not in self.blocks:
                 raise StructError(f"jump to unknown block {node}")
@@ -896,8 +910,9 @@ class Structurer:
         return seen
 
 
-def structurize(proto, blocks, following, parse_check=None) -> tuple[list[str], dict]:
-    structurer = Structurer(proto, blocks, following)
+def structurize(proto, blocks, following, parse_check=None,
+                annotations=None) -> tuple[list[str], dict]:
+    structurer = Structurer(proto, blocks, following, annotations)
     structurer.parse_check = parse_check
     lines = structurer.run()
     return lines, structurer.stats

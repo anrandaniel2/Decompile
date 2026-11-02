@@ -184,3 +184,9 @@ The VM pre-resolves constants into the operand slots, so **119** string constant
 `reports/payload.luau` contains the same program as runnable Luau: **20** functions, 2,944 basic blocks, 35,122 lines. `luau-ast` accepts the file (yes). **20/20** protos are de-flattened (1,683 `if`, 277 `while`, 109 `break`, 475 `continue`); 64 irreducible region(s) run as numeric dispatch loops.
 
 Conventions: `R[n]` is the proto's register file, `Protos[n]` the proto table, `PC` the next block. The payload's basic blocks were laid out in permuted order and connected by explicit jumps (a block-flattening pass ran before Luraph did); `tools/lift.py` re-lays them out in reverse postorder and `tools/structurize.py` restores the `if`/`while` structure, so the code reads in execution order with the flattening undone.
+
+## Trace-derived source
+
+`reports/payload.traced.luau` is the same lift annotated with the values the running program actually held: **20,968** dispatches were logged, covering 2,342 of 7,591 instructions across 20 protos (1,501 instructions annotated). `luau-ast` accepts the file (yes).
+
+Lines beginning `-- trace:` are not lifted code: they are the register values recorded at that instruction while the payload ran inside the emulated Roblox environment. `reports/TRACE.md` holds the full log, the API call sequence and the strings that came out of the registers.

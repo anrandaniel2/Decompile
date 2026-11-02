@@ -433,7 +433,15 @@ def _parses(body: list[str], luau_ast: str) -> bool:
         os.unlink(path)
 
 
-def lift_listing(listing: dict, luau_ast: str | None = None) -> tuple[str, dict]:
+def lift_listing(listing: dict, luau_ast: str | None = None,
+                 trace: dict | None = None) -> tuple[str, dict]:
+    """Lift every proto back to Luau.
+
+    `trace`, when given, is a site -> {original pc: comment} map produced from a
+    dynamic run (`tools/trace_lift.py`); the comments are attached to the basic
+    blocks they belong to, so the emitted source carries the values the VM
+    really held at that instruction.
+    """
     out: list[str] = [HEADER]
     stats = {"protos": 0, "instructions": 0, "blocks": 0, "lines": 0,
              "structured": 0, "fallback": 0, "fallback_reasons": {},
@@ -441,7 +449,20 @@ def lift_listing(listing: dict, luau_ast: str | None = None) -> tuple[str, dict]
              "islands": 0, "flat_tail_blocks": 0, "closed_open_blocks": 0, "partial": 0}
     for entry in listing["protos"]:
         proto = Proto(entry["id"], entry["instructions"])
+        notes = (trace or {}).get(entry.get("site"), {})
+        annotated: dict[int, str] = {}
+        if notes:
+            for start, block in build_blocks(proto).items():
+                for ins in block:
+                    if ins.pc in notes:
+                        annotated[ins.pc] = notes[ins.pc]
         laid_out, mapping = linearize(proto)
+        if annotated:
+            # express the notes in the re-laid-out pc space the structurer sees
+            moved: dict[int, str] = {}
+            for pc, note in annotated.items():
+                moved[mapping.get(pc, pc)] = note
+            annotated = moved
         blocks = build_blocks(laid_out)
         pcs = sorted(blocks)
         following = {start: (pcs[i + 1] if i + 1 < len(pcs) else None)
@@ -453,7 +474,8 @@ def lift_listing(listing: dict, luau_ast: str | None = None) -> tuple[str, dict]
         note = ""
         try:
             check = (lambda lines: _parses(lines, luau_ast)) if luau_ast else None
-            body, flow = structurize.structurize(laid_out, blocks, following, check)
+            body, flow = structurize.structurize(laid_out, blocks, following, check,
+                                                 annotated or None)
             for key in ("ifs", "whiles", "breaks", "continues", "islands",
                         "flat_tail_blocks", "closed_open_blocks"):
                 stats[key] += flow.get(key, 0)

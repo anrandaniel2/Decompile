@@ -99,6 +99,8 @@ def parse_output(stdout: str) -> dict:
         "vmstats": None,
         "protos": {},           # site -> {length, code:[[op, operands...]]}  (whole proto)
         "missing_globals": {},
+        "values": [],           # {site, pc, op, ra, va, rb, vb, rc, vc}  (value trace)
+        "valuestats": None,
     }
 
     for line in stdout.splitlines():
@@ -160,6 +162,15 @@ def parse_output(stdout: str) -> dict:
                 "pc": int(parts[2]),
                 "fields": [_vm_field(f) for f in _unescape(parts[3]).split("\t")],
             })
+        elif kind == "@@TV" and len(parts) >= 10:
+            result["values"].append({
+                "site": parts[1], "pc": int(parts[2]), "op": parts[3],
+                "ra": _vm_field(parts[4]), "va": _unescape(parts[5]),
+                "rb": _vm_field(parts[6]), "vb": _unescape(parts[7]),
+                "rc": _vm_field(parts[8]), "vc": _unescape(parts[9]),
+            })
+        elif kind == "@@TVSTATS" and len(parts) >= 3:
+            result["valuestats"] = {"steps": int(parts[1]), "emitted": int(parts[2])}
         elif kind == "@@ERROR" and len(parts) >= 3:
             result["errors"].append({"phase": parts[1], "message": _unescape(parts[2])})
         elif kind in ("@@OUTPUT", "@@WARN"):

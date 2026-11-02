@@ -35,7 +35,8 @@ VM_REWRITES: list[tuple[str, str]] = [
     # Note the `local`: the dispatch site is `while true do local N=X[H]; if N<...`.
     # Opt-in only -- the hook fires ~1.6e8 times per run, which slows the VM down
     # enough that it needs its own short run.
-    ("local N=X[H];if N<", '__vmop("B",H,X,X,K,j,m,l,D,Y);local N=X[H];if N<'),
+    ("local N=X[H];if N<",
+     '__vmop("B",H,X,X,K,j,m,l,D,Y,k);local N=X[H];if N<'),
 ]
 
 REWRITES: list[tuple[str, str]] = [

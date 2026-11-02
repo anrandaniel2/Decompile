@@ -207,6 +207,33 @@ The listing proves what each instruction does; this step makes it *runnable Luau
    `local` declarations. Result: 20/20 protos de-flattened, 2,944 blocks, 1,683 `if`, 277 `while`,
    109 `break`, 475 `continue`, ~35k lines — accepted by `luau-ast`.
 
+## 7d. Trace-driven reconstruction — `tools/trace_lift.py`
+
+The static lift recovers every instruction the VM *can* run. The trace pass
+records what it *did*: the harness rewrites the interpreter's dispatch site so
+that each dispatch calls `__vmop(site, pc, opcode, X, K, j, m, l, D, Y, k)` and
+the shim logs the code-array identity, the pc, the opcode and the values held in
+the three operand registers at that moment.
+
+* `VALUE_LIMIT = 20000` dispatches are logged (the hook fires ~1.6e8 times per
+  run, so this is a short, separate capture).
+* Register values are classified (`n:`/`s:`/`b:`/`t#n`) and the string ones are
+  kept verbatim, which is how runtime field lookups such as `task.spawn`,
+  `coroutine.running`, `string.gsub` are recovered as *data the program read*,
+  not as guesses from the constant pool.
+* `tools/trace_lift.py` turns the log into three artifacts: `out/trace/<stage>/trace.json`
+  (raw steps), `out/trace/<stage>/ir.txt` (the run rendered as a listing, with a
+  `<- branch from` marker wherever the pc jumps) and `reports/TRACE.md` (coverage
+  per proto, the API call sequence, the strings recovered from registers).
+* The same values annotate the source: `lift_listing(..., trace=...)` maps each
+  observed pc through the block relayout and `structurize` emits a
+  `-- trace: R[2] = "spawn"` comment above the statements of that block, so
+  `reports/payload.traced.luau` can be checked line by line against the run.
+
+Annotation never changes lifted code: comments are only attached to blocks that
+already have statements, and the annotated file is re-parsed with `luau-ast`
+before it is published.
+
 ## 8. Annotated output + verification — `tools/normalize.py`, `tools/verify.py`
 
 The annotated stage files are the input with three semantics-preserving changes:

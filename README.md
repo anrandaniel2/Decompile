@@ -122,6 +122,7 @@ tools/
   lift.py                 disassembly -> Luau source (reverse-postorder block layout)
   structurize.py          de-flattener: dominators/post-dominators -> if/while/break/continue
   simplify.py             folds the interpreter's scratch locals back into one statement
+  trace_lift.py           dynamic pass: register values from the live run -> annotated source
   normalize.py            annotations + numeric canonicalisation (semantics preserving)
   verify.py               token-equality + parse verification
   identify.py             obfuscator/version verdict with evidence

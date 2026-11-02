@@ -670,7 +670,8 @@ local function snapshotAll(reason)
         end
     end
     if dumpVm then dumpVm() end
-if dumpSeq then dumpSeq() end
+    if dumpSeq then dumpSeq() end
+    if dumpValues then dumpValues() end
     if dumpHandlerProfile then dumpHandlerProfile() end
     emit("@@TRACE", debug.traceback())
     emit("@@DONE")
@@ -885,6 +886,29 @@ local SEQ_LIMIT = 400000
 local vmopCalls = 0
 local vmopBadPc = 0
 
+-- value trace: what the registers hold while each instruction runs
+local valueTrace = {}
+local valueSteps = 0
+local VALUE_LIMIT = 20000
+
+local function shortValue(v)
+    local t = type(v)
+    if t == "number" then
+        if v == math.floor(v) then return "n:" .. string.format("%d", v) end
+        return "n:" .. string.format("%.6g", v)
+    elseif t == "string" then
+        if #v > 60 then return "s:" .. string.sub(v, 1, 60) .. "..." end
+        return "s:" .. v
+    elseif t == "boolean" then
+        return "b:" .. tostring(v)
+    elseif t == "nil" then
+        return "nil"
+    elseif t == "table" then
+        return "t#" .. tostring(#v)
+    end
+    return t
+end
+
 local function vmTag(v)
     local t = type(v)
     if t == "number" then
@@ -898,16 +922,23 @@ end
 
 local function vmop(site, pc, code, ...)
     vmopCalls += 1
+    local nargs = select("#", ...)
+    -- the rewrite appends the register file as one extra argument
+    local regs = (nargs >= 8) and select(nargs, ...) or nil
     if type(pc) ~= "number" then vmopBadPc += 1 return end
     -- one listing per proto: the code array identity separates functions
     site = tostring(site) .. ":" .. tostring(code)
     local record = vmSites[site]
     if not record then
         local n = select("#", ...)
+        -- the register file is not an operand array
+        if regs ~= nil then n = n - 1 end
         local arrays = table.create(n)
         for i = 1, n do arrays[i] = select(i, ...) end
         record = {code = code, arrays = arrays, n = n, seen = {}}
         vmSites[site] = record
+        emit("@@TVHDR", site, tostring(select("#", ...)), type(regs),
+             type(regs) == "table" and tostring(#regs) or "-")
     end
     -- execution order: the ground truth for the control-flow graph
     if seqCount < SEQ_LIMIT then
@@ -915,6 +946,25 @@ local function vmop(site, pc, code, ...)
         local seq = recordSeq[site]
         if not seq then seq = {}; recordSeq[site] = seq end
         seq[#seq + 1] = pc
+    end
+    -- log the first VALUE_LIMIT dispatches, then every pc the run reaches for
+    -- the first time, so a hot loop cannot crowd out the rest of the program
+    if type(regs) == "table" and (valueSteps < VALUE_LIMIT or record.seen[pc] == nil) then
+        -- varargs are (X, K, j, m, l, D, Y, k): the first three operands index registers
+        local X2, K2, j2, m2 = select(1, ...), select(2, ...), select(3, ...), select(4, ...)
+        local op = (type(X2) == "table") and X2[pc] or nil
+        local ra = (type(K2) == "table") and K2[pc] or nil
+        local rb = (type(j2) == "table") and j2[pc] or nil
+        local rc = (type(m2) == "table") and m2[pc] or nil
+        local va = (type(ra) == "number") and regs[ra] or nil
+        local vb = (type(rb) == "number") and regs[rb] or nil
+        local vc = (type(rc) == "number") and regs[rc] or nil
+        valueSteps += 1
+        valueTrace[#valueTrace + 1] = {
+            site = site, pc = pc, op = shortValue(op),
+            ra = ra, va = shortValue(va), rb = rb, vb = shortValue(vb),
+            rc = rc, vc = shortValue(vc), nargs = select("#", ...),
+        }
     end
     if record.seen[pc] ~= nil then return end
     if vmCount >= VM_LIMIT then return end
@@ -968,6 +1018,16 @@ function dumpSeq()
     end
 end
 env.__dumpSeq = dumpSeq
+function dumpValues()
+    for _, step in ipairs(valueTrace) do
+        emit("@@TV", tostring(step.site), tostring(step.pc), step.op,
+             tostring(step.ra), step.va, tostring(step.rb), step.vb,
+             tostring(step.rc), step.vc)
+    end
+    emit("@@TVSTATS", tostring(#valueTrace), tostring(valueSteps))
+end
+env.__dumpValues = dumpValues
+
 env.__probe = probeTable
 env.__wrap1 = function(t) return wrapTable(t, "A") end
 env.__wrap2 = function(t) return wrapTable(t, "B") end
@@ -991,6 +1051,7 @@ emit("@@EVENT", "ran", tostring(ok))
 if not ok then emit("@@ERROR", "run", tostring(err)) end
 if dumpVm then dumpVm() end
 if dumpSeq then dumpSeq() end
+if dumpValues then dumpValues() end
 if dumpHandlerProfile then dumpHandlerProfile() end
 emit("@@STATS", stats.api, stats.str, stats.func)
 emit("@@DONE")

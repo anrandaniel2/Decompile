@@ -246,6 +246,19 @@ def render_pipeline_report(manifest: dict) -> str:
                 lines.append(f"- irreducible regions emitted as numeric dispatch loops: "
                              f"{lift.get('islands', 0)} "
                              f"(blocks parked this way: {lift.get('flat_tail_blocks', 0)})")
+        tr = dis.get("trace") or {}
+        if tr:
+            trl = tr.get("lift") or {}
+            lines.append(f"- dynamic trace: **{tr['steps']:,}** dispatches, "
+                         f"**{tr['instructions_executed']:,}** instructions executed "
+                         f"across {tr['protos_touched']} protos, "
+                         f"**{tr['api_calls']}** API calls, "
+                         f"{tr['strings']} string values read out of registers")
+            lines.append(f"- trace-derived source: `reports/payload.traced.luau` "
+                         f"({trl.get('lines', 0):,} lines, parses with luau-ast: "
+                         f"{'yes' if (trl.get('parse') or {}).get('ok') else 'no'}), "
+                         f"{tr['annotated_blocks']:,} instructions annotated with their "
+                         f"observed values; log in `{tr['artifacts']['report']}`")
         lines.append(f"- listing: `{dis['artifacts']['disassembly']}`")
         lines.append("")
         lines.append("| semantics | count |")
@@ -425,6 +438,64 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
                 "Luraph did); `tools/lift.py` re-lays them out in reverse postorder and "
                 "`tools/structurize.py` restores the `if`/`while` structure, so the code reads "
                 "in execution order with the flattening undone.\n")
+
+        # ---- 5d. dynamic trace: rebuild the source from what the run did ----
+        # The listing says what the program *can* do; the trace says what it
+        # *did*.  Every block the run reached is annotated with the values the
+        # VM held in its operand registers, and the report walks the call
+        # sequence and the data that came out of the registers.
+        import trace_lift
+        trace_summary = trace_lift.summarize(trace_rt, listing)
+        annotated = trace_lift.annotations(trace_rt)
+        traced, traced_stats = lift.lift_listing(listing, luau_ast=luau_ast,
+                                                 trace=annotated)
+        traced_path = out_dir / "deobfuscated" / "payload.traced.luau"
+        traced_path.write_text(traced + "\n", encoding="utf-8", errors="surrogateescape")
+        record(traced_path)
+        traced_pub = reports_dir / "payload.traced.luau"
+        traced_pub.write_text(traced + "\n", encoding="utf-8", errors="surrogateescape")
+        record(traced_pub)
+        traced_parse = verify_mod.check_parse(traced_pub, luau_ast)
+        trace_paths = trace_lift.write_outputs(
+            trace_summary, trace_rt, listing, out_dir, reports_dir, vm_tag,
+            f"out/trace/{vm_tag}/trace.json", f"out/trace/{vm_tag}/ir.txt")
+        for path in trace_paths.values():
+            record(pathlib.Path(path))
+        disassembly["trace"] = {
+            "stage": vm_tag,
+            "steps": trace_summary["steps"],
+            "protos_touched": trace_summary["protos_touched"],
+            "instructions_executed": trace_summary["executed_instructions"],
+            "api_calls": len(trace_summary["api"]),
+            "strings": len(trace_summary["strings"]),
+            "annotated_blocks": sum(len(v) for v in annotated.values()),
+            "lift": {**traced_stats, "parse": traced_parse},
+            "artifacts": {**trace_paths, "source": str(traced_path),
+                          "published": str(traced_pub)},
+        }
+        print(f"[trace] {trace_summary['steps']:,} dispatches, "
+              f"{trace_summary['protos_touched']} protos reached, "
+              f"{len(trace_summary['api'])} API calls, "
+              f"{disassembly['trace']['annotated_blocks']} instructions annotated, "
+              f"traced lift {traced_stats['lines']:,} lines, "
+              f"parses: {traced_parse.get('ok')}")
+        with open(reports_dir / "PROGRAM.md", "a", encoding="utf-8") as handle:
+            handle.write(
+                "\n## Trace-derived source\n\n"
+                f"`reports/payload.traced.luau` is the same lift annotated with the "
+                f"values the running program actually held: **{trace_summary['steps']:,}** "
+                f"dispatches were logged, covering "
+                f"{trace_summary['executed_instructions']:,} of "
+                f"{trace_summary['instructions']:,} instructions across "
+                f"{trace_summary['protos_touched']} protos "
+                f"({disassembly['trace']['annotated_blocks']:,} instructions annotated). "
+                f"`luau-ast` accepts the file "
+                f"({'yes' if traced_parse.get('ok') else 'no'}).\n\n"
+                "Lines beginning `-- trace:` are not lifted code: they are the "
+                "register values recorded at that instruction while the payload "
+                "ran inside the emulated Roblox environment. `reports/TRACE.md` "
+                "holds the full log, the API call sequence and the strings that "
+                "came out of the registers.\n")
 
     # ---- 1b. identification (uses runtime evidence) -----------------------
     detector_notes = ""
