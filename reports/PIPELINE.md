@@ -62,7 +62,9 @@ The token stream check re-lexes both files and compares every token (numbers com
 - dispatches observed: 164,406,420
 - instructions: **7,591** (7,574 decoded) across **20** protos, 172 distinct opcodes
 - constant slots recovered: 119
-- lifted to Luau: **20** protos, 4,100 blocks, 17,430 lines, parses with luau-ast: yes
+- lifted to Luau: **20** protos, 2,944 blocks, 28,635 lines, parses with luau-ast: yes
+- structured: **20/20** protos de-flattened into `if`/`while` (1,705 `if`, 299 `while`, 109 `break`, 475 `continue`); 0 kept flat
+- irreducible regions emitted as numeric dispatch loops: 86 (blocks parked this way: 121)
 - listing: `out/payload/program.disasm.txt`
 
 | semantics | count |
@@ -90,15 +92,15 @@ The token stream check re-lexes both files and compares every token (numbers com
 | `out/pools/pool1.bin` | 430,656 | `50e3350f2b106e0475637ae819d26173` |
 | `out/pools/pools.json` | 847 | `67c46e0cc32c608d7a89e0d2c97def13` |
 | `out/inventory.json` | 416,708 | `890ea09905cd42b10428b8b3a1dd2e56` |
-| `out/runtime/A/runtime.json` | 193,138 | `1b0b185c9cc8d2833b17d4c60a68bab7` |
-| `out/runtime/B/runtime.json` | 908,023 | `383d89323a5d8224b33c0aa8c4bf8966` |
-| `out/runtime/Btrace/runtime.json` | 1,958,639 | `eec2cebb1590b13d12f9ebf8bc2ecdc8` |
-| `out/payload/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
-| `reports/program.disasm.txt` | 639,280 | `3c5dcf019f33ad660b9fa8f265f8a5fc` |
-| `out/payload/program.json` | 2,183,338 | `5f1d06d5d62ecd4efcda3d7770ae750d` |
-| `reports/PROGRAM.md` | 7,785 | `da9a151ccf4f0b8c5b2b8cf81a73b8f5` |
-| `out/deobfuscated/payload.luau` | 510,946 | `dc69ebfe2d8b0bfd8684c8613067ebef` |
-| `reports/payload.luau` | 510,946 | `dc69ebfe2d8b0bfd8684c8613067ebef` |
+| `out/runtime/A/runtime.json` | 193,138 | `796f572096cacbc5ab0b3ae6225ca157` |
+| `out/runtime/B/runtime.json` | 908,023 | `1084d25e93e6a68f9805b7e1aaf3b586` |
+| `out/runtime/Btrace/runtime.json` | 1,958,644 | `c3163bdfcd6992ebb51710aaec5d291c` |
+| `out/payload/program.disasm.txt` | 639,285 | `0739f221eb3cf8af72cece07981c522b` |
+| `reports/program.disasm.txt` | 639,285 | `0739f221eb3cf8af72cece07981c522b` |
+| `out/payload/program.json` | 2,183,343 | `da9ed55af952fa436844ae73e755ec61` |
+| `reports/PROGRAM.md` | 7,785 | `b2c0a571b26cc2028268d10dcea9f861` |
+| `out/deobfuscated/payload.luau` | 1,212,040 | `6f7687fbc0be658bf3b5a0fac0634939` |
+| `reports/payload.luau` | 1,212,040 | `6f7687fbc0be658bf3b5a0fac0634939` |
 | `out/identification.json` | 2,344 | `f62d6f12eb948cee519ed8dd19bc0c8c` |
 | `out/function_map.json` | 149,479 | `e283027a7a58c1901f37baab95fe409d` |
 | `out/opcodes.json` | 23,085 | `3e4e944c1ac54ba40006f0bc671be4ce` |
@@ -107,4 +109,4 @@ The token stream check re-lexes both files and compares every token (numbers com
 | `reports/IDENTIFICATION.md` | 2,023 | `a5f79616775c0ab4addf9776e2b862e7` |
 | `reports/FUNCTION_MAP.md` | 45,121 | `cbf14a65183de0c080aaa8dd03897a97` |
 | `reports/STRINGS.md` | 5,884 | `bc63be20f0c67cadecfd8c187d226c7b` |
-| `reports/BEHAVIOR.md` | 4,784 | `7cb197670eb711c3ac958b0e2e385b1b` |
+| `reports/BEHAVIOR.md` | 4,784 | `a78bf280dec21a42587cd50371a35c2b` |

@@ -237,6 +237,15 @@ def render_pipeline_report(manifest: dict) -> str:
             lines.append(f"- lifted to Luau: **{lift.get('protos', 0)}** protos, "
                          f"{lift.get('blocks', 0):,} blocks, {lift.get('lines', 0):,} lines, "
                          f"parses with luau-ast: {'yes' if parsed else parsed}")
+            lines.append(f"- structured: **{lift.get('structured', 0)}/{lift.get('protos', 0)}** protos "
+                         f"de-flattened into `if`/`while` ({lift.get('ifs', 0):,} `if`, "
+                         f"{lift.get('whiles', 0):,} `while`, {lift.get('breaks', 0):,} `break`, "
+                         f"{lift.get('continues', 0):,} `continue`); "
+                         f"{lift.get('fallback', 0)} kept flat")
+            if lift.get("islands") or lift.get("flat_tail_blocks"):
+                lines.append(f"- irreducible regions emitted as numeric dispatch loops: "
+                             f"{lift.get('islands', 0)} "
+                             f"(blocks parked this way: {lift.get('flat_tail_blocks', 0)})")
         lines.append(f"- listing: `{dis['artifacts']['disassembly']}`")
         lines.append("")
         lines.append("| semantics | count |")
@@ -382,7 +391,7 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
 
         # ---- 5c. lift the program back to Luau source ---------------------
         import lift
-        lifted, lift_stats = lift.lift_listing(listing)
+        lifted, lift_stats = lift.lift_listing(listing, luau_ast=luau_ast)
         lift_path = out_dir / "deobfuscated" / "payload.luau"
         lift_path.parent.mkdir(parents=True, exist_ok=True)
         lift_path.write_text(lifted + "\n", encoding="utf-8", errors="surrogateescape")
@@ -404,13 +413,18 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
                 f"`reports/payload.luau` contains the same program as runnable Luau: "
                 f"**{lift_stats['protos']}** functions, {lift_stats['blocks']:,} basic blocks, "
                 f"{lift_stats['lines']:,} lines. `luau-ast` accepts the file "
-                f"({'yes' if lift_parse.get('ok') else 'no'}).\n\n"
+                f"({'yes' if lift_parse.get('ok') else 'no'}). "
+                f"**{lift_stats['structured']}/{lift_stats['protos']}** protos are "
+                f"de-flattened ({lift_stats['ifs']:,} `if`, {lift_stats['whiles']:,} "
+                f"`while`, {lift_stats['breaks']:,} `break`, "
+                f"{lift_stats['continues']:,} `continue`); {lift_stats['islands']} "
+                f"irreducible region(s) run as numeric dispatch loops.\n\n"
                 "Conventions: `R[n]` is the proto's register file, `Protos[n]` the proto table, "
-                "`PC` the next block. Because the payload's basic blocks are laid out in "
-                "permuted order and connected by explicit jumps (a block-flattening pass ran "
-                "before Luraph did), control flow is a block dispatch loop; `tools/lift.py` "
-                "re-lays the blocks out in reverse postorder first so the code reads in "
-                "execution order.\n")
+                "`PC` the next block. The payload's basic blocks were laid out in permuted "
+                "order and connected by explicit jumps (a block-flattening pass ran before "
+                "Luraph did); `tools/lift.py` re-lays them out in reverse postorder and "
+                "`tools/structurize.py` restores the `if`/`while` structure, so the code reads "
+                "in execution order with the flattening undone.\n")
 
     # ---- 1b. identification (uses runtime evidence) -----------------------
     detector_notes = ""

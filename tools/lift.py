@@ -37,6 +37,8 @@ import json
 import pathlib
 import re
 
+import structurize
+
 # A rendered instruction is "<prefix statements> <control>" where the control
 # part is a jump, a conditional jump (either polarity) or a return.
 TAIL_PATTERNS: list[tuple[str, re.Pattern]] = [
@@ -110,6 +112,7 @@ class Ins:
             self.pre = self._slice(match.span("pre")).rstrip(";").strip()
             if kind in ("condtrue", "condfalse", "condboth", "condbody", "guardbody"):
                 self.cond = self._slice(match.span("cond"))
+                self._split_nested_cond()
                 self.target = int(self._slice(match.span("t")))
             elif kind == "jump":
                 self.target = int(self._slice(match.span("t")))
@@ -118,6 +121,20 @@ class Ins:
             if kind in ("condbody", "guardbody"):
                 self.body = self._slice(match.span("body"))
             return
+
+    def _split_nested_cond(self) -> None:
+        """Peel statements that lazily ended up inside the condition text.
+
+        A comparison in this VM is written as a nested `if` that assigns the
+        result, so the lazy `(.+?)` in TAIL_PATTERNS can swallow
+        `if a then z=..; else z=..; end; ` and leave it attached to the
+        condition.  The real condition is what comes after the last `; if `.
+        """
+        while "; if " in self.cond:
+            head, _, tail = self.cond.rpartition("; if ")
+            statement = "if " + head.strip() + ";"
+            self.pre = f"{self.pre}; {statement}" if self.pre else statement
+            self.cond = tail.strip()
 
     @property
     def is_control(self) -> bool:
@@ -274,7 +291,7 @@ class Emitter:
         nxt = self.proto.next_pc(ins.pc)
         out: list[str] = []
         if ins.pre:
-            out.append(ins.pre + ";")
+            out.append(ins.pre.rstrip(";") + ";")
         if ins.kind == "stmt":
             return out
         if ins.kind == "return":
@@ -370,40 +387,109 @@ HEADER = """-- Recovered Luau source for the protected payload of Key.luau.
 --   R[n]        register n of the proto (the VM's register file)
 --   ...         parameters
 --   Protos[n]   the proto table (closure creation reads it)
---   PC          the next block to run
 --
--- The payload's basic blocks are laid out in permuted order and joined by
--- explicit jumps (a block-flattening pass ran before Luraph did), so control
--- flow is expressed as a block dispatch loop. Blocks were re-laid out in
--- reverse postorder first, so reading top to bottom follows the flow.
+-- The payload's basic blocks were laid out in permuted order and joined by
+-- explicit jumps: a control-flow-flattening pass ran before Luraph virtualised
+-- the script. tools/structurize.py puts the structure back, so a function reads
+-- as `if`/`else`/`while`/`break`/`continue` instead of a dispatch loop:
+--
+--   * dominators give the loops (an edge back to a block that dominates it),
+--   * post-dominators give the merge point of a two-way branch, which is the
+--     follow set its `if`/`else` needs,
+--   * a follow-set walk then emits the nesting in reverse postorder.
+--
+-- Regions that are genuinely irreducible (several entry points, or a cycle that
+-- skips its header) are emitted as a small numeric dispatch loop marked with
+-- `local _s<n>, _x<n>`, so no structure is invented where the CFG has none.
 --
 -- Constants were pre-resolved by the obfuscator and appear inline as literals.
 """
 
 
-def lift_listing(listing: dict) -> tuple[str, dict]:
+def _parses(body: list[str], luau_ast: str) -> bool:
+    """Does this proto body still parse?  Ground truth from luau-ast."""
+    import subprocess
+    import tempfile
+    wrapper = ["local function _check(...)",
+               "    local R = {}",
+               "    local z, x, J, F, U, i, t, P, S, y, E, Q",
+               "    local D, B, d, k, H"]
+    wrapper.extend(body)
+    wrapper.append("end")
+    with tempfile.NamedTemporaryFile("w", suffix=".luau", delete=False) as handle:
+        handle.write("\n".join(wrapper))
+        path = handle.name
+    try:
+        result = subprocess.run([luau_ast, path], stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
+        return result.returncode == 0
+    finally:
+        import os
+        os.unlink(path)
+
+
+def lift_listing(listing: dict, luau_ast: str | None = None) -> tuple[str, dict]:
     out: list[str] = [HEADER]
-    stats = {"protos": 0, "instructions": 0, "blocks": 0, "lines": 0}
+    stats = {"protos": 0, "instructions": 0, "blocks": 0, "lines": 0,
+             "structured": 0, "fallback": 0, "fallback_reasons": {},
+             "ifs": 0, "whiles": 0, "breaks": 0, "continues": 0,
+             "islands": 0, "flat_tail_blocks": 0, "closed_open_blocks": 0, "partial": 0}
     for entry in listing["protos"]:
         proto = Proto(entry["id"], entry["instructions"])
         laid_out, mapping = linearize(proto)
-        emitter = Emitter(laid_out, proto)
-        emitter._map = {old: new for old, new in mapping.items()}
-        body = emitter.emit()
+        blocks = build_blocks(laid_out)
+        pcs = sorted(blocks)
+        following = {start: (pcs[i + 1] if i + 1 < len(pcs) else None)
+                     for i, start in enumerate(pcs)}
         executed = sum(1 for i in entry["instructions"] if i.get("executed"))
+
+        body: list[str]
+        structured = True
+        note = ""
+        try:
+            check = (lambda lines: _parses(lines, luau_ast)) if luau_ast else None
+            body, flow = structurize.structurize(laid_out, blocks, following, check)
+            for key in ("ifs", "whiles", "breaks", "continues", "islands",
+                        "flat_tail_blocks", "closed_open_blocks"):
+                stats[key] += flow.get(key, 0)
+            if flow.get("bailed"):
+                stats["partial"] += 1
+                flow["bailed"] = str(flow["bailed"])
+            reason = "structured"
+            if luau_ast is not None and not _parses(body, luau_ast):
+                raise structurize.StructError(
+                    "structured body did not parse; kept the state machine")
+        except structurize.StructError as error:
+            structured = False
+            reason = str(error)
+            emitter = Emitter(laid_out, proto)
+            body = emitter.emit()
+        except RecursionError:
+            structured = False
+            reason = "control flow too deep to structure"
+            emitter = Emitter(laid_out, proto)
+            body = emitter.emit()
+
         stats["protos"] += 1
+        stats["structured" if structured else "fallback"] += 1
+        if not structured:
+            key = reason.split(":")[0]
+            stats["fallback_reasons"][key] = stats["fallback_reasons"].get(key, 0) + 1
         stats["instructions"] += len(proto.pcs)
-        stats["blocks"] += len(emitter.blocks)
+        stats["blocks"] += len(blocks)
         stats["lines"] += len(body)
+
         out.append(f"-- proto {entry['id']}: {len(proto.pcs)} instructions, "
-                   f"{len(emitter.blocks)} blocks, {executed} executed in the captured run")
+                   f"{len(blocks)} blocks, {executed} executed in the captured run"
+                   + ("" if structured else f" -- control flow kept flat ({reason})"))
         out.append(f"local function {entry['id'].lower()}(...)")
         out.append("    local R = {}")
         out.append("    -- VM scratch: the interpreter's own temporaries, kept verbatim")
         out.append("    local z, x, J, F, U, i, t, P, S, y, E, Q")
         out.append("    -- VM environment: constants, globals, numeric stdlib table, registers, pc")
         out.append("    local D, B, d, k, H")
-        out.extend("    " + line if line else line for line in body)
+        if body:
+            out.extend("    " + line if line else line for line in body)
         out.append("end\n")
     return "\n".join(out), stats
 

@@ -170,12 +170,32 @@ The listing proves what each instruction does; this step makes it *runnable Luau
    masked first, because the payload's constants contain the words `if`, `return` and `goto`.
 3. **Re-lay out the blocks.** The payload's basic blocks are permuted and joined by explicit
    jumps — a block-flattening pass ran before Luraph did. `linearize()` splits the proto into
-   basic blocks and re-emits them in reverse postorder, so the emitted order follows control flow
-   and reads top to bottom.
-4. **Emit Luau.** Every proto becomes `local function pN(...)` with `local R = {}`; each region
-   becomes `if PC == n then ... continue end`, and jumps become `PC = n`. Luau has no `goto`, so
-   a faithful translation of a flattened CFG is a block state machine — the honest shape, not a
-   prettier one that would mean inventing structure the bytecode does not have.
+   basic blocks and re-emits them in reverse postorder, so the emitted order follows control flow.
+   Branch targets are `operand + 1`: the interpreter assigns the operand to the pc variable and
+   then advances it at the bottom of the dispatch loop. That off-by-one was confirmed against
+   400,000 observed transitions from an execution-order trace (`@@SQ`), with zero mismatches —
+   4,100 blocks collapsed to 2,944 once it was fixed.
+4. **De-flatten — `tools/structurize.py`.** A faithful translation of a flattened CFG is a block
+   state machine (Luau has no `goto`); this step is what turns it back into source shape. It is a
+   Cifuentes-style follow-set structurer:
+   * **Dominators** find the loops: an edge `u -> v` where `v` dominates `u` is a back edge and
+     the natural loop is every block that reaches `u` without passing `v`.
+   * **Post-dominators** find the merges: the immediate post-dominator of a two-way branch is
+     where its arms come back together, which is exactly the follow set a structured `if`/`else`
+     needs. When the arms reconverge earlier than the post-dominator, the walk uses the earliest
+     block both arms can reach, which is what keeps a diamond from being emitted twice.
+   * **The walk** emits `while` / `if` / `else` / `break` / `continue` in reverse postorder,
+     stopping at the follow node, and re-enters a loop header as `continue`.
+   * Loops with several exits become `while true do … end` with `_e<n>` / `_x<n>` exit selectors
+     and a dispatch chain after the loop, so `break` stays a `break`.
+   * **Irreducible regions** — strongly connected components with more than one header, or a
+     cycle that skips the loop header — cannot be written as `while`, so they are emitted as a
+     small numeric dispatch loop (`local _s<n>, _x<n>`) and labelled as such. Nothing is invented
+     where the CFG has no structure, and every proto is re-parsed with `luau-ast` before it is
+     accepted: a body that does not parse is replaced by the flat state machine for that proto.
+5. **Emit Luau.** Every proto becomes `local function pN(...)` with `local R = {}` and per-proto
+   `local` declarations. Result: 20/20 protos de-flattened, 2,944 blocks, 1,705 `if`, 299 `while`,
+   109 `break`, 475 `continue`, 28,635 lines — accepted by `luau-ast`.
 
 ## 8. Annotated output + verification — `tools/normalize.py`, `tools/verify.py`
 

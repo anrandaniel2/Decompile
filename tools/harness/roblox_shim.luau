@@ -626,6 +626,7 @@ env.getcustomasset = function() return "" end
 local CFG = __CFG or {}
 local dumpHandlerProfile  -- forward declaration (defined with the VM handler wrapper)
 local dumpVm               -- forward declaration (defined with the instruction capture)
+local dumpSeq              -- forward declaration (execution order)
 
 local realBuffer = buffer
 local tracked = {}
@@ -669,6 +670,7 @@ local function snapshotAll(reason)
         end
     end
     if dumpVm then dumpVm() end
+if dumpSeq then dumpSeq() end
     if dumpHandlerProfile then dumpHandlerProfile() end
     emit("@@TRACE", debug.traceback())
     emit("@@DONE")
@@ -876,6 +878,10 @@ local vmSites = {}
 local vmCount = 0
 local VM_LIMIT = 400000
 
+local recordSeq = {}
+local seqCount = 0
+local SEQ_LIMIT = 400000
+
 local vmopCalls = 0
 local vmopBadPc = 0
 
@@ -902,6 +908,13 @@ local function vmop(site, pc, code, ...)
         for i = 1, n do arrays[i] = select(i, ...) end
         record = {code = code, arrays = arrays, n = n, seen = {}}
         vmSites[site] = record
+    end
+    -- execution order: the ground truth for the control-flow graph
+    if seqCount < SEQ_LIMIT then
+        seqCount += 1
+        local seq = recordSeq[site]
+        if not seq then seq = {}; recordSeq[site] = seq end
+        seq[#seq + 1] = pc
     end
     if record.seen[pc] ~= nil then return end
     if vmCount >= VM_LIMIT then return end
@@ -947,6 +960,14 @@ function dumpVm()
     end
 end
 env.__dumpVm = dumpVm
+function dumpSeq()
+    for site, seq in pairs(recordSeq) do
+        local parts = table.create(#seq)
+        for i = 1, #seq do parts[i] = tostring(seq[i]) end
+        emit("@@SQ", tostring(site), tostring(#seq), table.concat(parts, ","))
+    end
+end
+env.__dumpSeq = dumpSeq
 env.__probe = probeTable
 env.__wrap1 = function(t) return wrapTable(t, "A") end
 env.__wrap2 = function(t) return wrapTable(t, "B") end
@@ -969,6 +990,7 @@ end, function(e) return tostring(e) .. "\n" .. debug.traceback() end)
 emit("@@EVENT", "ran", tostring(ok))
 if not ok then emit("@@ERROR", "run", tostring(err)) end
 if dumpVm then dumpVm() end
+if dumpSeq then dumpSeq() end
 if dumpHandlerProfile then dumpHandlerProfile() end
 emit("@@STATS", stats.api, stats.str, stats.func)
 emit("@@DONE")
