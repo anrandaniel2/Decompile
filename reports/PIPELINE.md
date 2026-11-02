@@ -1,0 +1,119 @@
+# Pipeline run
+
+- input: `input/Key.luau.txt` (796,511 bytes, sha256 `ea6275aceba86689c5f3a4643c4e3f93`)
+- luau: `.tools/luau`
+- budget per stage: 10s
+
+## Stages
+
+| stage | kind | lines | bytes | pools | notes |
+|---|---|---|---|---|---|
+| `plaintext1` | plaintext | 1–2 | 18 | 0 |  |
+| `A` | obfuscated | 3–3 | 161,747 | 1 | bit32-backed VM, flattened dispatch loops (`while true do ... continue`), mangled numeric literals (`0b10110_1`, `0Xf__`), buffer-backed constant pool, dynamic chunk loading (loadstring/setfenv) |
+| `plaintext2` | plaintext | 4–146 | 5,208 | 0 |  |
+| `B` | obfuscated | 147–147 | 629,535 | 1 | bit32-backed VM, flattened dispatch loops (`while true do ... continue`), mangled numeric literals (`0b10110_1`, `0Xf__`), dynamic chunk loading (loadstring/setfenv) |
+
+## Plaintext glue
+
+### `_G.PandaKrypticCfg`
+
+| key | value |
+|---|---|
+| `SlugID` | `62dcfcad9c9438a6` |
+| `ServiceId` | `devoidhub` |
+| `GetKeyUrl` | `https://ads.pandauth.com/getkey/devoidhub` |
+| `KeyCheckUrl` | `https://api.pandauth.com/api/v1/public/getkey/devoidhub/status` |
+| `ConfigUrl` | `https://api.pandauth.com/api/v1/cloud-configs/runtime/devoidhub` |
+| `ActiveUrl` | `https://vss.pandauth.com/kv/62dcfcad9c9438a6/active` |
+| `OwnerTier` | `BASIC` |
+| `Init` | `false` |
+| `Silent` | `false` |
+| `Heartbeat` | `true` |
+| `PuslHeartbeat` | `false` |
+| `Perf` | `false` |
+| `WaitGame` | `true` |
+| `HookCheck` | `block` |
+| `HookClip` | `false` |
+| `EnvGuard` | `block` |
+| `KwMsg` | `[Panda-Kryptic] No active key found for this device. Generate a key to continue.` |
+| `KwInterval` | `600` |
+
+- `_G.SlugID = 62dcfcad9c9438a6`
+
+Referenced endpoints:
+
+- `https://ads.pandauth.com/getkey/devoidhub`
+- `https://api.pandauth.com/api/v1/cloud-configs/runtime/devoidhub`
+- `https://api.pandauth.com/api/v1/public/getkey/devoidhub/status`
+- `https://vss.pandauth.com/kv/62dcfcad9c9438a6/active`
+
+## Verification of the annotated output
+
+| stage | token stream identical | tokens | parses (luau-ast) |
+|---|---|---|---|
+| `A` | yes | 34,967 | yes |
+| `B` | yes | 41,108 | yes |
+
+The token stream check re-lexes both files and compares every token (numbers compared by value), so the annotations provably change presentation only.
+
+## Recovered program (VM disassembly)
+
+- capture budget: 10 (dispatch hook, stage `B`)
+- dispatches observed: 164,406,420
+- instructions: **7,591** (7,574 decoded) across **20** protos, 172 distinct opcodes
+- constant slots recovered: 119
+- lifted to Luau: **20** protos, 2,944 blocks, 35,122 lines, parses with luau-ast: yes
+- structured: **20/20** protos de-flattened into `if`/`while` (1,683 `if`, 277 `while`, 109 `break`, 475 `continue`); 0 kept flat
+- irreducible regions emitted as numeric dispatch loops: 64 (blocks parked this way: 121)
+- dynamic trace: **20,968** dispatches, **2,342** instructions executed across 20 protos, **3** API calls, 58 string values read out of registers
+- trace-derived source: `reports/payload.traced.luau` (37,308 lines, parses with luau-ast: yes), 1,501 instructions annotated with their observed values; log in `reports/TRACE.md`
+- listing: `out/payload/program.disasm.txt`
+
+| semantics | count |
+|---|---|
+| JUMP | 2142 |
+| register move / read | 825 |
+| LOADK / LOADN | 780 |
+| MOVE | 759 |
+| register read / table index | 666 |
+| ADD | 541 |
+| SETTABLE | 365 |
+| NOT | 279 |
+| NEWCLOSURE | 266 |
+| conditional jump | 261 |
+| GETTABLE | 131 |
+| compare (le) | 105 |
+
+## Artefacts
+
+| file | bytes | sha256 |
+|---|---|---|
+| `out/stages/stageA.luau` | 161,748 | `50f1063473584028b91cea551b8bd846` |
+| `out/stages/stageB.luau` | 629,536 | `6c03953738dd84a6d3649e80411b87fe` |
+| `out/pools/pool0.bin` | 69,880 | `f711915edb50ad9662ad9c19eb248a73` |
+| `out/pools/pool1.bin` | 430,656 | `50e3350f2b106e0475637ae819d26173` |
+| `out/pools/pools.json` | 847 | `67c46e0cc32c608d7a89e0d2c97def13` |
+| `out/inventory.json` | 416,708 | `890ea09905cd42b10428b8b3a1dd2e56` |
+| `out/runtime/A/runtime.json` | 193,209 | `e03219cdfe26aa3845ded471202b7e23` |
+| `out/runtime/B/runtime.json` | 908,094 | `ae55cd9c09dec1378e58696a9693ee1e` |
+| `out/runtime/Btrace/runtime.json` | 5,620,811 | `fdb88db798d349989aed691e4053e2fb` |
+| `out/payload/program.disasm.txt` | 639,285 | `0739f221eb3cf8af72cece07981c522b` |
+| `reports/program.disasm.txt` | 639,285 | `0739f221eb3cf8af72cece07981c522b` |
+| `out/payload/program.json` | 2,183,343 | `f0da1f9e6b56a41e3017ba6fe2b28523` |
+| `reports/PROGRAM.md` | 7,785 | `b2c0a571b26cc2028268d10dcea9f861` |
+| `out/deobfuscated/payload.luau` | 1,280,471 | `0d4c6ae0ef4159a3ad7d2291933fc967` |
+| `reports/payload.luau` | 1,280,471 | `0d4c6ae0ef4159a3ad7d2291933fc967` |
+| `out/deobfuscated/payload.traced.luau` | 1,408,813 | `6db81be80ca97272eb9d938d1fbba34c` |
+| `reports/payload.traced.luau` | 1,408,813 | `6db81be80ca97272eb9d938d1fbba34c` |
+| `out/trace/B/trace.json` | 2,819,644 | `9b51eac513167cf43c9b239c5e2ffd9c` |
+| `out/trace/B/ir.txt` | 428,659 | `305fcb95f84ce21c1797b8b685352d4a` |
+| `reports/TRACE.md` | 3,425 | `cfc1bb59f9d6abd21c9c994a0ebb9bc6` |
+| `out/identification.json` | 2,344 | `f62d6f12eb948cee519ed8dd19bc0c8c` |
+| `out/function_map.json` | 149,480 | `24f54c969f37603f0b3f7739cfe1ff2b` |
+| `out/opcodes.json` | 23,085 | `3e4e944c1ac54ba40006f0bc671be4ce` |
+| `out/deobfuscated/stageA.annotated.luau` | 164,653 | `71b622a25fc4b3de23ea287778e809b3` |
+| `out/deobfuscated/stageB.annotated.luau` | 633,020 | `8f5a3e0b9354366550db06a576ad243e` |
+| `reports/IDENTIFICATION.md` | 2,023 | `a5f79616775c0ab4addf9776e2b862e7` |
+| `reports/FUNCTION_MAP.md` | 45,123 | `bec8fdd41675ed7390b0cd00dd873928` |
+| `reports/STRINGS.md` | 5,884 | `bc63be20f0c67cadecfd8c187d226c7b` |
+| `reports/BEHAVIOR.md` | 4,785 | `d7c4dc0defe0c54a5594676f12477c95` |

@@ -1,0 +1,184 @@
+name: Deobfuscate
+
+# Automated toolchain for the Luraph-protected Roblox script in input/.
+#
+#  build-luau   -> builds the Luau VM + AST CLI from source (cached)
+#  deobfuscate  -> identify / split / decode pools / inventory / run under the
+#                  emulation harness / name every handler / verify the output
+#  crosscheck   -> optional second opinion from a public Luraph devirtualiser
+#
+# Artefacts: reports/*.md (human readable) and out/ (raw dumps, pools,
+# annotated stages). A run fails if the annotated stages stop round-tripping.
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore: ["reports/**", "out/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Seconds of payload execution per stage"
+        default: "60"
+
+concurrency:
+  group: deobfuscate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LUAU_REF: "0.745"
+  DVL_REF: "892b48ac200e9deda6cd6fd3142bf66abed393c6"
+
+jobs:
+  build-luau:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Luau toolchain
+        id: cache-luau
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: luau-${{ runner.os }}-${{ env.LUAU_REF }}-v3
+
+      - name: Build luau + luau-ast
+        if: steps.cache-luau.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq build-essential
+          chmod +x tools/build_luau.sh
+          JOBS="$(nproc)" ./tools/build_luau.sh
+
+      - name: Show toolchain
+        run: |
+          ls -la .tools
+          .tools/luau --help | head -3
+          echo 'print("luau ok")' > /tmp/ok.luau && .tools/luau /tmp/ok.luau
+          .tools/luau-ast /tmp/ok.luau | head -c 120 && echo
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luau-toolchain
+          path: .tools
+          # artifact v4 skips dot-directories unless asked not to
+          include-hidden-files: true
+          retention-days: 7
+
+  deobfuscate:
+    needs: build-luau
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: luau-toolchain
+          path: .tools
+
+      - name: Make toolchain executable
+        run: chmod +x .tools/luau .tools/luau-ast
+
+      - name: Identify the obfuscator
+        run: |
+          python3 - <<'PY'
+          import sys, pathlib
+          sys.path.insert(0, "tools")
+          import identify
+          src = pathlib.Path("input/Key.luau.txt").read_text(encoding="utf-8", errors="surrogateescape")
+          v = identify.identify(src)
+          print(f"obfuscator: {v.obfuscator}")
+          print(f"version family: {v.version_family}")
+          print(f"confidence: {v.confidence:.2f}")
+          for ind in v.indicators:
+              if ind["hits"]:
+                  print(f"  [x] {ind['check']}: {ind['description']}")
+          PY
+
+      - name: Run the pipeline
+        env:
+          BUDGET: ${{ github.event.inputs.budget || '60' }}
+        run: |
+          python3 tools/pipeline.py \
+            --input input/Key.luau.txt \
+            --out out --reports reports \
+            --budget "$BUDGET" \
+            --luau .tools/luau \
+            --luau-ast .tools/luau-ast
+
+      - name: Verify the lifted source parses
+        run: |
+          set -e
+          .tools/luau-ast reports/payload.luau > /dev/null
+          # the trace-derived copy carries the run's observed values as comments
+          .tools/luau-ast reports/payload.traced.luau > /dev/null
+          echo "lifted + trace-derived sources both parse"
+
+      - name: Verify the annotated stages
+        run: |
+          set -e
+          python3 tools/verify.py out/stages/stageA.luau out/deobfuscated/stageA.annotated.luau .tools/luau-ast > /tmp/verifyA.json
+          python3 tools/verify.py out/stages/stageB.luau out/deobfuscated/stageB.annotated.luau .tools/luau-ast > /tmp/verifyB.json
+          python3 - <<'PY'
+          import json
+          for name in ("A", "B"):
+              data = json.load(open(f"/tmp/verify{name}.json"))
+              assert data["tokens"]["ok"], f"stage {name}: token streams differ"
+              assert data["parse"]["ok"], f"stage {name}: annotated output does not parse"
+              print(f"stage {name}: tokens identical ({data['tokens']['tokens']:,}), parses OK")
+          PY
+
+      - name: Summarise findings
+        run: |
+          {
+            echo "## Deobfuscation summary"
+            sed -n '1,12p' reports/IDENTIFICATION.md
+            echo
+            sed -n '/## Summary/,/^- /p' reports/FUNCTION_MAP.md | head -20
+            echo
+            sed -n '/## Protos/,/^$/p' reports/PROGRAM.md | head -8
+            grep -m1 "instructions recovered" reports/PROGRAM.md || true
+            echo
+            sed -n '/## Dynamic trace/,/^$/p' reports/TRACE.md | head -12
+            echo "full listing: reports/PROGRAM.md, out/payload/program.disasm.txt (artifact)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deobfuscation-results
+          path: |
+            reports
+            out
+          retention-days: 30
+
+  crosscheck:
+    needs: build-luau
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: luau-toolchain
+          path: .tools
+      - run: chmod +x .tools/luau .tools/luau-ast
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Split stages (needed by the cross-check)
+        run: python3 tools/pipeline.py --input input/Key.luau.txt --out out --reports reports --skip-runtime
+
+      - name: Run public Luraph devirtualiser (advisory)
+        env:
+          DVL_REF: ${{ env.DVL_REF }}
+        run: python3 tools/crosscheck.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crosscheck
+          path: reports/CROSSCHECK.md
+          retention-days: 30
