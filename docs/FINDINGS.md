@@ -113,11 +113,37 @@ From [`reports/BEHAVIOR.md`](../reports/BEHAVIOR.md) and [`reports/STRINGS.md`](
 * The only global the emulator had to stub is `Path2DControlPoint`, i.e. the payload draws a custom
   UI through the executor's `Path2D` object.
 
+## 6b. The payload's own program
+
+Route 1 of section 7 turned out to be unnecessary: instead of running the payload in a real
+executor, the interpreter can be instrumented where it already runs. See
+[`reports/PROGRAM.md`](../reports/PROGRAM.md) and `out/payload/program.disasm.txt`.
+
+* The harness hooks the dispatch site (`local N = X[H]; if N < …`) and records one tuple per
+  executed `(proto, pc)`: opcode plus the six operand slots. ~1.64 × 10⁸ dispatches produce
+  **2,342 distinct instructions across 20 protos** — one dominant proto of 1,133 instructions
+  (the loader's main body) and 19 smaller ones (43–326).
+* The opcode ladder is decoded by *evaluating* it for every candidate value, not by pattern
+  matching, which is why it yields 2337/2342 decoded instructions with no manual table.
+* The instruction mix is what a Roblox key-loader should look like: 650 jumps (the flattened
+  control flow), 411 register→table stores, 257 register moves, 221 constant loads, 134 closure
+  creations (the UI callback layer), 92 adds, 70 conditional jumps, 33 table reads, 25 calls,
+  22 numeric `for` loops — and one `NEWCLOSURE` body that is a full upvalue-capture loop with
+  `[1]=k`, `[3]=_` cells, i.e. the classic Luau closure-instantiation bytecode.
+* Constants are still VM operand numbers (`R[4]=(31)`): the actual values live in the LPH pools, so
+  the listing recovers control flow and register data flow, not literals. Pairing an operand with
+  the decrypted string table would require resolving the proto constant table, which is the next
+  step if literal recovery is wanted.
+
 ## 7. What is *not* recovered, and what it would take
 
 The original script text is not recovered: stage `B` is bytecode for the VM, not Luau source, and
-the VM is an interpreter whose program is embedded in the giant `IO` handler. Recovering source
-would require devirtualising that program (lifting the opcode stream back to Luau). Practical routes:
+the VM is an interpreter whose program is embedded in the giant `IO` handler. Section 6b lifts the
+*executed* instruction stream back to readable pseudocode, but a listing is not source: there is no
+expression structure, no local names, no literal constants, and code on unexecuted paths is absent.
+Closing that gap further would mean lifting the listing into structured Luau (basic blocks →
+`if`/`while`/`for`), which is mechanical for the 650 jumps above but was not attempted here.
+Remaining routes if literal-level source is wanted:
 
 1. run the payload in a real executor (or a much closer engine emulation) so the VM's own decoder
    table matches, and trace the opcode stream; or

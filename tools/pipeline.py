@@ -219,6 +219,24 @@ def render_pipeline_report(manifest: dict) -> str:
                      "(numbers compared by value), so the annotations provably change "
                      "presentation only.")
         lines.append("")
+    if manifest.get("disassembly"):
+        dis = manifest["disassembly"]
+        lines.append("## Recovered program (VM disassembly)")
+        lines.append("")
+        lines.append(f"- capture budget: {dis['budget']} (dispatch hook, stage `{dis['stage']}`)")
+        stats = dis.get("vmstats") or {}
+        if stats:
+            lines.append(f"- dispatches observed: {stats.get('dispatches', 0):,}")
+        lines.append(f"- instructions: **{dis['instructions']:,}** "
+                     f"({dis['decoded']:,} decoded) across **{dis['protos']}** protos, "
+                     f"{dis['opcodes']} distinct opcodes")
+        lines.append(f"- listing: `{dis['artifacts']['disassembly']}`")
+        lines.append("")
+        lines.append("| semantics | count |")
+        lines.append("|---|---|")
+        for name, count in list(dis["histogram"].items())[:12]:
+            lines.append(f"| {name} | {count} |")
+        lines.append("")
     lines.append("## Artefacts")
     lines.append("")
     lines.append("| file | bytes | sha256 |")
@@ -232,6 +250,9 @@ def render_pipeline_report(manifest: dict) -> str:
 # ---------------------------------------------------------------------------
 # main flow
 # ---------------------------------------------------------------------------
+DISASM_BUDGET = 10
+
+
 def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: pathlib.Path,
                  budget: int = 40, skip_runtime: bool = False, luau: str | None = None,
                  luau_ast: str | None = None) -> dict:
@@ -314,6 +335,43 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
     runtime_strings = [s for rt in runtimes.values() for bucket in rt.get("strings", {}).values()
                        for s in bucket]
 
+    # ---- 5b. capture + disassemble the VM program -------------------------
+    # The interpreter's dispatch site is instrumented, so every executed
+    # instruction lands in runtime.json.  The hook is expensive (~1.6e8 calls
+    # per run), so it gets its own short-budget pass over the main payload.
+    disassembly: dict | None = None
+    vm_tag = "B" if "B" in stage_paths else (next(iter(stage_paths), None))
+    if resolved_luau and vm_tag:
+        import disasm
+        import run_runtime
+        trace_dir = out_dir / "runtime" / f"{vm_tag}trace"
+        trace_budget = min(budget, DISASM_BUDGET)
+        trace_rt = run_runtime.run(stage_paths[vm_tag], trace_dir, budget=trace_budget,
+                                   luau=resolved_luau, timeout=trace_budget * 10 + 120,
+                                   vm_trace=True)
+        trace_path = trace_dir / "runtime.json"
+        trace_path.write_text(json.dumps(trace_rt, indent=1), encoding="utf-8")
+        record(trace_path)
+        stage_texts = {t: s.text for t, s in obfuscated}
+        listing = disasm.build_listing(trace_rt, inventories, stage_texts, vm_tag)
+        paths = disasm.write_outputs(listing, out_dir, reports_dir)
+        for path in paths.values():
+            record(pathlib.Path(path))
+        disassembly = {
+            "stage": vm_tag,
+            "budget": trace_budget,
+            "vmstats": trace_rt.get("vmstats"),
+            "instructions": listing["instruction_count"],
+            "decoded": listing["decoded_count"],
+            "protos": len(listing["protos"]),
+            "ladder_values": len(listing["templates"]),
+            "opcodes": len(listing["opcode_histogram"]),
+            "histogram": listing["histogram"],
+            "artifacts": paths,
+        }
+        print(f"[disasm] {listing['instruction_count']} executed instructions, "
+              f"{listing['decoded_count']} decoded, {len(listing['protos'])} protos")
+
     # ---- 1b. identification (uses runtime evidence) -----------------------
     detector_notes = ""
     verdict = identify_mod.identify(source, runtime_strings)
@@ -387,6 +445,7 @@ def run_pipeline(input_path: pathlib.Path, out_dir: pathlib.Path, reports_dir: p
         },
         "artifacts": artifacts,
         "verification": verification,
+        "disassembly": disassembly,
         "elapsed_seconds": round(time.time() - started, 1),
         "totals": name_map["totals"],
     }

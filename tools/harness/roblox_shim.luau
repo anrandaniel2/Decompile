@@ -625,6 +625,7 @@ env.getcustomasset = function() return "" end
 -- ---------------------------------------------------------------------------
 local CFG = __CFG or {}
 local dumpHandlerProfile  -- forward declaration (defined with the VM handler wrapper)
+local dumpVm               -- forward declaration (defined with the instruction capture)
 
 local realBuffer = buffer
 local tracked = {}
@@ -667,6 +668,7 @@ local function snapshotAll(reason)
             end
         end
     end
+    if dumpVm then dumpVm() end
     if dumpHandlerProfile then dumpHandlerProfile() end
     emit("@@TRACE", debug.traceback())
     emit("@@DONE")
@@ -861,6 +863,68 @@ local function probeTable(t, tag)
     end
     return t
 end
+-- ---------------------------------------------------------------------------
+-- VM instruction capture
+--
+-- The interpreter reads one instruction as `op = X[pc]` plus operand arrays
+-- indexed by the same pc (`K[pc]`, `j[pc]`, `m[pc]`, ...).  Rewriting that one
+-- dispatch site (see tools/harness/build_runner.py) lets the harness record the
+-- decoded program: every executed (pc -> opcode/operands) tuple, which is what
+-- the disassembler in tools/disasm.py consumes.
+-- ---------------------------------------------------------------------------
+local vmSites = {}
+local vmCount = 0
+local VM_LIMIT = 400000
+
+local vmopCalls = 0
+local vmopBadPc = 0
+
+local function vmop(site, pc, code, ...)
+    vmopCalls += 1
+    if type(pc) ~= "number" then vmopBadPc += 1 return end
+    -- one listing per proto: the code array identity separates functions
+    site = tostring(site) .. ":" .. tostring(code)
+    local record = vmSites[site]
+    if not record then
+        record = {}
+        vmSites[site] = record
+    end
+    if record[pc] ~= nil then return end
+    if vmCount >= VM_LIMIT then return end
+    vmCount += 1
+    local n = select("#", ...)
+    local parts = table.create(n)
+    for i = 1, n do
+        local arr = select(i, ...)
+        local v = nil
+        if type(arr) == "table" then
+            v = arr[pc]
+        end
+        parts[i] = v
+    end
+    -- keep the operand count: nils would otherwise truncate the dump line
+    record[pc] = {n = n, data = parts}
+end
+env.__vmop = vmop
+
+function dumpVm()
+    emit("@@VMSTATS", tostring(vmopCalls), tostring(vmopBadPc), tostring(vmCount))
+    for site, record in pairs(vmSites) do
+        local pcs = {}
+        for pc in pairs(record) do pcs[#pcs + 1] = pc end
+        table.sort(pcs)
+        for _, pc in ipairs(pcs) do
+            local parts = record[pc]
+            local out = {}
+            for i = 1, parts.n do
+                local v = parts.data[i]
+                out[i] = (type(v) == "number") and tostring(math.floor(v)) or "-"
+            end
+            emit("@@VM", tostring(site), tostring(pc), table.concat(out, "\t"))
+        end
+    end
+end
+env.__dumpVm = dumpVm
 env.__probe = probeTable
 env.__wrap1 = function(t) return wrapTable(t, "A") end
 env.__wrap2 = function(t) return wrapTable(t, "B") end
@@ -882,6 +946,7 @@ local ok, err = xpcall(function()
 end, function(e) return tostring(e) .. "\n" .. debug.traceback() end)
 emit("@@EVENT", "ran", tostring(ok))
 if not ok then emit("@@ERROR", "run", tostring(err)) end
+if dumpVm then dumpVm() end
 if dumpHandlerProfile then dumpHandlerProfile() end
 emit("@@STATS", stats.api, stats.str, stats.func)
 emit("@@DONE")

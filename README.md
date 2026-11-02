@@ -15,11 +15,13 @@ pipeline + CI workflow** that does it, so the analysis is reproducible instead o
 | String table | decrypted live — 167 unique strings from the executed path |
 | Verification | annotated output is token-identical to the input and parses with `luau-ast` |
 | Payload | a Roblox key-system / loader ("PandaAuth" key gate + `Kryptic` loader, `devoidhub` service) |
+| Recovered program | 2,342 executed VM instructions across 20 protos, disassembled into readable pseudocode |
 
 📄 Reports: [identification](reports/IDENTIFICATION.md) ·
 [function map](reports/FUNCTION_MAP.md) ·
 [strings](reports/STRINGS.md) ·
 [behaviour](reports/BEHAVIOR.md) ·
+[recovered program](reports/PROGRAM.md) ·
 [pipeline run](reports/PIPELINE.md) ·
 [cross-check](reports/CROSSCHECK.md) ·
 [method](docs/METHOD.md) ·
@@ -48,6 +50,7 @@ reports/IDENTIFICATION.md    obfuscator + version + evidence table
 reports/FUNCTION_MAP.md      every handler: obfuscated name -> recovered name/role/evidence
 reports/STRINGS.md           decrypted string table per stage
 reports/BEHAVIOR.md          API trace, hottest handlers, resolved stdlib slots
+reports/PROGRAM.md           the payload's own program: protos, instruction mix, sample listing
 reports/PIPELINE.md          stage split, plaintext config, artifact hashes, verification
 out/stages/                  the two obfuscated stages, split out of the file
 out/pools/                   decoded LPH pools (+ metadata)
@@ -55,6 +58,8 @@ out/deobfuscated/            annotated, still-executable copies of each stage
 out/runtime/                 raw harness output (strings, API calls, profiles)
 out/function_map.json        machine-readable name map
 out/opcodes.json             recovered VM opcode table
+out/payload/program.disasm.txt  full disassembly of every executed VM instruction
+out/payload/program.json     the same listing as machine-readable JSON
 ```
 
 ## CI
@@ -85,6 +90,12 @@ Artifacts (`reports/` + `out/`) are uploaded for every run.
   budget (the payload never terminates on its own).
 * **Naming**: structure + runtime profile + stack attribution produce a stable semantic name per
   handler (`vm_dispatch`, `pool_load`, `get_slot_25530`, `lib_bit32_bxor`, ...).
+* **Program recovery**: the interpreter's dispatch site (`local N = X[H]; if N < ...`) is
+  instrumented, so every executed instruction arrives as `(proto, pc, opcode, operands)`. The
+  opcode ladder is then decoded *by evaluating it* — each opcode value is walked through the
+  comparison tree — and the operands are substituted into the matching branch body. The result is
+  a per-proto listing that reads like Luau (`R[62][4]=(3)`, `if R[4]~=126 then goto 990`) instead
+  of `k[m[H]][Y[H]]=(D[H])`.
 
 Details and caveats: [docs/METHOD.md](docs/METHOD.md). Analysis narrative:
 [docs/FINDINGS.md](docs/FINDINGS.md).
@@ -100,7 +111,8 @@ tools/
   lph.py                  LPH pool extraction + base-85 decode
   inventory.py            handler-table recovery (names, params, slots, call graph)
   name_map.py             role classification + semantic names + report rendering
-  opcodes.py              VM opcode-ladder recovery
+  opcodes.py              VM opcode-ladder recovery (structural)
+  disasm.py               opcode ladder decoded by evaluation + program disassembly
   normalize.py            annotations + numeric canonicalisation (semantics preserving)
   verify.py               token-equality + parse verification
   identify.py             obfuscator/version verdict with evidence

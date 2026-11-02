@@ -127,6 +127,10 @@ jobs:
             sed -n '1,12p' reports/IDENTIFICATION.md
             echo
             sed -n '/## Summary/,/^- /p' reports/FUNCTION_MAP.md | head -20
+            echo
+            sed -n '/## Protos/,/^$/p' reports/PROGRAM.md | head -8
+            grep -m1 "instructions recovered" reports/PROGRAM.md || true
+            echo "full listing: reports/PROGRAM.md, out/payload/program.disasm.txt (artifact)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4

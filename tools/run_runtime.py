@@ -61,6 +61,8 @@ def parse_output(stdout: str) -> dict:
         "errors": [],
         "output": [],
         "stats": None,
+        "vm": [],              # {site, pc, fields:[op, K, j, m, l, D, Y]}
+        "vmstats": None,
         "missing_globals": {},
     }
 
@@ -107,6 +109,17 @@ def parse_output(stdout: str) -> dict:
                                   "buffer_calls": parts[3], "seconds": parts[4]}
         elif kind == "@@TRACE":
             result["trace"] = _unescape(parts[1]) if len(parts) > 1 else ""
+        elif kind == "@@VMSTATS" and len(parts) >= 4:
+            result["vmstats"] = {"dispatches": int(parts[1]), "bad_pc": int(parts[2]),
+                                 "instructions": int(parts[3])}
+        elif kind == "@@VM" and len(parts) >= 4:
+            # @@VM \t site \t pc \t <op \t operands...>  (inner separators escaped)
+            result["vm"].append({
+                "site": parts[1],
+                "pc": int(parts[2]),
+                "fields": [None if f in ("", "-") else f
+                           for f in _unescape(parts[3]).split("\t")],
+            })
         elif kind == "@@ERROR" and len(parts) >= 3:
             result["errors"].append({"phase": parts[1], "message": _unescape(parts[2])})
         elif kind in ("@@OUTPUT", "@@WARN"):
@@ -136,14 +149,15 @@ def attribute_api_to_handlers(result: dict) -> None:
 
 
 def run(payload: pathlib.Path, workdir: pathlib.Path, budget: int = DEFAULT_BUDGET,
-        luau: str | None = None, timeout: int | None = None) -> dict:
+        luau: str | None = None, timeout: int | None = None,
+        vm_trace: bool = False) -> dict:
     luau = luau or find_luau()
     if not luau:
         raise FileNotFoundError(
             "no luau binary found: build luau-lang/luau and set LUAU_BIN, or put it in .tools/luau")
     workdir.mkdir(parents=True, exist_ok=True)
     runner = workdir / "runner.luau"
-    cfg = {"budget": budget, "dumpAtReadstring": 0}
+    cfg = {"budget": budget, "dumpAtReadstring": 0, "vmTrace": bool(vm_trace)}
     info = build_runner.build(payload, runner, cfg)
     # The payload normally never terminates (it is a VM interpreting an
     # infinite Roblox script), so the driver streams the harness output, stops

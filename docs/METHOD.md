@@ -126,6 +126,30 @@ ADD, MUL, IDIV, CONCAT, NEWTABLE, LOADNIL, CALL, RETURN, VARARG, pool read, …)
 is a readable map of the VM's private opcode numbers; see the *Recovered VM opcode table* section of
 `reports/FUNCTION_MAP.md`.
 
+## 7b. Program recovery — `tools/disasm.py`
+
+Section 7 recovers the opcode *table*; this step recovers the *program*. Two pieces:
+
+1. **Capture.** `tools/harness/build_runner.py` splices a hook into the interpreter's dispatch
+   site, exactly at `local N = X[H]; if N < …` — the moment before the ladder decides what to do —
+   and passes the code array plus the six operand arrays. `__vmop` records one tuple per
+   `(proto, pc)`: `record[pc] = {n, data}`, with an explicit operand count so that nil operands do
+   not truncate the dump line. The hook fires ~1.6 × 10⁸ times per run, so it is opt-in
+   (`cfg.vmTrace`) and gets its own short-budget pass (`DISASM_BUDGET = 10`); the capture saturates
+   well before any larger budget does.
+2. **Decode by evaluation.** Guessing at tree shapes is fragile (the generator mixes `~=`,
+   reversed comparisons, `not(...)` wrappers and empty else branches), so `dispatch_tree()` walks
+   the tree *numerically*: for every candidate opcode value it evaluates `if <cond>` and descends,
+   until the condition stops mentioning the opcode variable — that span is the instruction body.
+   Bodies are then rendered with the recorded operands substituted (`K[H]`→A, `j[H]`→B, …) and
+   with `H = <pc>` rewritten as `goto <pc>`, which turns `k[m[H]][Y[H]]=(D[H])` into
+   `R[62][4]=(3)` and `H=m[H]` into `goto 214`.
+
+Output: `out/payload/program.disasm.txt` (full listing, per proto), `out/payload/program.json`
+(machine readable) and `reports/PROGRAM.md` (summary + sample). Protos are labelled `P1..Pn` by
+descending instruction count, because the runtime identity of a proto (`tostring` of its code
+array) is an address and changes between runs — within one run it is a stable key.
+
 ## 8. Annotated output + verification — `tools/normalize.py`, `tools/verify.py`
 
 The annotated stage files are the input with three semantics-preserving changes:
@@ -142,9 +166,11 @@ Verification is automatic and blocking in CI:
 
 ## Limits
 
-* Full **source recovery** (devirtualisation) is out of scope: the VM interprets its own bytecode
-  and the payload never terminates, so what is recovered is the VM's structure, its constants, its
-  behaviour and a name for every handler — not the original script text.
+* **Program recovery is partial by construction.** The listing covers every instruction the VM
+  actually executed in the captured run (2,342 across 20 protos); instructions on paths the harness
+  never reaches are absent, and constants are still VM operand numbers (`R[4]=(31)` means "load
+  operand 31"), because the constants live in the LPH pools, not in the instruction stream. What is
+  recovered is the program's control flow and register-level data flow, not the original script text.
 * The harness is an emulator: globals it does not model are stubbed (`@@MISSING` in
   `out/runtime/*/runtime.json`), and code paths behind a real Roblox-only global may not be reached.
 * The pure-Lua interpreter is ~1000× slower than Luau; longer budgets buy more of the executed

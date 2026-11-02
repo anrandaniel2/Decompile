@@ -30,6 +30,14 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 HARNESS = ROOT / "tools" / "harness" / "roblox_shim.luau"
 
 # needle -> replacement
+VM_REWRITES: list[tuple[str, str]] = [
+    # VM dispatch site of stage B: capture (pc, opcode, operands) per instruction.
+    # Note the `local`: the dispatch site is `while true do local N=X[H]; if N<...`.
+    # Opt-in only -- the hook fires ~1.6e8 times per run, which slows the VM down
+    # enough that it needs its own short run.
+    ("local N=X[H];if N<", '__vmop("B",H,X,X,K,j,m,l,D,Y);local N=X[H];if N<'),
+]
+
 REWRITES: list[tuple[str, str]] = [
     ("return({l=bit32,", "return __wrap1(({l=bit32,"),
     ("}):p()(...)", "})):p()(...)"),
@@ -44,10 +52,11 @@ class BuildError(RuntimeError):
     pass
 
 
-def instrument(payload: str) -> tuple[str, dict]:
+def instrument(payload: str, vm_trace: bool = False) -> tuple[str, dict]:
     out = payload
     applied, skipped = [], []
-    for needle, repl in REWRITES:
+    rewrites = REWRITES + (VM_REWRITES if vm_trace else [])
+    for needle, repl in rewrites:
         if needle in out:
             out = out.replace(needle, repl, 1)
             applied.append(needle)
@@ -78,8 +87,9 @@ def embed(source: str) -> str:
 
 def build(payload_path: pathlib.Path, out_path: pathlib.Path, cfg: dict | None = None) -> dict:
     payload = payload_path.read_text(encoding="utf-8", errors="surrogateescape")
-    instrumented, rewrites = instrument(payload)
-    runner = config_lua(cfg or {}) + embed(instrumented) + "\n" + HARNESS.read_text(encoding="utf-8")
+    cfg = cfg or {}
+    instrumented, rewrites = instrument(payload, vm_trace=bool(cfg.get("vmTrace")))
+    runner = config_lua(cfg) + embed(instrumented) + "\n" + HARNESS.read_text(encoding="utf-8")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(runner, encoding="utf-8", errors="surrogateescape")
     return {
