@@ -20,6 +20,10 @@ every folded numeric expression, and three vetted pure helpers. The isolated
 original and readable guards and all RNG calls agree at three tested seeds;
 the removed table shuffle still consumes its 256 random draws. The generated
 and formatted versions also compile to identical instruction listings.
+Intentional runtime repairs are applied to this one output: default material
+physics, Noclip/Phase collision restoration, Twerk animation cleanup, and
+godmode Crouch guard/rate limiting. These diverge from the attachment and
+were tested only in isolated Luau mocks, not in Roblox or its server.
 This does not test the full Roblox/executor runtime or its external libraries.
 Many anonymous callback parameters retain short local identifiers.
 

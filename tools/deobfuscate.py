@@ -229,8 +229,14 @@ for a,b,v in sorted(indexes,reverse=True): raw_body=raw_body[:a]+v.encode()+raw_
 body=raw_body.decode('utf-8')
 print('Normalised property accesses:',len(indexes),'parse error:',parser.parse(raw_body).root_node.has_error)
 
+# Apply narrowly scoped, intentional runtime repairs from the supplied script.
+# The user-facing output is one file; the original attachment remains unchanged.
+from repair_runtime import repair
+body = repair(body)
+assert not parser.parse(body.encode('utf-8')).root_node.has_error
+
 OUT.write_text('-- Reconstructed from cheesy.obfuscated.luau.txt by tools/deobfuscate.py.\n'
-               '-- Decoder, bootstrap side effects and selected helpers validated offline; NOT executed in Roblox.\n'
+               '-- Decoded and repaired from the supplied attachment; NOT tested in Roblox.\n'
                '-- Preserve the original call frame and anti-tamper guard before the game body.\n'
                + 'return (function(...)\n'
                + anti + '\n'
@@ -262,6 +268,10 @@ notes = [
     'original and readable guards and all RNG calls agree at three tested seeds;',
     'the removed table shuffle still consumes its 256 random draws. The generated',
     'and formatted versions also compile to identical instruction listings.',
+    'Intentional runtime repairs are applied to this one output: default material',
+    'physics, Noclip/Phase collision restoration, Twerk animation cleanup, and',
+    'godmode Crouch guard/rate limiting. These diverge from the attachment and',
+    'were tested only in isolated Luau mocks, not in Roblox or its server.',
     'This does not test the full Roblox/executor runtime or its external libraries.',
     'Many anonymous callback parameters retain short local identifiers.', '',
 ]

@@ -1,4 +1,4 @@
-"""Isolated Luau-VM checks for the optional movement-repaired variant.
+"""Isolated Luau-VM checks for repaired movement in the main readable script.
 
 Only the extracted physics, animation, and collision functions are executed
 against plain tables and signals; neither full script nor Roblox APIs run.
@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from patch_movement import OUTPUT, SOURCE, patch
+OUTPUT = Path(__file__).resolve().parents[1] / 'cheesy.deobfuscated.luau'
 
 
 def extract(text: str, start: str, end: str) -> str:
@@ -30,10 +30,7 @@ def run(luau: str, folder: Path, name: str, snippet: str, setup: str, check: str
 
 
 def main(luau: str):
-    original = SOURCE.read_text()
     patched = OUTPUT.read_text()
-    if patch(original) != patched:
-        raise AssertionError('Movement variant is not reproducible from the faithful file')
     compiler = Path(luau).with_name('luau-compile')
     subprocess.run([str(compiler), '--null', str(OUTPUT)],
                    check=True, capture_output=True, timeout=30)
@@ -81,7 +78,7 @@ print("PASS: noclip restoration, descendants, and Phase overlap")
     physics = extract(patched, '\tlocal function saveCharacterPhysics()\n',
                       '\tlocal function detectFloor()\n')
     dance = extract(patched, '\tToggles.TwerkDance:OnChanged(function(o)\n',
-                    '\tFunctions = {\n')
+                    '\tFunctions =')
     physics_setup = '''local function TableClear(t) for key in pairs(t) do t[key]=nil end end
 local part = {CustomPhysicalProperties=nil,
     CurrentPhysicalProperties={Friction=.3, Elasticity=.5, FrictionWeight=1, ElasticityWeight=2},

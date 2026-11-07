@@ -1,5 +1,5 @@
 -- Reconstructed from cheesy.obfuscated.luau.txt by tools/deobfuscate.py.
--- Decoder, bootstrap side effects and selected helpers validated offline; NOT executed in Roblox.
+-- Decoded and repaired from the supplied attachment; NOT tested in Roblox.
 -- Preserve the original call frame and anti-tamper guard before the game body.
 return (function(...)
 	do
@@ -48,9 +48,7 @@ return (function(...)
 			local I = {
 				pcall(function()
 					if F(-209446 + 209447, 581492 - 581490) == 340972 - 340971 or k == C then
-						local k = tonumber(
-							(T(tostring(({ pcall(secondErrorProbe) })[-884859 + 884861]), ":(%d*):"))()
-						)
+						local k = tonumber((T(tostring(({ pcall(secondErrorProbe) })[-884859 + 884861]), ":(%d*):"))())
 						o = o and y == k
 					end
 					if r then
@@ -200,8 +198,10 @@ return (function(...)
 	end
 	local function loadLinoriaUiLibrary()
 		local o = "https://raw.githubusercontent.com/doram44/linorialib/refs/heads/main/"
-		local w = "_istable=function(v)if typeof(v)~='table'then return false end return not pcall(string.sub,v,1,1)end;"
-		local F = "local function _cheesyhex(v) if typeof(v)~='string'then return false end return v:match('^#?%x%x%x%x%x%x$')~=nil end;"
+		local w =
+			"_istable=function(v)if typeof(v)~='table'then return false end return not pcall(string.sub,v,1,1)end;"
+		local F =
+			"local function _cheesyhex(v) if typeof(v)~='string'then return false end return v:match('^#?%x%x%x%x%x%x$')~=nil end;"
 		local function adaptLinoriaSource(o)
 			o = w .. o
 			o = o:gsub('typeof%s*%((%w+)%)%s*==%s*"table"', "_istable(%1)")
@@ -420,10 +420,7 @@ return (function(...)
 	Executions = 1
 	if
 		game.PlaceId ~= 6516141723
-		and (
-			game.PlaceId ~= 6839171747
-			and (game.PlaceId ~= 1.1025868967237e+014 and game.PlaceId ~= 10549820578)
-		)
+		and (game.PlaceId ~= 6839171747 and (game.PlaceId ~= 1.1025868967237e+014 and game.PlaceId ~= 10549820578))
 	then
 		return
 	end
@@ -487,9 +484,7 @@ return (function(...)
 									.. (
 										"&placename="
 										.. (
-											(game:GetService("HttpService")):UrlEncode(
-												k and P.Name or "Unknown"
-											)
+											(game:GetService("HttpService")):UrlEncode(k and P.Name or "Unknown")
 											.. (
 												"&executor="
 												.. (
@@ -615,10 +610,7 @@ return (function(...)
 		k:SetDescription(
 			"We don't have any key system at all. \nThe entire key is in the discord and its lifetime,\nthere is no ads or anything. It isn't a 'key system' at all"
 		)
-		k.Sidebar:AddInput(
-			"KeyInput",
-			{ ["Text"] = "Key", ["Placeholder"] = "", ["ClearTextOnFocus"] = false }
-		)
+		k.Sidebar:AddInput("KeyInput", { ["Text"] = "Key", ["Placeholder"] = "", ["ClearTextOnFocus"] = false })
 		k.Sidebar:AddButton({
 			["Text"] = "Copy/Open Discord Invite",
 			["Func"] = function()
@@ -774,8 +766,7 @@ return (function(...)
 		end
 		local T, k = pcall(function()
 			local T = game:HttpGet(
-				CheesyLanguageBase
-					.. ("/" .. (CheesyLanguage .. (".lua?nb=" .. tostring(math.floor(tick())))))
+				CheesyLanguageBase .. ("/" .. (CheesyLanguage .. (".lua?nb=" .. tostring(math.floor(tick())))))
 			)
 			local k = (o(T))()
 			if type(k) == "table" then
@@ -784,10 +775,7 @@ return (function(...)
 			end
 		end)
 		if not T then
-			warn(
-				"[cheesy] translation fetch failed for "
-					.. (tostring(CheesyLanguage) .. (": " .. tostring(k)))
-			)
+			warn("[cheesy] translation fetch failed for " .. (tostring(CheesyLanguage) .. (": " .. tostring(k))))
 		end
 	end
 	function CheesyBuildTranslateIndex(o)
@@ -1187,10 +1175,8 @@ return (function(...)
 	local espLibrarySource =
 		game:HttpGet("https://raw.githubusercontent.com/bocaj111004/ESPLibrary/refs/heads/main/Library.lua")
 	espLibrarySource = espLibrarySource:gsub("']</font>'", "'M]</font>'")
-	espLibrarySource = espLibrarySource:gsub(
-		"Frame%.Visible = OnScreen",
-		"Frame.Visible = OnScreen and Library.ShowESPText ~= false"
-	)
+	espLibrarySource =
+		espLibrarySource:gsub("Frame%.Visible = OnScreen", "Frame.Visible = OnScreen and Library.ShowESPText ~= false")
 	espLibrarySource = espLibrarySource:gsub(
 		"local ScreenPoint, OnScreen = Camera:WorldToViewportPoint%(ObjectPos%)",
 		"local ScreenPoint, OnScreen = Camera:WorldToViewportPoint(ObjectPos); if OnScreen then local Dist = (Camera.CFrame.Position - ObjectPos).Magnitude; local ObjMaxDist = Library.ObjectMaxDistance and Library.ObjectMaxDistance[Object]; if Dist > (ObjMaxDist or Library.MaxDistance) then OnScreen = false end end"
@@ -1342,6 +1328,11 @@ return (function(...)
 		if not (Toggles and (Toggles.Godmode and Toggles.Godmode.Value)) then
 			return false
 		end
+		-- The attachment's sink implementation explicitly does nothing on
+		-- these floors. Do not keep spoofing the Crouch remote there.
+		if CurrentFloor == "Fools" or CurrentFloor == "OldHotel" then
+			return false
+		end
 		if getGodmodeMethod() == 1 then
 			return true
 		end
@@ -1384,11 +1375,17 @@ return (function(...)
 			Humanoid.HipHeight = 0.05
 			Character:SetAttribute("GodmodeSunk", true)
 			CheesyState.SkipGodmodeCrouchForce = true
-			if GameRemotes then
-				local o = GameRemotes:FindFirstChild("Crouch")
-				if o then
-					o:FireServer(true, true)
+			local remoteOk, remoteError = pcall(function()
+				if GameRemotes then
+					local crouch = GameRemotes:FindFirstChild("Crouch")
+					if crouch then
+						crouch:FireServer(true, true)
+					end
 				end
+			end)
+			CheesyState.SkipGodmodeCrouchForce = false
+			if not remoteOk then
+				warn("Godmode Crouch remote failed: " .. tostring(remoteError))
 			end
 		end
 	end
@@ -1418,17 +1415,23 @@ return (function(...)
 			return
 		end
 		TableClear(PartProperties)
-		CustomPhysics = PhysicalProperties.new(
-			100,
-			HumanoidRootPart.CustomPhysicalProperties.Friction,
-			HumanoidRootPart.CustomPhysicalProperties.Elasticity,
-			HumanoidRootPart.CustomPhysicalProperties.FrictionWeight,
-			HumanoidRootPart.CustomPhysicalProperties.ElasticityWeight
-		)
+		-- CustomPhysicalProperties can be nil when the part uses its material defaults.
+		local rootPhysics = HumanoidRootPart.CustomPhysicalProperties or HumanoidRootPart.CurrentPhysicalProperties
+		if rootPhysics then
+			CustomPhysics = PhysicalProperties.new(
+				100,
+				rootPhysics.Friction,
+				rootPhysics.Elasticity,
+				rootPhysics.FrictionWeight,
+				rootPhysics.ElasticityWeight
+			)
+		else
+			CustomPhysics = nil
+		end
 		for o, T in Character:GetDescendants() do
 			if T:IsA("BasePart") then
 				PartProperties[T] = T.CustomPhysicalProperties
-				if Toggles.RemoveAcceleration and Toggles.RemoveAcceleration.Value then
+				if Toggles.RemoveAcceleration and Toggles.RemoveAcceleration.Value and CustomPhysics then
 					T.CustomPhysicalProperties = CustomPhysics
 				end
 			end
@@ -1451,8 +1454,7 @@ return (function(...)
 			return "Lobby"
 		end
 		if k == "Hotel" then
-			local o = ReplicatedStorage:FindFirstChild("RemotesFolder")
-				or ReplicatedStorage:FindFirstChild("Bricks")
+			local o = ReplicatedStorage:FindFirstChild("RemotesFolder") or ReplicatedStorage:FindFirstChild("Bricks")
 			if o and o.Name == "Bricks" then
 				return "OldHotel"
 			end
@@ -1510,10 +1512,8 @@ return (function(...)
 		if Character then
 			Humanoid = Character:FindFirstChildOfClass("Humanoid")
 			HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
-			CharacterCollision = Character:FindFirstChild("Collision")
-				or Character:FindFirstChild("CollisionPart")
-			CharacterCollisionPart = Character:FindFirstChild("CollisionPart")
-				or Character:FindFirstChild("Collision")
+			CharacterCollision = Character:FindFirstChild("Collision") or Character:FindFirstChild("CollisionPart")
+			CharacterCollisionPart = Character:FindFirstChild("CollisionPart") or Character:FindFirstChild("Collision")
 			saveCharacterPhysics()
 			watchMovementAttributes()
 			if CheesyState then
@@ -1619,10 +1619,7 @@ return (function(...)
 		if Toggles.FlyToggle.Value then
 			updateFly()
 		end
-		if
-			Toggles.ArchiveChairFly.Value
-			or (Toggles.StairwellChairFly and Toggles.StairwellChairFly.Value)
-		then
+		if Toggles.ArchiveChairFly.Value or (Toggles.StairwellChairFly and Toggles.StairwellChairFly.Value) then
 			StopChairBypass()
 		end
 		updateInfiniteJump()
@@ -1789,95 +1786,56 @@ return (function(...)
 	)
 	Groupboxes.SubfloorsFools:AddToggle(
 		"BypassSeekingWall",
-		{
-			["Text"] = "Anti Seeking Wall",
-			["Default"] = false,
-			["Tooltip"] = "Disables ScaryWall from hurting you",
-		}
+		{ ["Text"] = "Anti Seeking Wall", ["Default"] = false, ["Tooltip"] = "Disables ScaryWall from hurting you" }
 	)
 	Groupboxes.SubfloorsFools:AddToggle(
 		"BypassBanana",
-		{
-			["Text"] = "Anti Banana",
-			["Default"] = false,
-			["Tooltip"] = "Disables Banana Peel from making you slip",
-		}
+		{ ["Text"] = "Anti Banana", ["Default"] = false, ["Tooltip"] = "Disables Banana Peel from making you slip" }
 	)
 	Groupboxes.SubfloorsFools:AddToggle(
 		"BypassJeff",
-		{
-			["Text"] = "Anti Jeff",
-			["Default"] = false,
-			["Tooltip"] = "Disables Jeff the Killer from stabbing you",
-		}
+		{ ["Text"] = "Anti Jeff", ["Default"] = false, ["Tooltip"] = "Disables Jeff the Killer from stabbing you" }
 	)
 	Groupboxes.SubfloorsFools:AddDivider()
-	Groupboxes.SubfloorsFools:AddToggle(
-		"RemoveSeekTrigger",
-		{
-			["Text"] = "Delete Seek Trigger",
-			["Default"] = false,
-			["Tooltip"] = "Deletes/disables the Seek cutscene trigger",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.SubfloorsFools:AddToggle(
-		"RemoveFigure",
-		{
-			["Text"] = "Delete Figure",
-			["Default"] = false,
-			["Tooltip"] = "Removes Figure, however this is inconsistent",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.SubfloorsFools:AddToggle(
-		"AutoRevive",
-		{
-			["Text"] = "Infinite Revives",
-			["Default"] = false,
-			["Tooltip"] = "Automatically revives after dying without using a revive and having infinite usage",
-		}
-	)
+	Groupboxes.SubfloorsFools:AddToggle("RemoveSeekTrigger", {
+		["Text"] = "Delete Seek Trigger",
+		["Default"] = false,
+		["Tooltip"] = "Deletes/disables the Seek cutscene trigger",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.SubfloorsFools:AddToggle("RemoveFigure", {
+		["Text"] = "Delete Figure",
+		["Default"] = false,
+		["Tooltip"] = "Removes Figure, however this is inconsistent",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.SubfloorsFools:AddToggle("AutoRevive", {
+		["Text"] = "Infinite Revives",
+		["Default"] = false,
+		["Tooltip"] = "Automatically revives after dying without using a revive and having infinite usage",
+	})
 	Groupboxes.SubfloorsFools:AddToggle(
 		"FigureGodmodeFools",
-		{
-			["Text"] = "Figure Godmode",
-			["Default"] = false,
-			["Tooltip"] = "Prevents 'Figure' from hurting you",
-		}
+		{ ["Text"] = "Figure Godmode", ["Default"] = false, ["Tooltip"] = "Prevents 'Figure' from hurting you" }
 	)
 	Groupboxes.SubfloorsFools:AddDivider()
 	Groupboxes.SubfloorsFools:AddToggle(
 		"RemoveBasementGate",
-		{
-			["Text"] = "Remove Basement Gate",
-			["Default"] = false,
-			["Tooltip"] = "Removes the gate from basement rooms",
-		}
+		{ ["Text"] = "Remove Basement Gate", ["Default"] = false, ["Tooltip"] = "Removes the gate from basement rooms" }
 	)
-	Groupboxes.SubfloorsFools:AddToggle(
-		"RemovePaintingsDoor",
-		{
-			["Text"] = "Remove Paintings Door",
-			["Default"] = false,
-			["Tooltip"] = "Removes the fireplace doors from painting rooms",
-		}
-	)
-	Groupboxes.SubfloorsFools:AddToggle(
-		"RemoveSkeletonDoor",
-		{
-			["Text"] = "Remove Skeleton Door",
-			["Default"] = false,
-			["Tooltip"] = "Removes the skeleton door from the infirmary",
-		}
-	)
+	Groupboxes.SubfloorsFools:AddToggle("RemovePaintingsDoor", {
+		["Text"] = "Remove Paintings Door",
+		["Default"] = false,
+		["Tooltip"] = "Removes the fireplace doors from painting rooms",
+	})
+	Groupboxes.SubfloorsFools:AddToggle("RemoveSkeletonDoor", {
+		["Text"] = "Remove Skeleton Door",
+		["Default"] = false,
+		["Tooltip"] = "Removes the skeleton door from the infirmary",
+	})
 	Groupboxes.SubfloorsFools:AddToggle(
 		"AutoRoomSkip",
-		{
-			["Text"] = "Auto Room-Skip",
-			["Default"] = false,
-			["Tooltip"] = "Automatically teleports to the next room",
-		}
+		{ ["Text"] = "Auto Room-Skip", ["Default"] = false, ["Tooltip"] = "Automatically teleports to the next room" }
 	)
 	Groupboxes.SubfloorsFools:AddButton({
 		["Text"] = "Skip Current Room",
@@ -1930,15 +1888,12 @@ return (function(...)
 	Groupboxes.HomeWelcome = rT.Home:AddLeftGroupbox("Welcome")
 	local yT = '<font size="28">' .. (Greeting .. (", " .. (LocalPlayer.Name .. "</font>")))
 	Groupboxes.HomeWelcome:AddLabel({ ["Text"] = yT, ["DoesWrap"] = true })
-	avatarImage = Groupboxes.HomeWelcome:AddImage(
-		"AvatarPreview",
-		{
-			["Image"] = "rbxasset://textures/ui/GuiImagePlaceholder.png",
-			["Height"] = 100,
-			["Width"] = 100,
-			["ScaleType"] = Enum.ScaleType.Fit,
-		}
-	)
+	avatarImage = Groupboxes.HomeWelcome:AddImage("AvatarPreview", {
+		["Image"] = "rbxasset://textures/ui/GuiImagePlaceholder.png",
+		["Height"] = 100,
+		["Width"] = 100,
+		["ScaleType"] = Enum.ScaleType.Fit,
+	})
 	avatarImage:SetVisible(false)
 	local XT, IT = pcall(function()
 		return Players:GetUserThumbnailAsync(
@@ -1992,8 +1947,7 @@ return (function(...)
 	hasFireTouch = Executor.firetouchinterest ~= nil
 	hasReplicateSignal = Executor.replicatesignal ~= nil
 	hasNetworkOwner = Executor.isnetworkowner ~= nil
-	hasHookMeta = Executor.hookmetamethod ~= nil
-		and (Executor.newcclosure ~= nil and Executor.getnamecallmethod ~= nil)
+	hasHookMeta = Executor.hookmetamethod ~= nil and (Executor.newcclosure ~= nil and Executor.getnamecallmethod ~= nil)
 	hasRequire = Executor.require ~= nil
 	hasHookFunction = (RootEnv.hookfunction ~= nil) or (RootEnv.hook_function ~= nil)
 	_isSolaraCached = nil
@@ -2285,14 +2239,11 @@ return (function(...)
 	Toggles.ShowKeybinds:OnChanged(function(o)
 		UiLibrary.KeybindFrame.Visible = o
 	end)
-	Groupboxes.Misc:AddToggle(
-		"DiscordRichPresence",
-		{
-			["Text"] = "Discord Rich Presence",
-			["Default"] = false,
-			["Tooltip"] = "Shows your current room in your Discord status via Bloxstrap RPC",
-		}
-	)
+	Groupboxes.Misc:AddToggle("DiscordRichPresence", {
+		["Text"] = "Discord Rich Presence",
+		["Default"] = false,
+		["Tooltip"] = "Shows your current room in your Discord status via Bloxstrap RPC",
+	})
 	BLOXSTRAP_CHEESE_ICON = 1.0699002190259e+014
 	Discord = { ["PresenceConn"] = nil, ["PresenceActive"] = false, ["LastUpdate"] = 0 }
 	local function postBloxstrapRpc(o, T)
@@ -2325,18 +2276,12 @@ return (function(...)
 		if not (Toggles.DiscordRichPresence and Toggles.DiscordRichPresence.Value) then
 			return
 		end
-		postBloxstrapRpc(
-			"SetRichPresence",
-			{
-				["details"] = "Using cheesy",
-				["state"] = getPresenceRoom(),
-				["largeImage"] = { ["assetId"] = BLOXSTRAP_CHEESE_ICON, ["hoverText"] = "cheesy" },
-				["smallImage"] = {
-					["assetId"] = BLOXSTRAP_CHEESE_ICON,
-					["hoverText"] = "discord.gg/CuZJQaCquK",
-				},
-			}
-		)
+		postBloxstrapRpc("SetRichPresence", {
+			["details"] = "Using cheesy",
+			["state"] = getPresenceRoom(),
+			["largeImage"] = { ["assetId"] = BLOXSTRAP_CHEESE_ICON, ["hoverText"] = "cheesy" },
+			["smallImage"] = { ["assetId"] = BLOXSTRAP_CHEESE_ICON, ["hoverText"] = "discord.gg/CuZJQaCquK" },
+		})
 	end
 	Toggles.DiscordRichPresence:OnChanged(function(o)
 		if Discord.PresenceConn then
@@ -2363,25 +2308,19 @@ return (function(...)
 				Discord.PresenceConn:Disconnect()
 				Discord.PresenceConn = nil
 			end
-			postBloxstrapRpc(
-				"SetRichPresence",
-				{
-					["details"] = "<reset>",
-					["state"] = "<reset>",
-					["largeImage"] = { ["reset"] = true },
-					["smallImage"] = { ["reset"] = true },
-				}
-			)
+			postBloxstrapRpc("SetRichPresence", {
+				["details"] = "<reset>",
+				["state"] = "<reset>",
+				["largeImage"] = { ["reset"] = true },
+				["smallImage"] = { ["reset"] = true },
+			})
 		end
 	end)
-	Groupboxes.Misc:AddToggle(
-		"AntiLag",
-		{
-			["Text"] = "Anti-Lag",
-			["Default"] = false,
-			["Tooltip"] = "Reduces lag by setting all parts in the current rooms to Plastic material",
-		}
-	)
+	Groupboxes.Misc:AddToggle("AntiLag", {
+		["Text"] = "Anti-Lag",
+		["Default"] = false,
+		["Tooltip"] = "Reduces lag by setting all parts in the current rooms to Plastic material",
+	})
 	AntiLagOriginal = setmetatable({}, { ["__mode"] = "k" })
 	AntiLagConn = nil
 	function AntiLagApplyPart(o)
@@ -2441,14 +2380,11 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Misc:AddDivider()
-	Groupboxes.Misc:AddToggle(
-		"DisableIdleKick",
-		{
-			["Text"] = "Disable Idle Kick",
-			["Default"] = false,
-			["Tooltip"] = "Disables the kick from being afk for 20 minutes",
-		}
-	)
+	Groupboxes.Misc:AddToggle("DisableIdleKick", {
+		["Text"] = "Disable Idle Kick",
+		["Default"] = false,
+		["Tooltip"] = "Disables the kick from being afk for 20 minutes",
+	})
 	DisableIdleKickConn = nil
 	Toggles.DisableIdleKick:OnChanged(function(o)
 		if DisableIdleKickConn then
@@ -2463,14 +2399,11 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Misc:AddDivider()
-	Groupboxes.Misc:AddToggle(
-		"DisplayInfo",
-		{
-			["Text"] = "Display Info",
-			["Default"] = false,
-			["Tooltip"] = "Shows an overlay with FPS, ping, executor, and username",
-		}
-	)
+	Groupboxes.Misc:AddToggle("DisplayInfo", {
+		["Text"] = "Display Info",
+		["Default"] = false,
+		["Tooltip"] = "Shows an overlay with FPS, ping, executor, and username",
+	})
 	DisplayInfoFPS = 60
 	DisplayInfoFC = 0
 	DisplayInfoFT = tick()
@@ -2505,12 +2438,8 @@ return (function(...)
 					DisplayInfoFC = 0
 				end
 				local T = pcall(function()
-					return math.floor(
-						(game:GetService("Stats")).Network.ServerStatsItem["Data Ping"]:GetValue()
-					)
-				end) and math.floor(
-					(game:GetService("Stats")).Network.ServerStatsItem["Data Ping"]:GetValue()
-				) or 0
+					return math.floor((game:GetService("Stats")).Network.ServerStatsItem["Data Ping"]:GetValue())
+				end) and math.floor((game:GetService("Stats")).Network.ServerStatsItem["Data Ping"]:GetValue()) or 0
 				local k = pcall(identifyexecutor) and identifyexecutor() or "Unknown"
 				DisplayInfoLabel:SetText(
 					("%s | %s: %d | %s: %dms | %s: %s | %s: %s"):format(
@@ -2603,7 +2532,8 @@ return (function(...)
 			P.Font = Enum.Font.Code
 			P.TextXAlignment = Enum.TextXAlignment.Center
 			P.TextYAlignment = Enum.TextYAlignment.Center
-			P.Text = ".............                                            \n                                           ................                                     ..................                                     \n                                        .......................                               ......................                                   \n                                     .............................                          ..........................                                 \n                                   .................................                      .............................                                \n                                  .....................      .......                     ................................                              \n                                 ............                     ..                    :..                   ............                             \n                                ..........                                                                       ..........                            \n                               ........                                                                            .........                           \n                              .......                                                                               .........                          \n                             .......                                                                                  .......                          \n                            .......                     +%##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                         ........                         \n                           ......                +*#%%#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                    ......                         \n                           ....             *###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@                 .....                        \n                          ....          *##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@            :.....                       \n                         ....        ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@          -.....                      \n                        ....:     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@        -....                      \n                        -.-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@     =:..:                     \n                            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                             \n                          #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                         \n                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@                       \n                      ###%%%%%####%%%%%%%%%%%%#####%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%@@@@@@@@@%%%#######%%%%%%@@                     \n                    %#%%####%@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%@@@@@@@@@@@@@@@@@@@@@@@%#####%%%@%%%                   \n                  #######%@@@@@@@@@@@@@@@@@@@@@@@@@@@@%#*#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%##%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%%                 \n                 %%####%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%                \n               #%%**#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%%%%%%%%%##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%              \n              %%#**%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*#%%%%%%%%%%%%%%%%%%%%##%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@###%%%%%%             \n            ##%#*#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*#%%%%%%%%%%%%%%%%%%##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@###%%%%%%            \n           *#%#*#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%#%@@@@@@@@@@@@@@@%#*+=-----+*#@@@@@@@@@@@@@@@@@@@#*#%%%%%%%          \n          *#%#*#@@@@@@@@@@@@@@@@@@@@@@@@@%#+=:.....:=*%@@@@@@@@@%+#%%%%%%%%%%%%%%#%@@@@@@@@@@@@@#=...............=%@@@@@@@@@@@@@@@@@#*#%%%%%%%         \n         *###*#@@@@@@@@@@@@@@@@@@@@@@@%=...............:+@@@@@@@@%+#%%%%%%%%%%%%#%@@@@@@@@@@@%=...............:---:-%@@@@@@@@@@@@@@@@*##%%%%%%%        \n        *####*@@@@@@@@@@@@@@@@@@@@@@%=...    .........---:*@@@@@@@*+%%%%%%%%%%%##@@@@@@@@@@@+................:==-=-::*@@@@@@@@@@@@@@@%*#%%%%%%%        \n       *####*%@@@@@@@@@@@@@@@@@@@@@*...   ..........:===--:-%@@@@@@+#%%%%%%%%%%#%@@@@@@@@@%-.................-==----:.#@@@@@@@@@@@@@@@+##%%%%%%%       \n      *#####*%@@@@@@@@@@@@@@@@@@@@=.................===----:-%@@@@@**%%%%%%%%%##@@@@@@@@@%-..................-==----:.:@@@@@@@@@@@@@@@*###%%%%%%%      \n     **####*#@@@@@@@@@@@@@@@@@@@@=..................-==----:.+@@@@@#+%%%%%%%%%#%@@@@@@@@@*....................:-=-:::.:@@@@@@@@@@@@@@@#*##%%%%%%%%     \n    **#####*#@@@@@@@@@@@@@@@@@@@#....................==----:.-%@@@@%+#%%%%%%%%#%@@@@@@@@@+............................:@@@@@@@@@@@@@@@#*###%%%%%%#     \n    *######*#@@@@@@@@@@@@@@@@@@@+.....................:--::..-%@@@@%+#%%%%%%%##%@@@@@@@@@*............................-@@@@@@@@@@@@@@@#*###%%%%%%##    \n  ***######*#@@@@@@@@@@@@@@@@@@@=............................=@@@@@%+##%%%%%%#*%@@@@@@@@@#:...........................%@@@@@@@@@@@@@@@**###%%%%%##%    \n  *+#######**@@@@@@@@@@@@@@@@@@@*............................*@@@@@#+##%%%%%%#*#@@@@@@@@@@+.........................:%@@@@@@@@@@@@@@@@*###%%%%%%%%##   \n# +*#######**%@@@@@@@@@@@@@@@@@@%:..........................=%@@@@@+*##%%%%%%%##@@@@@@@@@@%+.......................+@@@@@@@@@@@@@@@@@%*####%%%%%%%%#   \n##+*#######**#@@@@@@@%%%%%@@@@@@@*.........................-%@@@@@%=###%%%%%%%#*%@@@@@@@@@@%#-..................:+%@@@@@@@@@@@@@@@@@@+*####%%%%%#####  \n#**#########*+%@@@@@%%%%%%%%@@@@@@*.......................+@@@@@@@++####%%%%%%#**@@@@@@@@@@%%%#+:............:=#@@@@@@@@@@@@@@@@@@@@*+#####%%%%######  \n***#########**+%@@@@@%%%%%%%%%@@@@@%=...................=%@@@@@@@*+####%%%%%%%##*#@@@@@@@@@%%%%@@%#*+++++*#%@@@@@@@@@@@@@@@@@@@@@@@#+#####%%%%%%#####  \n***##########*++@@@@@@%%%%%%%%%%@@@@@%+:.............-+%@@@@@@@@#+*###%%%#%%%%%##+#@@@@@@@@@%%%%%%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+*#######%%%######  \n***##########**++%@@@@@@%%%%%%%%%%%@@@@@%#=-::::-=*%@@@@@@@@@@@*+*####%#%%%%%%%###**@@@@@@@@@@%%%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@*+*#########%%######  \n#**##########***+=%@@@@@@@%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@@@@*+*#######%%%#%######*+%@@@@@@@@@@%%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@#+*###########%######## \n#**###########****+*@@@@@@@@@%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@#++*#####################+*@@@@@@@@@@@@@@%%%%%@@@@@@@@@@@@@@@@@@@#++*##################### \n#**###########*****++*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%++*########################*+*%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#++*####################### \n#**###########*******++*%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#==*############################*++#@@@@@@@@@@@@@@@@@@@@@@@@@@@@%+=+**#######################  \n#**######*#************+++*%@@@@@@@@@@@@@@@@@@@@@@@@@#+=+*################################**++*#%@@@@@@@@@@@@@@@@@@@%*==+**##########################  \n#***#####*****************++++#%@@@@@@@@@@@@@@@@@#*==+**######################################**++++**#########**++++***#############################  \n##**#####*********************+++++++++++++++++==++**##############################################*******++++******##=::...::+######################  \n##**#####*****************************************##################################################################+..........=#####################  \n##**#####************************************#######################################################################+-=*+......:*###################   \n###**#####*****************************###############################################################################*-...:*#=:+###################   \n####**####******************************#############################################################################=....-*#######################    \n#####*####********************************########################################################################*=....-*#########################    \n ####**####***************************************#*############################################################+:....=*##########################     \n  ####*#####*******************************************######################################################*-....:+############################      \n  #####*#####***************************************************#########################################*+-....:+###############################      \n   ###########***************+::-+***********************************#################################*=.....-*##############################*##       \n    #####*#####****************+:...:=+***********************************#*####################**=:.....:=*###################################        \n     ####**#####******************+-....:-=*********************************#########*#####**=:......:+***##################################*#         \n      ####**#####********************+=-:.....:-=+************************************+=-:......:-+**#####################################***          \n      ######*######*********************+++=:........::--==++***************++==-::........:-=+*****######################################**           \n       ######*#######************************++==-:..................................:-=++**********#####################################**            \n         #####*#######******************************++==----:::::::::::::::---===++**********************############################***#              \n          ######*########**********************************************************************************##########################*##               \n           ###############*************************************************************************************#################*###*#*                \n            #######*########**********************************************************************************################***#***                  \n              #######*#########********************************************************************************#############**####**                   \n                ######**##########****************************************************************************###########*******#*                     \n                  ######**##########*************************************************************************##########*********                       \n                   #########*#########**********************************************************************########********##                         \n                      ########*#########*****************************************************************########***********                           \n                        ##########*#########*********************************************************#########************                             \n                          ######################*************************************************########***************                               \n                             ##########################*************************************#########****************                                  \n                               ##################################******************#############******************                                     \n                                   *######################################################*********************                                        \n                                      ***####***###*******#############*##########*************************                                            \n                                          *####*##*##*#************************************************"
+			P.Text =
+				".............                                            \n                                           ................                                     ..................                                     \n                                        .......................                               ......................                                   \n                                     .............................                          ..........................                                 \n                                   .................................                      .............................                                \n                                  .....................      .......                     ................................                              \n                                 ............                     ..                    :..                   ............                             \n                                ..........                                                                       ..........                            \n                               ........                                                                            .........                           \n                              .......                                                                               .........                          \n                             .......                                                                                  .......                          \n                            .......                     +%##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                         ........                         \n                           ......                +*#%%#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                    ......                         \n                           ....             *###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@                 .....                        \n                          ....          *##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@            :.....                       \n                         ....        ##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@          -.....                      \n                        ....:     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@        -....                      \n                        -.-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@     =:..:                     \n                            #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                             \n                          #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@@                         \n                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%@@@                       \n                      ###%%%%%####%%%%%%%%%%%%#####%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%%%@@@@@@@@@%%%#######%%%%%%@@                     \n                    %#%%####%@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%%@@@@@@@@@@@@@@@@@@@@@@@%#####%%%@%%%                   \n                  #######%@@@@@@@@@@@@@@@@@@@@@@@@@@@@%#*#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%##%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%%                 \n                 %%####%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%%%%%%%%%%%%%#%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%                \n               #%%**#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%%%%%%%%%##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%###%%%%%%              \n              %%#**%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*#%%%%%%%%%%%%%%%%%%%%##%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@###%%%%%%             \n            ##%#*#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*#%%%%%%%%%%%%%%%%%%##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@###%%%%%%            \n           *#%#*#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#%%%%%%%%%%%%%%%%#%@@@@@@@@@@@@@@@%#*+=-----+*#@@@@@@@@@@@@@@@@@@@#*#%%%%%%%          \n          *#%#*#@@@@@@@@@@@@@@@@@@@@@@@@@%#+=:.....:=*%@@@@@@@@@%+#%%%%%%%%%%%%%%#%@@@@@@@@@@@@@#=...............=%@@@@@@@@@@@@@@@@@#*#%%%%%%%         \n         *###*#@@@@@@@@@@@@@@@@@@@@@@@%=...............:+@@@@@@@@%+#%%%%%%%%%%%%#%@@@@@@@@@@@%=...............:---:-%@@@@@@@@@@@@@@@@*##%%%%%%%        \n        *####*@@@@@@@@@@@@@@@@@@@@@@%=...    .........---:*@@@@@@@*+%%%%%%%%%%%##@@@@@@@@@@@+................:==-=-::*@@@@@@@@@@@@@@@%*#%%%%%%%        \n       *####*%@@@@@@@@@@@@@@@@@@@@@*...   ..........:===--:-%@@@@@@+#%%%%%%%%%%#%@@@@@@@@@%-.................-==----:.#@@@@@@@@@@@@@@@+##%%%%%%%       \n      *#####*%@@@@@@@@@@@@@@@@@@@@=.................===----:-%@@@@@**%%%%%%%%%##@@@@@@@@@%-..................-==----:.:@@@@@@@@@@@@@@@*###%%%%%%%      \n     **####*#@@@@@@@@@@@@@@@@@@@@=..................-==----:.+@@@@@#+%%%%%%%%%#%@@@@@@@@@*....................:-=-:::.:@@@@@@@@@@@@@@@#*##%%%%%%%%     \n    **#####*#@@@@@@@@@@@@@@@@@@@#....................==----:.-%@@@@%+#%%%%%%%%#%@@@@@@@@@+............................:@@@@@@@@@@@@@@@#*###%%%%%%#     \n    *######*#@@@@@@@@@@@@@@@@@@@+.....................:--::..-%@@@@%+#%%%%%%%##%@@@@@@@@@*............................-@@@@@@@@@@@@@@@#*###%%%%%%##    \n  ***######*#@@@@@@@@@@@@@@@@@@@=............................=@@@@@%+##%%%%%%#*%@@@@@@@@@#:...........................%@@@@@@@@@@@@@@@**###%%%%%##%    \n  *+#######**@@@@@@@@@@@@@@@@@@@*............................*@@@@@#+##%%%%%%#*#@@@@@@@@@@+.........................:%@@@@@@@@@@@@@@@@*###%%%%%%%%##   \n# +*#######**%@@@@@@@@@@@@@@@@@@%:..........................=%@@@@@+*##%%%%%%%##@@@@@@@@@@%+.......................+@@@@@@@@@@@@@@@@@%*####%%%%%%%%#   \n##+*#######**#@@@@@@@%%%%%@@@@@@@*.........................-%@@@@@%=###%%%%%%%#*%@@@@@@@@@@%#-..................:+%@@@@@@@@@@@@@@@@@@+*####%%%%%#####  \n#**#########*+%@@@@@%%%%%%%%@@@@@@*.......................+@@@@@@@++####%%%%%%#**@@@@@@@@@@%%%#+:............:=#@@@@@@@@@@@@@@@@@@@@*+#####%%%%######  \n***#########**+%@@@@@%%%%%%%%%@@@@@%=...................=%@@@@@@@*+####%%%%%%%##*#@@@@@@@@@%%%%@@%#*+++++*#%@@@@@@@@@@@@@@@@@@@@@@@#+#####%%%%%%#####  \n***##########*++@@@@@@%%%%%%%%%%@@@@@%+:.............-+%@@@@@@@@#+*###%%%#%%%%%##+#@@@@@@@@@%%%%%%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+*#######%%%######  \n***##########**++%@@@@@@%%%%%%%%%%%@@@@@%#=-::::-=*%@@@@@@@@@@@*+*####%#%%%%%%%###**@@@@@@@@@@%%%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@*+*#########%%######  \n#**##########***+=%@@@@@@@%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@@@@*+*#######%%%#%######*+%@@@@@@@@@@%%%%%%%%%%%%@@@@@@@@@@@@@@@@@@@#+*###########%######## \n#**###########****+*@@@@@@@@@%%%%%%%%%@@@@@@@@@@@@@@@@@@@@@@#++*#####################+*@@@@@@@@@@@@@@%%%%%@@@@@@@@@@@@@@@@@@@#++*##################### \n#**###########*****++*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%++*########################*+*%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#++*####################### \n#**###########*******++*%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#==*############################*++#@@@@@@@@@@@@@@@@@@@@@@@@@@@@%+=+**#######################  \n#**######*#************+++*%@@@@@@@@@@@@@@@@@@@@@@@@@#+=+*################################**++*#%@@@@@@@@@@@@@@@@@@@%*==+**##########################  \n#***#####*****************++++#%@@@@@@@@@@@@@@@@@#*==+**######################################**++++**#########**++++***#############################  \n##**#####*********************+++++++++++++++++==++**##############################################*******++++******##=::...::+######################  \n##**#####*****************************************##################################################################+..........=#####################  \n##**#####************************************#######################################################################+-=*+......:*###################   \n###**#####*****************************###############################################################################*-...:*#=:+###################   \n####**####******************************#############################################################################=....-*#######################    \n#####*####********************************########################################################################*=....-*#########################    \n ####**####***************************************#*############################################################+:....=*##########################     \n  ####*#####*******************************************######################################################*-....:+############################      \n  #####*#####***************************************************#########################################*+-....:+###############################      \n   ###########***************+::-+***********************************#################################*=.....-*##############################*##       \n    #####*#####****************+:...:=+***********************************#*####################**=:.....:=*###################################        \n     ####**#####******************+-....:-=*********************************#########*#####**=:......:+***##################################*#         \n      ####**#####********************+=-:.....:-=+************************************+=-:......:-+**#####################################***          \n      ######*######*********************+++=:........::--==++***************++==-::........:-=+*****######################################**           \n       ######*#######************************++==-:..................................:-=++**********#####################################**            \n         #####*#######******************************++==----:::::::::::::::---===++**********************############################***#              \n          ######*########**********************************************************************************##########################*##               \n           ###############*************************************************************************************#################*###*#*                \n            #######*########**********************************************************************************################***#***                  \n              #######*#########********************************************************************************#############**####**                   \n                ######**##########****************************************************************************###########*******#*                     \n                  ######**##########*************************************************************************##########*********                       \n                   #########*#########**********************************************************************########********##                         \n                      ########*#########*****************************************************************########***********                           \n                        ##########*#########*********************************************************#########************                             \n                          ######################*************************************************########***************                               \n                             ##########################*************************************#########****************                                  \n                               ##################################******************#############******************                                     \n                                   *######################################################*********************                                        \n                                      ***####***###*******#############*##########*************************                                            \n                                          *####*##*##*#************************************************"
 			P.Parent = k;
 			(TweenService:Create(
 				k,
@@ -2636,43 +2566,32 @@ return (function(...)
 		["Tooltip"] = "Execute this in the hotel at a start of run, either use it from here or execute the actual script",
 		["Callback"] = function()
 			(loadstring(
-				game:HttpGet(
-					"https://raw.githubusercontent.com/doram44/cheesy/refs/heads/main/stuff/deathfarm.lua"
-				)
+				game:HttpGet("https://raw.githubusercontent.com/doram44/cheesy/refs/heads/main/stuff/deathfarm.lua")
 			))()
 		end,
 	})
-	Groupboxes.MiscFun:AddToggle(
-		"OrbitItems",
-		{
-			["Text"] = "Orbit Items",
-			["Default"] = false,
-			["Tooltip"] = "Items that you have dropped will spin around you on the floor",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
-	Groupboxes.MiscFun:AddSlider(
-		"OrbitYOffset",
-		{
-			["Text"] = "Orbit Y Offset",
-			["Min"] = 0,
-			["Max"] = 2,
-			["Default"] = 2,
-			["Rounding"] = 1,
-			["Tooltip"] = "The Y position of the item orbit",
-		}
-	)
-	Groupboxes.MiscFun:AddSlider(
-		"OrbitSpeed",
-		{
-			["Text"] = "Orbit Speed",
-			["Min"] = 2,
-			["Max"] = 5,
-			["Default"] = 2,
-			["Rounding"] = 1,
-			["Tooltip"] = "The speed of the item orbit",
-		}
-	)
+	Groupboxes.MiscFun:AddToggle("OrbitItems", {
+		["Text"] = "Orbit Items",
+		["Default"] = false,
+		["Tooltip"] = "Items that you have dropped will spin around you on the floor",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
+	Groupboxes.MiscFun:AddSlider("OrbitYOffset", {
+		["Text"] = "Orbit Y Offset",
+		["Min"] = 0,
+		["Max"] = 2,
+		["Default"] = 2,
+		["Rounding"] = 1,
+		["Tooltip"] = "The Y position of the item orbit",
+	})
+	Groupboxes.MiscFun:AddSlider("OrbitSpeed", {
+		["Text"] = "Orbit Speed",
+		["Min"] = 2,
+		["Max"] = 5,
+		["Default"] = 2,
+		["Rounding"] = 1,
+		["Tooltip"] = "The speed of the item orbit",
+	})
 	OrbitConn = nil
 	local function startOrbitItems()
 		if OrbitConn then
@@ -2812,22 +2731,15 @@ return (function(...)
 			end
 		end)
 	end
-	Groupboxes.MiscFun:AddToggle(
-		"BringItems",
-		{
-			["Text"] = "Bring Items",
-			["Default"] = false,
-			["Tooltip"] = "Floats all dropped items in front of your mouse",
-		}
-	)
+	Groupboxes.MiscFun:AddToggle("BringItems", {
+		["Text"] = "Bring Items",
+		["Default"] = false,
+		["Tooltip"] = "Floats all dropped items in front of your mouse",
+	})
 	Toggles.BringItems:OnChanged(SetupBringItems)
 	Groupboxes.MiscFun:AddToggle(
 		"TwerkDance",
-		{
-			["Text"] = "Twerk",
-			["Default"] = false,
-			["Tooltip"] = "Plays the mspaint twerking animation (i think)",
-		}
+		{ ["Text"] = "Twerk", ["Default"] = false, ["Tooltip"] = "Plays the mspaint twerking animation (i think)" }
 	)
 	Toggles.TwerkDance:OnChanged(function(o)
 		local T = LocalPlayer.Character
@@ -2841,21 +2753,21 @@ return (function(...)
 			if not k then
 				return
 			end
-			local P = k:LoadAnimation(o)
-			P.Looped = true
-			P:Play()
-		else
 			if TwerkTrack then
 				TwerkTrack:Stop()
 			end
+			TwerkTrack = k:LoadAnimation(o)
+			TwerkTrack.Looped = true
+			TwerkTrack:Play()
+		else
+			if TwerkTrack then
+				TwerkTrack:Stop()
+				TwerkTrack = nil
+			end
 		end
 	end)
-	Functions = {
-		["FirePrompt"] = nil,
-		["GetLibraryCode"] = nil,
-		["HasItem"] = nil,
-		["HandleHidingTransparency"] = nil,
-	}
+	Functions =
+		{ ["FirePrompt"] = nil, ["GetLibraryCode"] = nil, ["HasItem"] = nil, ["HandleHidingTransparency"] = nil }
 	Connections = {}
 	if Options.HotelAutoWalkMethod then
 		Options.HotelAutoWalkMethod:OnChanged(function()
@@ -2867,8 +2779,7 @@ return (function(...)
 				Functions.HotelAutoWalk.StopTeleport()
 			end
 			if
-				HotelMethodName() == "Teleport"
-				and (Functions.HotelAutoWalk and Functions.HotelAutoWalk.RunTeleport)
+				HotelMethodName() == "Teleport" and (Functions.HotelAutoWalk and Functions.HotelAutoWalk.RunTeleport)
 			then
 				Functions.HotelAutoWalk.RunTeleport()
 			end
@@ -2914,44 +2825,28 @@ return (function(...)
 			end)
 		end,
 	})
-	Groupboxes.SpamBuy:AddSlider(
-		"SpamBuyCount",
-		{
-			["Text"] = "Purchase Count",
-			["Min"] = 1,
-			["Max"] = 6,
-			["Default"] = 3,
-			["Rounding"] = 0,
-			["Compact"] = true,
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
-	Groupboxes.SpamBuy:AddDropdown(
-		"SpamBuyItems",
-		{
-			["Text"] = "Items to Buy",
-			["Values"] = {
-				"Lockpick",
-				"Lighter",
-				"Flashlight",
-				"Vitamins",
-				"Crucifix",
-				"Skeleton Key",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
-	Groupboxes.SpamBuy:AddToggle(
-		"ShowCrucifix",
-		{
-			["Text"] = "Show Crucifix",
-			["Default"] = false,
-			["Tooltip"] = "Shows/hides the crucifix in the item shop",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.SpamBuy:AddSlider("SpamBuyCount", {
+		["Text"] = "Purchase Count",
+		["Min"] = 1,
+		["Max"] = 6,
+		["Default"] = 3,
+		["Rounding"] = 0,
+		["Compact"] = true,
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
+	Groupboxes.SpamBuy:AddDropdown("SpamBuyItems", {
+		["Text"] = "Items to Buy",
+		["Values"] = { "Lockpick", "Lighter", "Flashlight", "Vitamins", "Crucifix", "Skeleton Key" },
+		["Multi"] = true,
+		["AllowNull"] = true,
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
+	Groupboxes.SpamBuy:AddToggle("ShowCrucifix", {
+		["Text"] = "Show Crucifix",
+		["Default"] = false,
+		["Tooltip"] = "Shows/hides the crucifix in the item shop",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	Toggles.ShowCrucifix:OnChanged(function(o)
 		local T = detectFloor()
 		if T ~= "OldHotel" then
@@ -2966,9 +2861,7 @@ return (function(...)
 						LocalPlayer.PlayerGui.MainUI:FindFirstChild("ItemShop")
 						and (
 							LocalPlayer.PlayerGui.MainUI.ItemShop:FindFirstChild("Items")
-							and LocalPlayer.PlayerGui.MainUI.ItemShop.Items:FindFirstChild(
-								"ItemShop_Crucifix"
-							)
+							and LocalPlayer.PlayerGui.MainUI.ItemShop.Items:FindFirstChild("ItemShop_Crucifix")
 						)
 					)
 				)
@@ -2977,15 +2870,12 @@ return (function(...)
 			k.Visible = o
 		end
 	end)
-	Groupboxes.SpamBuy:AddToggle(
-		"ShowSkeletonKey",
-		{
-			["Text"] = "Show Skeleton Key",
-			["Default"] = false,
-			["Tooltip"] = "Shows/hides the skeleton key in the item shop",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.SpamBuy:AddToggle("ShowSkeletonKey", {
+		["Text"] = "Show Skeleton Key",
+		["Default"] = false,
+		["Tooltip"] = "Shows/hides the skeleton key in the item shop",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	Toggles.ShowSkeletonKey:OnChanged(function(o)
 		local T = detectFloor()
 		if T ~= "OldHotel" then
@@ -3000,9 +2890,7 @@ return (function(...)
 						LocalPlayer.PlayerGui.MainUI:FindFirstChild("ItemShop")
 						and (
 							LocalPlayer.PlayerGui.MainUI.ItemShop:FindFirstChild("Items")
-							and LocalPlayer.PlayerGui.MainUI.ItemShop.Items:FindFirstChild(
-								"ItemShop_Skeleton Key"
-							)
+							and LocalPlayer.PlayerGui.MainUI.ItemShop.Items:FindFirstChild("ItemShop_Skeleton Key")
 						)
 					)
 				)
@@ -3012,40 +2900,22 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Prompts = rT.Exploits:AddLeftGroupbox("Prompts")
-	Groupboxes.Prompts:AddToggle(
-		"InstantInteract",
-		{
-			["Text"] = "Instant Interact",
-			["Default"] = false,
-			["Tooltip"] = "Removes the wait time for interactions e.g. locks",
-		}
-	)
+	Groupboxes.Prompts:AddToggle("InstantInteract", {
+		["Text"] = "Instant Interact",
+		["Default"] = false,
+		["Tooltip"] = "Removes the wait time for interactions e.g. locks",
+	})
 	Groupboxes.Prompts:AddToggle(
 		"PromptClip",
-		{
-			["Text"] = "Prompt Clip",
-			["Default"] = false,
-			["Tooltip"] = "Allows you to interact through walls",
-		}
+		{ ["Text"] = "Prompt Clip", ["Default"] = false, ["Tooltip"] = "Allows you to interact through walls" }
 	)
 	Groupboxes.Prompts:AddToggle(
 		"PromptReach",
-		{
-			["Text"] = "Prompt Reach",
-			["Default"] = false,
-			["Tooltip"] = "Increases the range of all proximity prompts",
-		}
+		{ ["Text"] = "Prompt Reach", ["Default"] = false, ["Tooltip"] = "Increases the range of all proximity prompts" }
 	)
 	Groupboxes.Prompts:AddSlider(
 		"PromptRange",
-		{
-			["Text"] = "Prompt Range",
-			["Min"] = 1,
-			["Max"] = 2,
-			["Default"] = 1,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Prompt Range", ["Min"] = 1, ["Max"] = 2, ["Default"] = 1, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	_TrackedPrompts = {}
 	Options.PromptRange:OnChanged(function(o)
@@ -3056,15 +2926,12 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Exploits = rT.Exploits:AddLeftGroupbox("Exploits")
-	Groupboxes.Exploits:AddToggle(
-		"InfiniteItemsToggle",
-		{
-			["Text"] = "Infinite Items",
-			["Default"] = false,
-			["Tooltip"] = "Allows you to use lockpicks, shears, skeleton keys, and multitools without draining the usage",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Exploits:AddToggle("InfiniteItemsToggle", {
+		["Text"] = "Infinite Items",
+		["Default"] = false,
+		["Tooltip"] = "Allows you to use lockpicks, shears, skeleton keys, and multitools without draining the usage",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Connections.InfiniteItemsHandler = ProximityPromptService.PromptTriggered:Connect(function(o)
 		if not o:GetAttribute("FakePrompt") then
 			return
@@ -3080,16 +2947,7 @@ return (function(...)
 			"KeyIron",
 			"Multitool",
 		}
-		local k = {
-			"Lockpick",
-			"Shears",
-			"SkeletonKey",
-			"Key",
-			"KeyElectrical",
-			"KeyBackdoor",
-			"KeyIron",
-			"Multitool",
-		}
+		local k = { "Lockpick", "Shears", "SkeletonKey", "Key", "KeyElectrical", "KeyBackdoor", "KeyIron", "Multitool" }
 		local P
 		for o, T in ipairs(T) do
 			P = Character:FindFirstChild(T)
@@ -3174,10 +3032,7 @@ return (function(...)
 			Functions.HasItem("Shears", true)
 			and (
 				A
-				and (
-					w.Parent.Name ~= "CuttableVines"
-					and (w.Parent.Name ~= "Chest_Vine" and w.Parent.Name ~= "Cellar")
-				)
+				and (w.Parent.Name ~= "CuttableVines" and (w.Parent.Name ~= "Chest_Vine" and w.Parent.Name ~= "Cellar"))
 			)
 		then
 			return
@@ -3198,12 +3053,7 @@ return (function(...)
 				C
 				and (
 					Toggles.InfiniteItemsToggle.Value
-					and ({
-						["Lockpicks"] = true,
-						["Skeleton Key"] = true,
-						["Shears"] = true,
-						["Multitool"] = true,
-					})[C]
+					and ({ ["Lockpicks"] = true, ["Skeleton Key"] = true, ["Shears"] = true, ["Multitool"] = true })[C]
 				)
 			)
 		then
@@ -3224,34 +3074,25 @@ return (function(...)
 			Functions.FirePrompt(T)
 		end
 	end)
-	Groupboxes.Exploits:AddToggle(
-		"InfiniteCrucifix",
-		{
-			["Text"] = "Infinite Crucifix",
-			["Default"] = false,
-			["Tooltip"] = "Performs a glitch that doesn't use up your crucifix when used on a rushlike entity (rush, ambush, a60, a120, blitz), however, this is inconsistent",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.Exploits:AddToggle(
-		"AutoHeartbeatMinigame",
-		{
-			["Text"] = "Win Heartbeat Minigame",
-			["Default"] = false,
-			["Tooltip"] = "Automatically passes the heartbeat minigame when it starts",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.Exploits:AddToggle(
-		"CrouchSpoof",
-		{
-			["Text"] = "Crouch Spoof",
-			["Default"] = false,
-			["Tooltip"] = "Always makes the game think you are crouching",
-			["Disabled"] = not hasHookMeta,
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Exploits:AddToggle("InfiniteCrucifix", {
+		["Text"] = "Infinite Crucifix",
+		["Default"] = false,
+		["Tooltip"] = "Performs a glitch that doesn't use up your crucifix when used on a rushlike entity (rush, ambush, a60, a120, blitz), however, this is inconsistent",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.Exploits:AddToggle("AutoHeartbeatMinigame", {
+		["Text"] = "Win Heartbeat Minigame",
+		["Default"] = false,
+		["Tooltip"] = "Automatically passes the heartbeat minigame when it starts",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.Exploits:AddToggle("CrouchSpoof", {
+		["Text"] = "Crouch Spoof",
+		["Default"] = false,
+		["Tooltip"] = "Always makes the game think you are crouching",
+		["Disabled"] = not hasHookMeta,
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Groupboxes.Exploits:AddButton({
 		["Text"] = "Fake Revive",
 		["Tooltip"] = "This doesnt always work, and interacting with a bandage will disable it, and will not be able to enable it back. Sometimes you will not be able to fully finish the run, but you can still go through doors/finish",
@@ -3330,10 +3171,7 @@ return (function(...)
 					((game:GetService("CoreGui")):FindFirstChild("RobloxGui")).Backpack.Visible = true
 					LocalPlayer:SetAttribute("Alive", true)
 					LocalPlayer:SetAttribute("FakeDeath", true)
-					UiLibrary:Notify({
-						["Title"] = "Pick up a bandage to restore all interactions",
-						["Time"] = 5,
-					})
+					UiLibrary:Notify({ ["Title"] = "Pick up a bandage to restore all interactions", ["Time"] = 5 })
 				end
 			end)
 		end,
@@ -3371,10 +3209,7 @@ return (function(...)
 		end
 		table.insert(_TrackedPrompts, o)
 		configureProximityPrompt(o)
-		if
-			Executor.fireproximityprompt
-			and (Toggles.InfiniteItemsToggle and Toggles.InfiniteItemsToggle.Value)
-		then
+		if Executor.fireproximityprompt and (Toggles.InfiniteItemsToggle and Toggles.InfiniteItemsToggle.Value) then
 			local T = LocalPlayer:GetAttribute("CurrentFloor") or ""
 			if T ~= "OldHotel" and T ~= "Fools" then
 				local T = xT[o.Name]
@@ -3383,10 +3218,7 @@ return (function(...)
 						o.Parent
 						and (
 							o.Parent.Parent
-							and (
-								o.Parent.Parent.Name == "Locker_Small_Locked"
-								and o.Name == "ActivateEventPrompt"
-							)
+							and (o.Parent.Parent.Name == "Locker_Small_Locked" and o.Name == "ActivateEventPrompt")
 						)
 					)
 				if T then
@@ -3405,8 +3237,7 @@ return (function(...)
 					if Toggles.PromptClip.Value then
 						T.RequiresLineOfSight = false
 					end
-					T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
-						* Options.PromptRange.Value
+					T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old") * Options.PromptRange.Value
 					FakePrompts[T] = o
 					table.insert(_TrackedPrompts, T)
 					T.Destroying:Once(function()
@@ -3460,8 +3291,7 @@ return (function(...)
 	Toggles.PromptReach:OnChanged(function()
 		for o, T in ipairs(_TrackedPrompts) do
 			if Toggles.PromptReach.Value then
-				T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
-					* Options.PromptRange.Value
+				T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old") * Options.PromptRange.Value
 			else
 				T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
 			end
@@ -3470,8 +3300,7 @@ return (function(...)
 	Options.PromptRange:OnChanged(function()
 		if Toggles.PromptReach.Value then
 			for o, T in ipairs(_TrackedPrompts) do
-				T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
-					* Options.PromptRange.Value
+				T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old") * Options.PromptRange.Value
 			end
 		end
 	end)
@@ -3487,48 +3316,33 @@ return (function(...)
 		"BypassDupe",
 		{ ["Text"] = "Anti Dupe", ["Default"] = false, ["Tooltip"] = "Prevents you from opening Dupe doors" }
 	)
-	Groupboxes.Exploits_Bypasses:AddToggle(
-		"BypassEyes",
-		{
-			["Text"] = "Anti Eyes",
-			["Default"] = false,
-			["Tooltip"] = "Prevents Eyes from hurting you",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.Exploits_Bypasses:AddToggle(
-		"BypassLookman",
-		{
-			["Text"] = "Anti Lookman",
-			["Default"] = false,
-			["Tooltip"] = "Prevents Lookman from hurting you",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.Exploits_Bypasses:AddToggle(
-		"BypassGloombatEggs",
-		{
-			["Text"] = "Anti Gloombat Eggs",
-			["Default"] = false,
-			["Tooltip"] = "Prevents taking damage from stepping on Gloombat eggs",
-		}
-	)
-	Groupboxes.Exploits_Bypasses:AddToggle(
-		"BypassSeekObstructions",
-		{
-			["Text"] = "Anti Seek Obstructions",
-			["Default"] = false,
-			["Tooltip"] = "Prevents obstacles in the Seek chase from harming you",
-		}
-	)
-	Groupboxes.Exploits_Bypasses:AddToggle(
-		"BypassVacuum",
-		{
-			["Text"] = "Anti Vacuum",
-			["Default"] = false,
-			["Tooltip"] = "Prevents you from falling into Vacuum fake doors",
-		}
-	)
+	Groupboxes.Exploits_Bypasses:AddToggle("BypassEyes", {
+		["Text"] = "Anti Eyes",
+		["Default"] = false,
+		["Tooltip"] = "Prevents Eyes from hurting you",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.Exploits_Bypasses:AddToggle("BypassLookman", {
+		["Text"] = "Anti Lookman",
+		["Default"] = false,
+		["Tooltip"] = "Prevents Lookman from hurting you",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.Exploits_Bypasses:AddToggle("BypassGloombatEggs", {
+		["Text"] = "Anti Gloombat Eggs",
+		["Default"] = false,
+		["Tooltip"] = "Prevents taking damage from stepping on Gloombat eggs",
+	})
+	Groupboxes.Exploits_Bypasses:AddToggle("BypassSeekObstructions", {
+		["Text"] = "Anti Seek Obstructions",
+		["Default"] = false,
+		["Tooltip"] = "Prevents obstacles in the Seek chase from harming you",
+	})
+	Groupboxes.Exploits_Bypasses:AddToggle("BypassVacuum", {
+		["Text"] = "Anti Vacuum",
+		["Default"] = false,
+		["Tooltip"] = "Prevents you from falling into Vacuum fake doors",
+	})
 	Groupboxes.Exploits_Bypasses:AddToggle(
 		"BypassSnare",
 		{ ["Text"] = "Anti Snare", ["Default"] = false, ["Tooltip"] = "Prevents Snare from trapping you" }
@@ -3674,11 +3488,9 @@ return (function(...)
 						local k = T
 						if T:IsA("BasePart") then
 							task.spawn(function()
-								if
-									pcall(function()
-										return Executor.isnetworkowner(k)
-									end)
-								then
+								if pcall(function()
+									return Executor.isnetworkowner(k)
+								end) then
 									k.Position = Vector3.new(-49999, -49999, -49999)
 								end
 							end)
@@ -3694,11 +3506,9 @@ return (function(...)
 						if T:IsA("BasePart") then
 							T.CanCollide = false
 							task.spawn(function()
-								while
-									pcall(function()
-										return Executor.isnetworkowner(k)
-									end)
-								do
+								while pcall(function()
+									return Executor.isnetworkowner(k)
+								end) do
 									k.Position = Vector3.new(
 										math.random(-29999, 29999),
 										math.random(-29999, 29999),
@@ -3745,10 +3555,7 @@ return (function(...)
 			table.insert(wT.SeekObstructions, o)
 		elseif T == "Bridge" then
 			for T, k in o:GetChildren() do
-				if
-					k.Name == "PlayerBarrier"
-					and (k.Size.Y == 2.75 and (k.Rotation.X == 0 or k.Rotation.X == 180))
-				then
+				if k.Name == "PlayerBarrier" and (k.Size.Y == 2.75 and (k.Rotation.X == 0 or k.Rotation.X == 180)) then
 					local T = k:Clone()
 					T.CFrame = T.CFrame * CFrame.new(0, 0, -5)
 					T.Name = tostring(math.random(100000000, 999999999))
@@ -3851,8 +3658,7 @@ return (function(...)
 				local w = Instance.new("Beam")
 				local F = rawget(Toggles, "ShowSeekPathColor") and Options.ShowSeekPathColor.Value
 					or Color3.fromRGB(0, 255, 0)
-				w.Color =
-					ColorSequence.new({ ColorSequenceKeypoint.new(0, F), ColorSequenceKeypoint.new(1, F) })
+				w.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, F), ColorSequenceKeypoint.new(1, F) })
 				w.FaceCamera = true
 				w.Width0 = 0.2
 				w.Width1 = 0.2
@@ -3860,13 +3666,9 @@ return (function(...)
 				w.LightInfluence = 0
 				w.LightEmission = 0
 				w.Enabled = true
-				local A = rawget(Toggles, "ShowSeekPathToggle")
-						and (Toggles.ShowSeekPathToggle.Value and 0)
-					or 1
-				w.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, A),
-					NumberSequenceKeypoint.new(1, A),
-				})
+				local A = rawget(Toggles, "ShowSeekPathToggle") and (Toggles.ShowSeekPathToggle.Value and 0) or 1
+				w.Transparency =
+					NumberSequence.new({ NumberSequenceKeypoint.new(0, A), NumberSequenceKeypoint.new(1, A) })
 				w.Parent = CheesyState.SeekNodesFolder
 				local d = Instance.new("Attachment", T)
 				local C = Instance.new("Attachment", k)
@@ -3977,12 +3779,7 @@ return (function(...)
 		if o and CheesyState.IsEyes then
 			local o = detectFloor()
 			if o == "Fools" or o == "OldHotel" then
-				GameRemotes.MotorReplication:FireServer(
-					0,
-					(CheesyState.SpoofOffset == 200 and 65 or -65),
-					0,
-					false
-				)
+				GameRemotes.MotorReplication:FireServer(0, (CheesyState.SpoofOffset == 200 and 65 or -65), 0, false)
 			else
 				GameRemotes.MotorReplication:FireServer(-650)
 			end
@@ -3992,12 +3789,7 @@ return (function(...)
 		if o and CheesyState.IsLookman then
 			local o = detectFloor()
 			if o == "Fools" or o == "OldHotel" then
-				GameRemotes.MotorReplication:FireServer(
-					0,
-					(CheesyState.SpoofOffset == 200 and 65 or -65),
-					0,
-					false
-				)
+				GameRemotes.MotorReplication:FireServer(0, (CheesyState.SpoofOffset == 200 and 65 or -65), 0, false)
 			else
 				GameRemotes.MotorReplication:FireServer(-650)
 			end
@@ -4056,44 +3848,28 @@ return (function(...)
 	Groupboxes.Exploits_Removals:AddDivider()
 	Groupboxes.Exploits_Removals:AddToggle(
 		"RemoveFootstepSounds",
-		{
-			["Text"] = "Remove Footstep Sounds",
-			["Default"] = false,
-			["Tooltip"] = "Removes the sounds when walking",
-		}
+		{ ["Text"] = "Remove Footstep Sounds", ["Default"] = false, ["Tooltip"] = "Removes the sounds when walking" }
 	)
-	Groupboxes.Exploits_Removals:AddToggle(
-		"RemoveJamminMusic",
-		{
-			["Text"] = "Remove Jammin Music",
-			["Default"] = false,
-			["Tooltip"] = "Removes the music and muffle effect from the Jammin modifier",
-		}
-	)
-	Groupboxes.Exploits_Removals:AddToggle(
-		"RemoveInteractingSounds",
-		{
-			["Text"] = "Remove Interacting Sounds",
-			["Default"] = false,
-			["Tooltip"] = "Removes the sounds when interacting with proximity prompts",
-		}
-	)
-	Groupboxes.Exploits_Removals:AddToggle(
-		"RemoveHasteSound",
-		{
-			["Text"] = "Remove Haste Sound",
-			["Default"] = false,
-			["Tooltip"] = "Mutes the ambience sound when Haste is active",
-		}
-	)
-	Groupboxes.Exploits_Removals:AddToggle(
-		"RemoveClosetDelay",
-		{
-			["Text"] = "Remove Closet Delay",
-			["Default"] = false,
-			["Tooltip"] = "Removes the short window where you can't exit out of a closet after the animation finishes.",
-		}
-	)
+	Groupboxes.Exploits_Removals:AddToggle("RemoveJamminMusic", {
+		["Text"] = "Remove Jammin Music",
+		["Default"] = false,
+		["Tooltip"] = "Removes the music and muffle effect from the Jammin modifier",
+	})
+	Groupboxes.Exploits_Removals:AddToggle("RemoveInteractingSounds", {
+		["Text"] = "Remove Interacting Sounds",
+		["Default"] = false,
+		["Tooltip"] = "Removes the sounds when interacting with proximity prompts",
+	})
+	Groupboxes.Exploits_Removals:AddToggle("RemoveHasteSound", {
+		["Text"] = "Remove Haste Sound",
+		["Default"] = false,
+		["Tooltip"] = "Mutes the ambience sound when Haste is active",
+	})
+	Groupboxes.Exploits_Removals:AddToggle("RemoveClosetDelay", {
+		["Text"] = "Remove Closet Delay",
+		["Default"] = false,
+		["Tooltip"] = "Removes the short window where you can't exit out of a closet after the animation finishes.",
+	})
 	Toggles.RemoveA90:OnChanged(function(o)
 		local T = getMainGameModules()
 		if not T then
@@ -4175,11 +3951,7 @@ return (function(...)
 	end)
 	Groupboxes.Exploits_Damage:AddToggle(
 		"NoScreechDamage",
-		{
-			["Text"] = "No Screech Damage",
-			["Default"] = false,
-			["Tooltip"] = "Prevents Screech from hurting you",
-		}
+		{ ["Text"] = "No Screech Damage", ["Default"] = false, ["Tooltip"] = "Prevents Screech from hurting you" }
 	)
 	Groupboxes.Exploits_Damage:AddToggle(
 		"NoA90Damage",
@@ -4238,15 +4010,12 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Exploits_Automation = rT.Exploits:AddRightGroupbox("Automation")
-	Groupboxes.Exploits_Automation:AddToggle(
-		"AutoUnlockPadlockToggle",
-		{
-			["Text"] = "Auto Unlock Padlock",
-			["Default"] = false,
-			["Tooltip"] = "Instantly unlocks the room 50 padlock when you get close, but you need the books required",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.Exploits_Automation:AddToggle("AutoUnlockPadlockToggle", {
+		["Text"] = "Auto Unlock Padlock",
+		["Default"] = false,
+		["Tooltip"] = "Instantly unlocks the room 50 padlock when you get close, but you need the books required",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	Groupboxes.Exploits_Automation:AddButton({
 		["Text"] = "Show Library Code",
 		["Tooltip"] = "Displays the current library code in a notification",
@@ -4260,51 +4029,34 @@ return (function(...)
 			end
 		end,
 	})
-	Groupboxes.Exploits_Automation:AddToggle(
-		"AutoBreakerBox",
-		{
-			["Text"] = "Auto Breaker Box",
-			["Default"] = false,
-			["Tooltip"] = "Automatically solves the breaker box.",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.Exploits_Automation:AddToggle("AutoBreakerBox", {
+		["Text"] = "Auto Breaker Box",
+		["Default"] = false,
+		["Tooltip"] = "Automatically solves the breaker box.",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	Groupboxes.Exploits_Automation:AddDropdown(
 		"BreakerBoxMethod",
-		{
-			["Text"] = "Breaker Box Method",
-			["Values"] = { "Instant", "Legit" },
-			["Default"] = 1,
-			["Multi"] = false,
-		}
+		{ ["Text"] = "Breaker Box Method", ["Values"] = { "Instant", "Legit" }, ["Default"] = 1, ["Multi"] = false }
 	)
-	Groupboxes.Exploits_Automation:AddToggle(
-		"AutoLibraryBruteForce",
-		{
-			["Text"] = "Auto Brute-Force Padlock",
-			["Default"] = false,
-			["Tooltip"] = "Automatically brute-forces codes in the library code when near the padlock until it finds the correct code",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.Exploits_Automation:AddToggle("AutoLibraryBruteForce", {
+		["Text"] = "Auto Brute-Force Padlock",
+		["Default"] = false,
+		["Tooltip"] = "Automatically brute-forces codes in the library code when near the padlock until it finds the correct code",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	Groupboxes.Exploits_Automation:AddDivider()
-	Groupboxes.Exploits_Automation:AddToggle(
-		"HotelAutoWalk",
-		{
-			["Text"] = "Auto Hotel",
-			["Default"] = false,
-			["Tooltip"] = "TRIES (fails a lot of the time) to beat the hotel automatically for you up to door 100",
-		}
-	)
-	Groupboxes.Exploits_Automation:AddDropdown(
-		"HotelAutoWalkMethod",
-		{
-			["Text"] = "Method",
-			["Values"] = { "Teleport", "Pathfind" },
-			["Default"] = "Teleport",
-			["Tooltip"] = "Teleport hops straight to the key/door each room. Pathfind walks the route with the pathfinder.",
-		}
-	)
+	Groupboxes.Exploits_Automation:AddToggle("HotelAutoWalk", {
+		["Text"] = "Auto Hotel",
+		["Default"] = false,
+		["Tooltip"] = "TRIES (fails a lot of the time) to beat the hotel automatically for you up to door 100",
+	})
+	Groupboxes.Exploits_Automation:AddDropdown("HotelAutoWalkMethod", {
+		["Text"] = "Method",
+		["Values"] = { "Teleport", "Pathfind" },
+		["Default"] = "Teleport",
+		["Tooltip"] = "Teleport hops straight to the key/door each room. Pathfind walks the route with the pathfinder.",
+	})
 	HotelMethodName = function()
 		local o = Options.HotelAutoWalkMethod and Options.HotelAutoWalkMethod.Value
 		return o or "Teleport"
@@ -4530,10 +4282,7 @@ return (function(...)
 				else
 					local o = HotelAssistRoom()
 					if o == 50 and not HotelLibraryReady() then
-						if
-							not CheesyState.HotelLibNextAttempt
-							or tick() >= CheesyState.HotelLibNextAttempt
-						then
+						if not CheesyState.HotelLibNextAttempt or tick() >= CheesyState.HotelLibNextAttempt then
 							CheesyState.HotelLibNextAttempt = tick() + 3
 							pcall(HotelAutoLibrary)
 						end
@@ -4554,12 +4303,7 @@ return (function(...)
 			end
 		end
 		pcall(function()
-			(game:GetService("VirtualInputManager")):SendKeyEvent(
-				false,
-				Enum.KeyCode.LeftControl,
-				false,
-				game
-			)
+			(game:GetService("VirtualInputManager")):SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
 		end)
 		CheesyState.HotelCrouchHeld = false
 		CheesyState.HotelActiveSince = nil
@@ -4669,8 +4413,7 @@ return (function(...)
 				end)
 			end
 			if
-				HotelMethodName() == "Teleport"
-				and (Functions.HotelAutoWalk and Functions.HotelAutoWalk.RunTeleport)
+				HotelMethodName() == "Teleport" and (Functions.HotelAutoWalk and Functions.HotelAutoWalk.RunTeleport)
 			then
 				Functions.HotelAutoWalk.RunTeleport()
 			end
@@ -4700,11 +4443,7 @@ return (function(...)
 	end)
 	Groupboxes.Exploits_Automation:AddToggle(
 		"HotelShowPath",
-		{
-			["Text"] = "Show Hotel Path",
-			["Default"] = false,
-			["Tooltip"] = "Shows the current auto hotel path",
-		}
+		{ ["Text"] = "Show Hotel Path", ["Default"] = false, ["Tooltip"] = "Shows the current auto hotel path" }
 	)
 	Toggles.HotelShowPath:AddColorPicker(
 		"HotelShowPathColor",
@@ -4770,13 +4509,13 @@ return (function(...)
 			and ReplicatedStorage.FloorReplicated.ClientRemote:FindFirstChild("Haste")
 		)
 	then
-		local o = (ReplicatedStorage.FloorReplicated.ClientRemote.Haste.Ambience:GetPropertyChangedSignal(
-			"Playing"
-		)):Connect(function()
-			if Toggles.RemoveHasteSound.Value then
-				ReplicatedStorage.FloorReplicated.ClientRemote.Haste.Ambience.Playing = false
+		local o = (ReplicatedStorage.FloorReplicated.ClientRemote.Haste.Ambience:GetPropertyChangedSignal("Playing")):Connect(
+			function()
+				if Toggles.RemoveHasteSound.Value then
+					ReplicatedStorage.FloorReplicated.ClientRemote.Haste.Ambience.Playing = false
+				end
 			end
-		end)
+		)
 		table.insert(Connections, o)
 	end
 	CheesyState = {
@@ -4943,10 +4682,7 @@ return (function(...)
 				for o, P in ipairs(w) do
 					if
 						k:IsA("ImageLabel")
-						and (
-							P:IsA("ImageLabel")
-							and (k.ImageRectOffset == P.ImageRectOffset and T[tonumber(P.Name)])
-						)
+						and (P:IsA("ImageLabel") and (k.ImageRectOffset == P.ImageRectOffset and T[tonumber(P.Name)]))
 					then
 						T[tonumber(P.Name)] = k.TextLabel.Text
 					end
@@ -4968,17 +4704,13 @@ return (function(...)
 				local w = (k:GetPropertyChangedSignal("Value")):Connect(function()
 					for o, T in ipairs(T) do
 						if T:GetAttribute("Transparency_Old") then
-							(TweenService:Create(
-								T,
-								TweenInfo.new(0.25, Enum.EasingStyle.Linear),
-								{
-									["Transparency"] = (
-										k.Value == Character and Toggles.TransparentHidingSpotsToggle.Value
-									)
-											and Options.TransparentHidingSpotsSlider.Value
-										or T:GetAttribute("Transparency_Old"),
-								}
-							)):Play()
+							(TweenService:Create(T, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {
+								["Transparency"] = (
+									k.Value == Character and Toggles.TransparentHidingSpotsToggle.Value
+								)
+										and Options.TransparentHidingSpotsSlider.Value
+									or T:GetAttribute("Transparency_Old"),
+							})):Play()
 						end
 					end
 				end)
@@ -5035,10 +4767,7 @@ return (function(...)
 		for T, k in ipairs(wT.HidingSpots) do
 			if k.PrimaryPart and k:FindFirstChild("HidePrompt") then
 				local T = LocalPlayer:DistanceFromCharacter(k.PrimaryPart.Position)
-				if
-					T < o.Distance
-					and (T < k.HidePrompt.MaxActivationDistance and k.PrimaryPart.Position.Y > -10)
-				then
+				if T < o.Distance and (T < k.HidePrompt.MaxActivationDistance and k.PrimaryPart.Position.Y > -10) then
 					local P = k:FindFirstChild("HiddenPlayer", true)
 					if P and not P.Value then
 						o.Distance = T
@@ -5088,8 +4817,7 @@ return (function(...)
 				local T = { ... }
 				local k = Executor.getnamecallmethod()
 				if o.Name == "MotorReplication" and k == "FireServer" then
-					local o = Toggles.BypassMonument
-						and (Toggles.BypassMonument.Value and CheesyState.IsMonument)
+					local o = Toggles.BypassMonument and (Toggles.BypassMonument.Value and CheesyState.IsMonument)
 					local k = (Toggles.BypassEyes.Value and CheesyState.IsEyes)
 						or (Toggles.BypassLookman.Value and CheesyState.IsLookman)
 					if o then
@@ -5119,10 +4847,7 @@ return (function(...)
 					end
 					T[2] = true
 				end
-				if
-					Toggles.AutoHeartbeatMinigame
-					and (Toggles.AutoHeartbeatMinigame.Value and k == "FireServer")
-				then
+				if Toggles.AutoHeartbeatMinigame and (Toggles.AutoHeartbeatMinigame.Value and k == "FireServer") then
 					if o.Name == "ClutchHeartbeat" then
 						return MainHook(o, true)
 					end
@@ -5151,8 +4876,7 @@ return (function(...)
 						local o = P.GetDoor()
 						if o then
 							local k = o:GetPivot()
-							local P = workspace.CurrentCamera
-								and workspace.CurrentCamera:FindFirstChild("MinecartRig")
+							local P = workspace.CurrentCamera and workspace.CurrentCamera:FindFirstChild("MinecartRig")
 							if P then
 								P:PivotTo(k)
 							end
@@ -5191,10 +4915,7 @@ return (function(...)
 							CheesyState.RoomsAutoWalkActive
 							and (
 								Toggles.RoomsAutoWalkSpoofFootsteps.Value
-								and (
-									CurrentFloor == "Rooms"
-									and not (Character and Character:GetAttribute("Hiding"))
-								)
+								and (CurrentFloor == "Rooms" and not (Character and Character:GetAttribute("Hiding")))
 							)
 						)
 					)
@@ -5266,8 +4987,7 @@ return (function(...)
 				if CheesyState.BruteForceCount and CheesyState.BruteForceCount > 0 then
 					task.spawn(function()
 						UiLibrary:Notify({
-							["Title"] = "Padlock code found after "
-								.. (CheesyState.BruteForceCount .. " attempts!"),
+							["Title"] = "Padlock code found after " .. (CheesyState.BruteForceCount .. " attempts!"),
 							["Description"] = "yay",
 							["Time"] = 5,
 						})
@@ -5350,9 +5070,7 @@ return (function(...)
 				end
 				CheesyState.BreakerBoxInteracted = true
 			end
-			Connections.BreakerConnection = (T:GetPropertyChangedSignal("Text")):Connect(
-				handleBreakerBoxAutoSolve
-			)
+			Connections.BreakerConnection = (T:GetPropertyChangedSignal("Text")):Connect(handleBreakerBoxAutoSolve)
 			CheesyState.RunBreakerFunc = handleBreakerBoxAutoSolve
 			o.Destroying:Once(function()
 				CheesyState.RunBreakerFunc = nil
@@ -5438,13 +5156,7 @@ return (function(...)
 		end
 		CheesyState.InfCrucifixRunning = true
 		task.spawn(function()
-			local o = {
-				["RushMoving"] = 49,
-				["AmbushMoving"] = 50,
-				["A60"] = 49,
-				["A120"] = 50,
-				["BackdoorRush"] = 49,
-			}
+			local o = { ["RushMoving"] = 49, ["AmbushMoving"] = 50, ["A60"] = 49, ["A120"] = 50, ["BackdoorRush"] = 49 }
 			local T = 0.05
 			local function updateNetworkPingEstimate()
 				local o, k = pcall(function()
@@ -5561,10 +5273,7 @@ return (function(...)
 					end
 				end
 				for T, k in workspace:GetDescendants() do
-					if
-						k:IsA("Model")
-						and (k.Name == "Crucifix" and not k:IsDescendantOf(LocalPlayer.Character))
-					then
+					if k:IsA("Model") and (k.Name == "Crucifix" and not k:IsDescendantOf(LocalPlayer.Character)) then
 						if (((k:GetPivot()).Position - o.Position)).Magnitude < 25 then
 							return k
 						end
@@ -5647,24 +5356,14 @@ return (function(...)
 			end
 		end
 	end)
-	Groupboxes.Character:AddToggle(
-		"WalkspeedEnabled",
-		{
-			["Text"] = "Walkspeed",
-			["Default"] = false,
-			["Tooltip"] = "Applies the walkspeed value from the slider below",
-		}
-	)
+	Groupboxes.Character:AddToggle("WalkspeedEnabled", {
+		["Text"] = "Walkspeed",
+		["Default"] = false,
+		["Tooltip"] = "Applies the walkspeed value from the slider below",
+	})
 	Groupboxes.Character:AddSlider(
 		"Walkspeed",
-		{
-			["Text"] = "Walkspeed",
-			["Min"] = 16,
-			["Max"] = 150,
-			["Default"] = 16,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Walkspeed", ["Min"] = 16, ["Max"] = 150, ["Default"] = 16, ["Rounding"] = 0, ["Compact"] = true }
 	)
 	Groupboxes.Character:AddDropdown(
 		"SpeedBypassMode",
@@ -5677,158 +5376,125 @@ return (function(...)
 	)
 	Groupboxes.Character:AddSlider(
 		"FlySpeed",
-		{
-			["Text"] = "Fly Speed",
-			["Min"] = 25,
-			["Max"] = 150,
-			["Default"] = 60,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Fly Speed", ["Min"] = 25, ["Max"] = 150, ["Default"] = 60, ["Rounding"] = 0, ["Compact"] = true }
 	)
 	Groupboxes.Character:AddDivider()
-	Groupboxes.Character:AddToggle(
-		"RemoveAcceleration",
-		{
-			["Text"] = "Remove Acceleration",
-			["Default"] = false,
-			["Tooltip"] = "Removes 'sliding' when moving at high speeds",
-		}
-	)
+	Groupboxes.Character:AddToggle("RemoveAcceleration", {
+		["Text"] = "Remove Acceleration",
+		["Default"] = false,
+		["Tooltip"] = "Removes 'sliding' when moving at high speeds",
+	})
 	Groupboxes.Character:AddDivider()
 	Groupboxes.Character:AddToggle(
 		"EnableCharacterJump",
-		{
-			["Text"] = "Enable Jumping",
-			["Default"] = false,
-			["Tooltip"] = "Enables the doors jumping feature",
-		}
+		{ ["Text"] = "Enable Jumping", ["Default"] = false, ["Tooltip"] = "Enables the doors jumping feature" }
 	)
 	Groupboxes.Character:AddToggle(
 		"InfiniteJumps",
 		{ ["Text"] = "Infinite Jump", ["Default"] = false, ["Tooltip"] = "Allows you to jump mid-air" }
 	)
 	Groupboxes.Character:AddDivider()
-	Groupboxes.Character:AddToggle(
-		"EnableCharacterSlide",
-		{
-			["Text"] = "Enable Sliding",
-			["Default"] = false,
-			["Tooltip"] = "Enables the doors sliding feature (only at speeds above 20)",
-		}
-	)
+	Groupboxes.Character:AddToggle("EnableCharacterSlide", {
+		["Text"] = "Enable Sliding",
+		["Default"] = false,
+		["Tooltip"] = "Enables the doors sliding feature (only at speeds above 20)",
+	})
 	Groupboxes.Character:AddToggle(
 		"Noclip",
-		{
-			["Text"] = "Noclip",
-			["Default"] = false,
-			["Tooltip"] = "Allows you to go through walls (rubberbands you)",
-		}
+		{ ["Text"] = "Noclip", ["Default"] = false, ["Tooltip"] = "Allows you to go through walls (rubberbands you)" }
 	)
 	Toggles.Noclip:AddKeyPicker(
 		"NoclipKeybind",
 		{ ["Text"] = "Noclip", ["Default"] = "N", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Character:AddToggle(
-		"Phase",
-		{
-			["Text"] = "Phase",
-			["Default"] = false,
-			["Tooltip"] = "Slowly floats you forward with noclip enabled for no rubberbanding",
-		}
-	)
+	Groupboxes.Character:AddToggle("Phase", {
+		["Text"] = "Phase",
+		["Default"] = false,
+		["Tooltip"] = "Slowly floats you forward with noclip enabled for no rubberbanding",
+	})
 	Toggles.Phase:AddKeyPicker(
 		"PhaseKeybind",
 		{ ["Text"] = "Phase", ["Default"] = "T", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Other:AddToggle(
-		"AnticheatManipulation",
-		{
-			["Text"] = "Anticheat Manipulation",
-			["Default"] = false,
-			["Tooltip"] = "Makes your character fly forwards fast to trick the anticheat to send you through walls",
-		}
-	)
+	Groupboxes.Other:AddToggle("AnticheatManipulation", {
+		["Text"] = "Anticheat Manipulation",
+		["Default"] = false,
+		["Tooltip"] = "Makes your character fly forwards fast to trick the anticheat to send you through walls",
+	})
 	Toggles.AnticheatManipulation:AddKeyPicker(
 		"AnticheatManipulationKeybind",
-		{
-			["Text"] = "Anticheat Manipulation",
-			["Default"] = "B",
-			["Mode"] = "Hold",
-			["SyncToggleState"] = true,
-		}
+		{ ["Text"] = "Anticheat Manipulation", ["Default"] = "B", ["Mode"] = "Hold", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Other:AddToggle(
-		"AutoInteract",
-		{
-			["Text"] = "Auto Interact",
-			["Default"] = false,
-			["Tooltip"] = "Auto interacts with prompts near you (you can change it to be a hold keybind)",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Other:AddToggle("AutoInteract", {
+		["Text"] = "Auto Interact",
+		["Default"] = false,
+		["Tooltip"] = "Auto interacts with prompts near you (you can change it to be a hold keybind)",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Toggles.AutoInteract:AddKeyPicker(
 		"AutoInteractKeybind",
 		{ ["Text"] = "Auto Interact", ["Default"] = "R", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Other:AddDropdown(
-		"AutoInteractIgnoreList",
-		{
-			["Text"] = "Interact Blacklist",
-			["Values"] = {
-				"Locks",
-				"Glitch Fragments",
-				"Dropped Items",
-				"Mandrake",
-				"Archives Lockers",
-				"Pizza",
-				"Donut",
-				"PaperPlane",
-				"PaperPlanePickup",
-				"GweenSodaPack",
-				"BottleCrate",
-				"DinkyLamp",
-				"JerryCan",
-				"HoneyPot",
-				"RiftJar",
-				"BoxingGloves",
-				"Green_Herb",
-				"BrokenMonitor",
-				"SecretCD",
-				"Drakobloxxer",
-				"GrumbleRig",
-				"Snare",
-				"GiggleCeiling",
-				"WaterPump",
-				"TimerLever",
-				"VineGuillotine",
-				"StardustPickup",
-				"GoldPile",
-				"ElectricalKeyObtain",
-				"LiveBreakerPolePickup",
-				"LibraryHintPaper",
-				"LiveHintBook",
-			},
-			["Default"] = { "Dropped Items" },
-			["Multi"] = true,
-			["AllowNull"] = true,
-		}
-	)
+	Groupboxes.Other:AddDropdown("AutoInteractIgnoreList", {
+		["Text"] = "Interact Blacklist",
+		["Values"] = {
+			"Locks",
+			"Glitch Fragments",
+			"Dropped Items",
+			"Mandrake",
+			"Archives Lockers",
+			"Pizza",
+			"Donut",
+			"PaperPlane",
+			"PaperPlanePickup",
+			"GweenSodaPack",
+			"BottleCrate",
+			"DinkyLamp",
+			"JerryCan",
+			"HoneyPot",
+			"RiftJar",
+			"BoxingGloves",
+			"Green_Herb",
+			"BrokenMonitor",
+			"SecretCD",
+			"Drakobloxxer",
+			"GrumbleRig",
+			"Snare",
+			"GiggleCeiling",
+			"WaterPump",
+			"TimerLever",
+			"VineGuillotine",
+			"StardustPickup",
+			"GoldPile",
+			"ElectricalKeyObtain",
+			"LiveBreakerPolePickup",
+			"LibraryHintPaper",
+			"LiveHintBook",
+		},
+		["Default"] = { "Dropped Items" },
+		["Multi"] = true,
+		["AllowNull"] = true,
+	})
 	Groupboxes.Other:AddDivider()
-	Groupboxes.Other:AddToggle(
-		"Godmode",
-		{
-			["Text"] = "Godmode",
-			["Default"] = false,
-			["Tooltip"] = "Makes your character appear underground on the server, protecting you from rush-like entities.",
-		}
-	)
+	Groupboxes.Other:AddToggle("Godmode", {
+		["Text"] = "Godmode",
+		["Default"] = false,
+		["Tooltip"] = "Makes your character appear underground on the server, protecting you from rush-like entities.",
+	})
 	Toggles.Godmode:AddKeyPicker(
 		"GodmodeKeybind",
 		{ ["Text"] = "Godmode", ["Default"] = "G", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Toggles.Godmode:OnChanged(function(o)
-		if o then
+	Toggles.Godmode:OnChanged(function(enabled)
+		if enabled then
+			if CurrentFloor == "Fools" or CurrentFloor == "OldHotel" then
+				UiLibrary:Notify({
+					["Title"] = "Godmode unavailable",
+					["Description"] = "This godmode method does not support " .. tostring(CurrentFloor),
+					["Time"] = 5,
+				})
+				return
+			end
 			if shouldUseGodmode() then
 				applyGodmode()
 			end
@@ -5836,25 +5502,19 @@ return (function(...)
 			restoreGodmode()
 		end
 	end)
-	Groupboxes.Other:AddDropdown(
-		"GodmodeMethod",
-		{
-			["Text"] = "Godmode Method",
-			["Values"] = { "Always enabled", "On entity spawn" },
-			["Default"] = "Always enabled",
-			["Tooltip"] = "Always enabled keeps godmode active while the toggle is on. On entity spawn only activates it when a listed entity exists.",
-		}
-	)
-	Groupboxes.Other:AddToggle(
-		"FigureGodmode",
-		{
-			["Text"] = "Figure Godmode",
-			["Default"] = false,
-			["Tooltip"] = "Holds you out of the Figure's reach while it is close, without moving your camera",
-			["Disabled"] = CurrentFloor == "OldHotel" or CurrentFloor == "Fools",
-			["DisabledTooltip"] = "This feature doesn't work in this floor",
-		}
-	)
+	Groupboxes.Other:AddDropdown("GodmodeMethod", {
+		["Text"] = "Godmode Method",
+		["Values"] = { "Always enabled", "On entity spawn" },
+		["Default"] = "Always enabled",
+		["Tooltip"] = "Always enabled keeps godmode active while the toggle is on. On entity spawn only activates it when a listed entity exists.",
+	})
+	Groupboxes.Other:AddToggle("FigureGodmode", {
+		["Text"] = "Figure Godmode",
+		["Default"] = false,
+		["Tooltip"] = "Holds you out of the Figure's reach while it is close, without moving your camera",
+		["Disabled"] = CurrentFloor == "OldHotel" or CurrentFloor == "Fools",
+		["DisabledTooltip"] = "This feature doesn't work in this floor",
+	})
 	do
 		local o = {}
 		FigureNames = { ["Figure"] = true, ["FigureRig"] = true, ["FigureRagdoll"] = true }
@@ -5874,9 +5534,7 @@ return (function(...)
 			if not o or not o:IsA("Model") then
 				return nil
 			end
-			return o:FindFirstChild("HumanoidRootPart")
-				or o.PrimaryPart
-				or o:FindFirstChildWhichIsA("BasePart", true)
+			return o:FindFirstChild("HumanoidRootPart") or o.PrimaryPart or o:FindFirstChildWhichIsA("BasePart", true)
 		end
 		local function trackFigureOrGroundskeeper(T)
 			if not T then
@@ -6024,66 +5682,43 @@ return (function(...)
 			end
 		end)
 	end
-	Groupboxes.Other:AddToggle(
-		"NotifyVulnerable",
-		{
-			["Text"] = "Notify When Vulnerable",
-			["Default"] = false,
-			["Tooltip"] = "Notifies you when your character moves 3+ studs upward",
-		}
-	)
-	Groupboxes.Other:AddToggle(
-		"AutoClosetToggle",
-		{
-			["Text"] = "Auto Closet",
-			["Default"] = false,
-			["Tooltip"] = "Automatically hides in a closet next to you when a rush-like entity is near",
-			["Disabled"] = not hasFirePrompt,
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Other:AddToggle("NotifyVulnerable", {
+		["Text"] = "Notify When Vulnerable",
+		["Default"] = false,
+		["Tooltip"] = "Notifies you when your character moves 3+ studs upward",
+	})
+	Groupboxes.Other:AddToggle("AutoClosetToggle", {
+		["Text"] = "Auto Closet",
+		["Default"] = false,
+		["Tooltip"] = "Automatically hides in a closet next to you when a rush-like entity is near",
+		["Disabled"] = not hasFirePrompt,
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Toggles.AutoClosetToggle:AddKeyPicker(
 		"AutoClosetKeybind",
 		{ ["Text"] = "Auto Closet", ["Default"] = "H", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Other:AddDropdown(
-		"AutoClosetEntityList",
-		{
-			["Text"] = "Ignore List",
-			["Values"] = {
-				"Rush",
-				"Ambush",
-				"Blitz",
-				"A-60",
-				"A-120",
-				"Glitch Rush",
-				"Glitch Ambush",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-		}
-	)
+	Groupboxes.Other:AddDropdown("AutoClosetEntityList", {
+		["Text"] = "Ignore List",
+		["Values"] = { "Rush", "Ambush", "Blitz", "A-60", "A-120", "Glitch Rush", "Glitch Ambush" },
+		["Multi"] = true,
+		["AllowNull"] = true,
+	})
 	Groupboxes.Other:AddDivider()
-	Groupboxes.Other:AddToggle(
-		"DoorReachToggle",
-		{
-			["Text"] = "Door Reach",
-			["Default"] = false,
-			["Tooltip"] = "Increases your door opening reach by your chosen amount",
-		}
-	)
-	Groupboxes.Other:AddSlider(
-		"DoorReachDistance",
-		{
-			["Text"] = "Distance",
-			["Min"] = 15,
-			["Max"] = 75,
-			["Default"] = 45,
-			["Rounding"] = 0,
-			["Compact"] = true,
-			["Suffix"] = " studs",
-		}
-	)
+	Groupboxes.Other:AddToggle("DoorReachToggle", {
+		["Text"] = "Door Reach",
+		["Default"] = false,
+		["Tooltip"] = "Increases your door opening reach by your chosen amount",
+	})
+	Groupboxes.Other:AddSlider("DoorReachDistance", {
+		["Text"] = "Distance",
+		["Min"] = 15,
+		["Max"] = 75,
+		["Default"] = 45,
+		["Rounding"] = 0,
+		["Compact"] = true,
+		["Suffix"] = " studs",
+	})
 	Fly = { ["Connection"] = nil, ["Body"] = nil }
 	local gT = nil
 	LastControlledChair = nil
@@ -6293,9 +5928,7 @@ return (function(...)
 		local T, k = nil, math.huge
 		local function considerNearbyOfficeChair(P)
 			if (P.Name == "ArchivesOfficeChair" or P.Name == "StairwellOfficeChair") and P:IsA("Model") then
-				local w = P:FindFirstChild("Collider")
-					or P.PrimaryPart
-					or P:FindFirstChildWhichIsA("BasePart")
+				local w = P:FindFirstChild("Collider") or P.PrimaryPart or P:FindFirstChildWhichIsA("BasePart")
 				if w and w:IsA("BasePart") then
 					local F = ((o.Position - w.Position)).Magnitude
 					if F < k then
@@ -6625,7 +6258,7 @@ return (function(...)
 	end)
 	Toggles.RemoveAcceleration:OnChanged(function(o)
 		for T, k in pairs(PartProperties) do
-			T.CustomPhysicalProperties = o and CustomPhysics or k
+			T.CustomPhysicalProperties = (o and CustomPhysics) or k
 		end
 	end)
 	Toggles.EnableCharacterJump:OnChanged(function(o)
@@ -6640,36 +6273,41 @@ return (function(...)
 	end)
 	NoclipConnection = nil
 	NoclipParts = {}
+	local noclipOriginalCollision = {}
+	local noclipDescendantConnection = nil
+	local noclipCharacter = nil
 	local function collectNoclipParts()
 		TableClear(NoclipParts)
 		if not Character then
 			return
 		end
-		for o, T in Character:GetDescendants() do
-			if T:IsA("BasePart") then
-				table.insert(NoclipParts, T)
-			end
-		end
-		if CharacterCollisionPart then
-			table.insert(NoclipParts, CharacterCollisionPart)
-			local o = CharacterCollisionPart:FindFirstChild("CollisionCrouch")
-			if o then
-				table.insert(NoclipParts, o)
-			end
-		end
-		local o = Character:FindFirstChild("CollisionClone")
-		if o then
-			table.insert(NoclipParts, o)
-			local T = o:FindFirstChild("CollisionCrouch")
-			if T then
-				table.insert(NoclipParts, T)
+		for _, part in Character:GetDescendants() do
+			if part:IsA("BasePart") then
+				table.insert(NoclipParts, part)
 			end
 		end
 	end
-	local function setNoclipPartsCollision(o)
-		for T, k in ipairs(NoclipParts) do
-			if k then
-				k.CanCollide = o
+	local function setNoclipPartsCollision(restore, force)
+		if restore then
+			-- Noclip and Phase share collision ownership. Do not undo one while
+			-- the other is active; an unload forces both to release it.
+			if not force and (Toggles.Noclip.Value or Toggles.Phase.Value) then
+				return
+			end
+			for part, original in pairs(noclipOriginalCollision) do
+				if part.Parent then
+					part.CanCollide = original
+				end
+			end
+			TableClear(noclipOriginalCollision)
+			return
+		end
+		for _, part in ipairs(NoclipParts) do
+			if part.Parent then
+				if noclipOriginalCollision[part] == nil then
+					noclipOriginalCollision[part] = part.CanCollide
+				end
+				part.CanCollide = false
 			end
 		end
 	end
@@ -6678,8 +6316,25 @@ return (function(...)
 			NoclipConnection:Disconnect()
 			NoclipConnection = nil
 		end
+		if noclipDescendantConnection then
+			noclipDescendantConnection:Disconnect()
+			noclipDescendantConnection = nil
+		end
+		if noclipCharacter ~= Character then
+			setNoclipPartsCollision(true, true)
+			noclipCharacter = Character
+		end
 		if Toggles.Noclip.Value then
 			collectNoclipParts()
+			setNoclipPartsCollision(false)
+			if Character then
+				noclipDescendantConnection = Character.DescendantAdded:Connect(function(part)
+					if part:IsA("BasePart") then
+						table.insert(NoclipParts, part)
+						setNoclipPartsCollision(false)
+					end
+				end)
+			end
 			NoclipConnection = RunService.Stepped:Connect(function()
 				setNoclipPartsCollision(false)
 			end)
@@ -6690,8 +6345,7 @@ return (function(...)
 	Toggles.Noclip:OnChanged(updateNoclip)
 	MonumentParts = {}
 	local function refreshEyesAndMonumentState()
-		CheesyState.IsEyes = workspace:FindFirstChild("Eyes") ~= nil
-			or workspace:FindFirstChild("Lookman") ~= nil
+		CheesyState.IsEyes = workspace:FindFirstChild("Eyes") ~= nil or workspace:FindFirstChild("Lookman") ~= nil
 		CheesyState.IsLookman = workspace:FindFirstChild("BackdoorLookman") ~= nil
 		CheesyState.IsMonument = false
 		RefreshMonuments()
@@ -6791,8 +6445,7 @@ return (function(...)
 	workspace.ChildRemoved:Connect(function(o)
 		local T = o.Name
 		if T == "Eyes" or T == "Lookman" then
-			CheesyState.IsEyes = workspace:FindFirstChild("Eyes") ~= nil
-				or workspace:FindFirstChild("Lookman") ~= nil
+			CheesyState.IsEyes = workspace:FindFirstChild("Eyes") ~= nil or workspace:FindFirstChild("Lookman") ~= nil
 		elseif T == "BackdoorLookman" then
 			CheesyState.IsLookman = workspace:FindFirstChild("BackdoorLookman") ~= nil
 		end
@@ -6825,12 +6478,7 @@ return (function(...)
 			if o then
 				local o = CurrentFloor
 				if o == "Fools" or o == "OldHotel" then
-					GameRemotes.MotorReplication:FireServer(
-						0,
-						(CheesyState.SpoofOffset == 200 and 65 or -65),
-						0,
-						false
-					)
+					GameRemotes.MotorReplication:FireServer(0, (CheesyState.SpoofOffset == 200 and 65 or -65), 0, false)
 				else
 					GameRemotes.MotorReplication:FireServer(-650)
 				end
@@ -6912,9 +6560,7 @@ return (function(...)
 		if not Character or not Humanoid or not HumanoidRootPart then
 			return
 		end
-		if
-			Character:GetAttribute("GodmodeSunk") and (CurrentFloor ~= "Fools" and CurrentFloor ~= "OldHotel")
-		then
+		if Character:GetAttribute("GodmodeSunk") and (CurrentFloor ~= "Fools" and CurrentFloor ~= "OldHotel") then
 			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0, 2.346, 0)
 			Humanoid.HipHeight = CheesyState.OriginalHipHeight or 2.396
 			Character:SetAttribute("GodmodeSunk", nil)
@@ -6955,17 +6601,8 @@ return (function(...)
 			restoreGodmode()
 		end
 		if
-			(o or (Toggles.CrouchSpoof and Toggles.CrouchSpoof.Value))
-			and (GameRemotes and GameRemotes:FindFirstChild("Crouch"))
-		then
-			GameRemotes.Crouch:FireServer(true, true)
-		end
-		if
 			CurrentFloor ~= "Fools"
-			and (
-				CurrentFloor ~= "OldHotel"
-				and not (CurrentCamera and CurrentCamera:FindFirstChild("MinecartRig"))
-			)
+			and (CurrentFloor ~= "OldHotel" and not (CurrentCamera and CurrentCamera:FindFirstChild("MinecartRig")))
 		then
 			HumanoidRootPart.CanCollide = false
 		end
@@ -7023,16 +6660,13 @@ return (function(...)
 			if P then
 				P.Position = HumanoidRootPart.Position + Vector3.new(0, A, 0)
 			end
-			if
-				k and (k:FindFirstChild("CollisionCrouch") and (w and w:FindFirstChild("CollisionCrouch")))
-			then
+			if k and (k:FindFirstChild("CollisionCrouch") and (w and w:FindFirstChild("CollisionCrouch"))) then
 				local T = o and 1.328 or -0.982
 				k.CollisionCrouch.Position = HumanoidRootPart.Position + Vector3.new(0, T, 0)
 				w.CollisionCrouch.CollisionGroup = k.CollisionCrouch.CollisionGroup
 			end
 			if w and w:FindFirstChild("CollisionCrouch") then
-				w.CollisionCrouch.Position = HumanoidRootPart.Position
-					+ Vector3.new(0, o and 0.75 or -0.982, 0)
+				w.CollisionCrouch.Position = HumanoidRootPart.Position + Vector3.new(0, o and 0.75 or -0.982, 0)
 			end
 		end
 		if w and k then
@@ -7062,7 +6696,7 @@ return (function(...)
 		if CurrentFloor == "Fools" or CurrentFloor == "OldHotel" then
 			return Character:GetAttribute("Crouching")
 		end
-		return CharacterCollisionPart.CollisionGroup == "PlayerCrouching"
+		return CharacterCollisionPart ~= nil and CharacterCollisionPart.CollisionGroup == "PlayerCrouching"
 	end
 	ESP_FIGURE_NAMES = { ["FigureRig"] = true, ["FigureRagdoll"] = true, ["Figure"] = true }
 	Functions.GetNearestFigure = function()
@@ -7105,36 +6739,19 @@ return (function(...)
 		end
 		if Toggles.Phase.Value then
 			collectPhaseParts()
+			collectNoclipParts()
 			if Character then
 				Phase.CharConn = Character.ChildAdded:Connect(function()
 					task.wait()
 					collectPhaseParts()
+					collectNoclipParts()
 				end)
 			end
 			Phase.Connection = RunService.Stepped:Connect(function()
 				if not Character then
 					return
 				end
-				for o, T in ipairs(Phase.Parts) do
-					if T then
-						T.CanCollide = false
-					end
-				end
-				if CharacterCollisionPart then
-					CharacterCollisionPart.CanCollide = false
-					local o = CharacterCollisionPart:FindFirstChild("CollisionCrouch")
-					if o then
-						o.CanCollide = false
-					end
-				end
-				local o = Character:FindFirstChild("CollisionClone")
-				if o then
-					o.CanCollide = false
-					local T = o:FindFirstChild("CollisionCrouch")
-					if T then
-						T.CanCollide = false
-					end
-				end
+				setNoclipPartsCollision(false)
 				if HumanoidRootPart and (Humanoid and (CurrentCamera and Phase.Body)) then
 					local o = Vector3.zero
 					local T = Humanoid.MoveDirection
@@ -7269,10 +6886,7 @@ return (function(...)
 			if not Options.AutoInteractIgnoreList.Value["Archives Lockers"] then
 				if
 					o.Parent.Name:match("^HidingSpot%d+$")
-					and (
-						o.Name == "InteractPrompt"
-						and (o.ActionText == "Loot" and (o.Enabled and not Pd.Debounce))
-					)
+					and (o.Name == "InteractPrompt" and (o.ActionText == "Loot" and (o.Enabled and not Pd.Debounce)))
 				then
 					if not Pd.Looted[o] then
 						Pd.Looted[o] = true
@@ -7307,10 +6921,7 @@ return (function(...)
 			return
 		end
 		local T = CurrentRooms
-			and (
-				CurrentRooms:FindFirstChild("50")
-				and (CurrentRooms:FindFirstChild("50")):FindFirstChild("Door")
-			)
+			and (CurrentRooms:FindFirstChild("50") and (CurrentRooms:FindFirstChild("50")):FindFirstChild("Door"))
 		if T and o:FindFirstAncestor("Door") == T then
 			return
 		end
@@ -7468,8 +7079,7 @@ return (function(...)
 					return
 				end
 				local o = Toggles and (Toggles.AutoInteract and Toggles.AutoInteract.Value)
-					or Options
-						and (Options.AutoInteractKeybind and Options.AutoInteractKeybind:GetState())
+					or Options and (Options.AutoInteractKeybind and Options.AutoInteractKeybind:GetState())
 				if not o then
 					return
 				end
@@ -7510,9 +7120,7 @@ return (function(...)
 								local P = k.Y - A.Position.Y
 								local w = k.Z - A.Position.Z
 								local F = (o * o + P * P) + w * w
-								local d = (
-									T:GetAttribute("MaxActivationDistance_Old") or T.MaxActivationDistance
-								) + 5
+								local d = (T:GetAttribute("MaxActivationDistance_Old") or T.MaxActivationDistance) + 5
 								if
 									F <= (d + f) * (d + f)
 									and (
@@ -8271,14 +7879,10 @@ return (function(...)
 						and (
 							Options.DoorReachDistance
 							and (
-								LocalPlayer:DistanceFromCharacter(o.Door.Position)
-									< Options.DoorReachDistance.Value
+								LocalPlayer:DistanceFromCharacter(o.Door.Position) < Options.DoorReachDistance.Value
 								and (
 									tick() - F > 0.1
-									and (
-										Toggles
-										and (Toggles.DoorReachToggle and Toggles.DoorReachToggle.Value)
-									)
+									and (Toggles and (Toggles.DoorReachToggle and Toggles.DoorReachToggle.Value))
 								)
 							)
 						)
@@ -8390,11 +7994,7 @@ return (function(...)
 							local T = Options.EntitiesESPAllowed and Options.EntitiesESPAllowed.Value
 							if not T or next(T) == nil or T[k] then
 								Functions.AddESP(
-									{
-										["Object"] = o,
-										["Text"] = k,
-										["Color"] = Options.EntitiesESPColor.Value,
-									},
+									{ ["Object"] = o, ["Text"] = k, ["Color"] = Options.EntitiesESPColor.Value },
 									o:GetAttribute("ParentRoom") ~= nil
 								)
 							end
@@ -8597,10 +8197,7 @@ return (function(...)
 				local T = GetESPTarget(A, o)
 				if T then
 					local F = A:GetAttribute("ParentRoom") ~= nil
-					Functions.AddESP(
-						{ ["Object"] = T, ["Text"] = P and getESPLabel(A, o) or "", ["Color"] = k },
-						F
-					)
+					Functions.AddESP({ ["Object"] = T, ["Text"] = P and getESPLabel(A, o) or "", ["Color"] = k }, F)
 					if w then
 						ESPLibrary:SetTracersEnabled(T, true)
 					end
@@ -8728,45 +8325,42 @@ return (function(...)
 	Groupboxes.Visuals_ESP = Groupboxes.Visuals_ESPBox:AddTab("ESP")
 	Groupboxes.Visuals_Settings = Groupboxes.Visuals_ESPBox:AddTab("Settings")
 	setupCategoryESP("Entities", "Entities")
-	Groupboxes.Visuals_ESP:AddDropdown(
-		"EntitiesESPAllowed",
-		{
-			["Text"] = "Allowed Entities",
-			["Values"] = {
-				"Rush",
-				"Ambush",
-				"A-60",
-				"A-120",
-				"Eyes",
-				"Lookman",
-				"Figure",
-				"Blitz",
-				"Groundskeeper",
-				"Gloombat Swarm",
-				"Glitch Rush",
-				"Glitch Ambush",
-				"Frozen Ambush",
-				"Monument",
-				"Jeff the Killer",
-				"Sally",
-				"Dupe",
-				"Giggle",
-				"Snare",
-				"Gloombat Eggs",
-				"Grumble",
-				"Bash",
-				"Drones",
-				"Electric Puddle",
-				"Teller",
-				"Scribbles",
-				"Noise",
-				"Creak",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-			["Tooltip"] = "Only show ESP for selected entities (leave empty to show all)",
-		}
-	)
+	Groupboxes.Visuals_ESP:AddDropdown("EntitiesESPAllowed", {
+		["Text"] = "Allowed Entities",
+		["Values"] = {
+			"Rush",
+			"Ambush",
+			"A-60",
+			"A-120",
+			"Eyes",
+			"Lookman",
+			"Figure",
+			"Blitz",
+			"Groundskeeper",
+			"Gloombat Swarm",
+			"Glitch Rush",
+			"Glitch Ambush",
+			"Frozen Ambush",
+			"Monument",
+			"Jeff the Killer",
+			"Sally",
+			"Dupe",
+			"Giggle",
+			"Snare",
+			"Gloombat Eggs",
+			"Grumble",
+			"Bash",
+			"Drones",
+			"Electric Puddle",
+			"Teller",
+			"Scribbles",
+			"Noise",
+			"Creak",
+		},
+		["Multi"] = true,
+		["AllowNull"] = true,
+		["Tooltip"] = "Only show ESP for selected entities (leave empty to show all)",
+	})
 	setupCategoryESP("Doors", "Doors")
 	setupCategoryESP("Objectives", "Objectives")
 	setupCategoryESP("Items", "Items")
@@ -8801,11 +8395,7 @@ return (function(...)
 					if k then
 						local k = o:FindFirstChildOfClass("Humanoid")
 						local P = T.Name .. (k and " [" .. (math.floor(k.Health) .. " HP]") or "")
-						ESPLibrary:AddESP({
-							["Object"] = o,
-							["Text"] = P,
-							["Color"] = Options.PlayersESPColor.Value,
-						})
+						ESPLibrary:AddESP({ ["Object"] = o, ["Text"] = P, ["Color"] = Options.PlayersESPColor.Value })
 						local w = o.Destroying:Once(function()
 							ESPLibrary:RemoveESP(o)
 							ESPCleanup[o] = nil
@@ -8828,11 +8418,7 @@ return (function(...)
 				if k then
 					local k = T:FindFirstChildOfClass("Humanoid")
 					local P = o.Name .. (k and " [" .. (math.floor(k.Health) .. " HP]") or "")
-					ESPLibrary:AddESP({
-						["Object"] = T,
-						["Text"] = P,
-						["Color"] = Options.PlayersESPColor.Value,
-					})
+					ESPLibrary:AddESP({ ["Object"] = T, ["Text"] = P, ["Color"] = Options.PlayersESPColor.Value })
 					local w = T.Destroying:Once(function()
 						ESPLibrary:RemoveESP(T)
 						ESPCleanup[T] = nil
@@ -8865,44 +8451,31 @@ return (function(...)
 	refreshPlayersESP()
 	Groupboxes.Visuals_ESP:AddToggle(
 		"ESPFade",
-		{
-			["Text"] = "ESP Fade",
-			["Default"] = false,
-			["Tooltip"] = "Enables smooth fading effect on ESP highlights",
-		}
+		{ ["Text"] = "ESP Fade", ["Default"] = false, ["Tooltip"] = "Enables smooth fading effect on ESP highlights" }
 	)
-	Groupboxes.Visuals_ESP:AddSlider(
-		"ESPFadeTime",
-		{
-			["Text"] = "Fade Time",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0.25,
-			["Rounding"] = 2,
-			["Compact"] = true,
-			["Suffix"] = "s",
-		}
-	)
-	Groupboxes.Visuals_ESP:AddToggle(
-		"ESPArrowsToggle",
-		{
-			["Text"] = "Enable Arrows",
-			["Default"] = false,
-			["Tooltip"] = "Shows arrows that point to off-screen objects",
-		}
-	)
-	Groupboxes.Visuals_ESP:AddSlider(
-		"ESPArrowsRadius",
-		{
-			["Text"] = "Arrow Radius",
-			["Min"] = 100,
-			["Max"] = 500,
-			["Default"] = 250,
-			["Rounding"] = 0,
-			["Compact"] = true,
-			["Suffix"] = " px",
-		}
-	)
+	Groupboxes.Visuals_ESP:AddSlider("ESPFadeTime", {
+		["Text"] = "Fade Time",
+		["Min"] = 0,
+		["Max"] = 1,
+		["Default"] = 0.25,
+		["Rounding"] = 2,
+		["Compact"] = true,
+		["Suffix"] = "s",
+	})
+	Groupboxes.Visuals_ESP:AddToggle("ESPArrowsToggle", {
+		["Text"] = "Enable Arrows",
+		["Default"] = false,
+		["Tooltip"] = "Shows arrows that point to off-screen objects",
+	})
+	Groupboxes.Visuals_ESP:AddSlider("ESPArrowsRadius", {
+		["Text"] = "Arrow Radius",
+		["Min"] = 100,
+		["Max"] = 500,
+		["Default"] = 250,
+		["Rounding"] = 0,
+		["Compact"] = true,
+		["Suffix"] = " px",
+	})
 	EntityPathNodes = {}
 	EntityPathConns = {}
 	EntityPathContainers = setmetatable({}, { ["__mode"] = "k" })
@@ -9062,9 +8635,7 @@ return (function(...)
 		if not o then
 			return
 		end
-		local T = o.RootPart
-			or Character:FindFirstChild("HumanoidRootPart")
-			or Character:FindFirstChildOfClass("Part")
+		local T = o.RootPart or Character:FindFirstChild("HumanoidRootPart") or Character:FindFirstChildOfClass("Part")
 		if not T then
 			return
 		end
@@ -9149,10 +8720,8 @@ return (function(...)
 						w.Velocity = (
 							(T.CFrame.LookVector * (F.F + F.B))
 							+ (
-								(
-									T.CFrame
-									* (CFrame.new(F.L + F.R, (((F.F + F.B) + F.Q) + F.E) * 0.2, 0)).Position
-								) - T.CFrame.Position
+								(T.CFrame * (CFrame.new(F.L + F.R, (((F.F + F.B) + F.Q) + F.E) * 0.2, 0)).Position)
+								- T.CFrame.Position
 							)
 						) * d
 					end)
@@ -9162,10 +8731,8 @@ return (function(...)
 						w.Velocity = (
 							(T.CFrame.LookVector * (A.F + A.B))
 							+ (
-								(
-									T.CFrame
-									* (CFrame.new(A.L + A.R, (((A.F + A.B) + F.Q) + F.E) * 0.2, 0)).Position
-								) - T.CFrame.Position
+								(T.CFrame * (CFrame.new(A.L + A.R, (((A.F + A.B) + F.Q) + F.E) * 0.2, 0)).Position)
+								- T.CFrame.Position
 							)
 						) * d
 					end)
@@ -9217,22 +8784,14 @@ return (function(...)
 			["DoesWrap"] = true,
 		})
 		P:AddDivider()
-		P:AddToggle(
-			"AutoJoinElevator",
-			{
-				["Text"] = "Auto Join Elevator",
-				["Default"] = false,
-				["Tooltip"] = "Automatically joins the selected player's elevator.",
-			}
-		)
+		P:AddToggle("AutoJoinElevator", {
+			["Text"] = "Auto Join Elevator",
+			["Default"] = false,
+			["Tooltip"] = "Automatically joins the selected player's elevator.",
+		})
 		P:AddDropdown(
 			"AutoJoinElevatorTarget",
-			{
-				["Text"] = "Target",
-				["SpecialType"] = "Player",
-				["ExcludeLocalPlayer"] = true,
-				["Searchable"] = true,
-			}
+			{ ["Text"] = "Target", ["SpecialType"] = "Player", ["ExcludeLocalPlayer"] = true, ["Searchable"] = true }
 		)
 		P:AddButton({
 			["Text"] = "Redeem All Codes",
@@ -9240,10 +8799,7 @@ return (function(...)
 				if CheesyState.RedeemingCodes then
 					return
 				end
-				UiLibrary:Notify({
-					["Title"] = "Redeeming " .. (#CheesyState.CodesList .. " codes."),
-					["Time"] = 5,
-				})
+				UiLibrary:Notify({ ["Title"] = "Redeeming " .. (#CheesyState.CodesList .. " codes."), ["Time"] = 5 })
 				CheesyState.RedeemingCodes = true
 				for o, T in ipairs(CheesyState.CodesList) do
 					local k = GameRemotes and GameRemotes:FindFirstChild("ShopCode")
@@ -9283,17 +8839,14 @@ return (function(...)
 				stopLobbyFly()
 			end
 		end)
-		w:AddSlider(
-			"LobbyFlySpeed",
-			{
-				["Text"] = "Fly Speed",
-				["Min"] = 25,
-				["Max"] = 150,
-				["Default"] = 35,
-				["Rounding"] = 0,
-				["Compact"] = true,
-			}
-		)
+		w:AddSlider("LobbyFlySpeed", {
+			["Text"] = "Fly Speed",
+			["Min"] = 25,
+			["Max"] = 150,
+			["Default"] = 35,
+			["Rounding"] = 0,
+			["Compact"] = true,
+		})
 		Options.LobbyFlySpeed:OnChanged(function()
 			LobbyFlyState.SpeedCoeff = (Options.LobbyFlySpeed and Options.LobbyFlySpeed.Value or 35) / 50
 		end)
@@ -9403,70 +8956,64 @@ return (function(...)
 				end
 			end
 			if not CheesyState.LobbyGuardConnection then
-				CheesyState.LobbyGuardConnection = (game:GetService("RunService")).Heartbeat:Connect(
-					function()
-						if _Unloading then
-							return
+				CheesyState.LobbyGuardConnection = (game:GetService("RunService")).Heartbeat:Connect(function()
+					if _Unloading then
+						return
+					end
+					if not CheesyState.InLobby then
+						return
+					end
+					local o = {
+						"Godmode",
+						"ThirdPerson",
+						"Noclip",
+						"FlyToggle",
+						"Phase",
+						"AnticheatManipulation",
+						"AutoInteract",
+					}
+					for o, T in ipairs(o) do
+						local k = Toggles[T]
+						if k and k.Value then
+							k:SetValue(false)
 						end
-						if not CheesyState.InLobby then
-							return
+					end
+					if Toggles.AutoJoinElevator and Toggles.AutoJoinElevator.Value then
+						local o
+						if typeof(Options.AutoJoinElevatorTarget.Value) == "Instance" then
+							o = Options.AutoJoinElevatorTarget.Value.Character
+						elseif typeof(Options.AutoJoinElevatorTarget.Value) == "string" then
+							o = ((game:GetService("Players")):FindFirstChild(Options.AutoJoinElevatorTarget.Value)).Character
 						end
-						local o = {
-							"Godmode",
-							"ThirdPerson",
-							"Noclip",
-							"FlyToggle",
-							"Phase",
-							"AnticheatManipulation",
-							"AutoInteract",
-						}
-						for o, T in ipairs(o) do
-							local k = Toggles[T]
-							if k and k.Value then
-								k:SetValue(false)
-							end
-						end
-						if Toggles.AutoJoinElevator and Toggles.AutoJoinElevator.Value then
-							local o
-							if typeof(Options.AutoJoinElevatorTarget.Value) == "Instance" then
-								o = Options.AutoJoinElevatorTarget.Value.Character
-							elseif typeof(Options.AutoJoinElevatorTarget.Value) == "string" then
-								o = ((game:GetService("Players")):FindFirstChild(
-									Options.AutoJoinElevatorTarget.Value
-								)).Character
-							end
-							local T = false
-							local k = workspace:FindFirstChild("Lobby")
-								and workspace.Lobby:FindFirstChild("LobbyElevators")
-							if k then
-								for k, P in k:GetChildren() do
-									if
-										o
+						local T = false
+						local k = workspace:FindFirstChild("Lobby") and workspace.Lobby:FindFirstChild("LobbyElevators")
+						if k then
+							for k, P in k:GetChildren() do
+								if
+									o
+									and (
+										P
 										and (
-											P
+											o:GetAttribute("InGameElevator")
 											and (
-												o:GetAttribute("InGameElevator")
-												and (
-													P:GetAttribute("ID")
-													and P:GetAttribute("ID")
-														== o:GetAttribute("InGameElevator")
-												)
+												P:GetAttribute("ID")
+												and P:GetAttribute("ID") == o:GetAttribute("InGameElevator")
 											)
 										)
-									then
-										T = true
-										if GameRemotes and GameRemotes:FindFirstChild("ElevatorJoin") then
-											GameRemotes.ElevatorJoin:FireServer(P)
-										end
+									)
+								then
+									T = true
+									if GameRemotes and GameRemotes:FindFirstChild("ElevatorJoin") then
+										GameRemotes.ElevatorJoin:FireServer(P)
 									end
 								end
 							end
-							if not T and (GameRemotes and GameRemotes:FindFirstChild("ElevatorExit")) then
-								GameRemotes.ElevatorExit:FireServer()
-							end
+						end
+						if not T and (GameRemotes and GameRemotes:FindFirstChild("ElevatorExit")) then
+							GameRemotes.ElevatorExit:FireServer()
 						end
 					end
-				)
+				end)
 			end
 			if rT.FoolsHotel then
 				rT.FoolsHotel:SetVisible(false)
@@ -9725,32 +9272,23 @@ return (function(...)
 		return string.format("%d:%02d %s", w, k, P)
 	end
 	Groupboxes.ArchivesMain = rT.Archives:AddLeftGroupbox("Archives")
-	Groupboxes.ArchivesMain:AddToggle(
-		"AntiDrone",
-		{
-			["Text"] = "Anti Drone",
-			["Default"] = false,
-			["Tooltip"] = "Prevents you from bumping/falling over when walking into (singular) drones",
-			["Disabled"] = not hasHookMeta,
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.ArchivesMain:AddToggle(
-		"DisableDroneStampede",
-		{
-			["Text"] = "Disable Drone Stampede (FE)",
-			["Default"] = false,
-			["Tooltip"] = "Disables the drone stampede from spawning FE",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("AntiDrone", {
+		["Text"] = "Anti Drone",
+		["Default"] = false,
+		["Tooltip"] = "Prevents you from bumping/falling over when walking into (singular) drones",
+		["Disabled"] = not hasHookMeta,
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.ArchivesMain:AddToggle("DisableDroneStampede", {
+		["Text"] = "Disable Drone Stampede (FE)",
+		["Default"] = false,
+		["Tooltip"] = "Disables the drone stampede from spawning FE",
+	})
 	Toggles.DisableDroneStampede:OnChanged(function(o)
 		if o and not CheesyState.DisableDroneStampedeRunning then
 			CheesyState.DisableDroneStampedeRunning = true
 			task.spawn(function()
-				while
-					not _Unloading
-					and (Toggles.DisableDroneStampede and Toggles.DisableDroneStampede.Value)
-				do
+				while not _Unloading and (Toggles.DisableDroneStampede and Toggles.DisableDroneStampede.Value) do
 					local o = GetLatestClock()
 					local T = o and o:FindFirstChild("LookedAtRemote")
 					if T then
@@ -9764,14 +9302,11 @@ return (function(...)
 			end)
 		end
 	end)
-	Groupboxes.ArchivesMain:AddToggle(
-		"DroneTimer",
-		{
-			["Text"] = "Drone Stampede Timer",
-			["Default"] = false,
-			["Tooltip"] = "Notifies you 60s and 30s before the 05:00 and 09:00 drone stampede",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("DroneTimer", {
+		["Text"] = "Drone Stampede Timer",
+		["Default"] = false,
+		["Tooltip"] = "Notifies you 60s and 30s before the 05:00 and 09:00 drone stampede",
+	})
 	Toggles.DroneTimer:OnChanged(function(o)
 		if o and not CheesyState.DroneTimerRunning then
 			CheesyState.DroneTimerRunning = true
@@ -9824,14 +9359,11 @@ return (function(...)
 			end)
 		end
 	end)
-	Groupboxes.ArchivesMain:AddToggle(
-		"NoAlmaDamage",
-		{
-			["Text"] = "Anti Alma",
-			["Default"] = false,
-			["Tooltip"] = "Prevents alma from ever interacting with you/you can look at her freely",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("NoAlmaDamage", {
+		["Text"] = "Anti Alma",
+		["Default"] = false,
+		["Tooltip"] = "Prevents alma from ever interacting with you/you can look at her freely",
+	})
 	Toggles.NoAlmaDamage:OnChanged(function(o)
 		if o and not CheesyState.NoAlmaDamageRunning then
 			CheesyState.NoAlmaDamageRunning = true
@@ -9882,14 +9414,11 @@ return (function(...)
 			end
 		end
 	end)
-	Groupboxes.ArchivesMain:AddToggle(
-		"AntiElectricPuddle",
-		{
-			["Text"] = "Anti Electric Puddle",
-			["Default"] = false,
-			["Tooltip"] = "Prevents you from getting damaged from electric puddles",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("AntiElectricPuddle", {
+		["Text"] = "Anti Electric Puddle",
+		["Default"] = false,
+		["Tooltip"] = "Prevents you from getting damaged from electric puddles",
+	})
 	local ud = {}
 	local ed = nil
 	local td = 0
@@ -9984,38 +9513,25 @@ return (function(...)
 			task.spawn(processElectricPuddle, o, T)
 		end)
 	end)
-	Groupboxes.ArchivesMain:AddToggle(
-		"AntiRansom",
-		{
-			["Text"] = "Anti Ransom",
-			["Default"] = false,
-			["Tooltip"] = "Prevents ransom from attacking you even when moving",
-			["Disabled"] = not (
-					Executor.hookmetamethod and (Executor.newcclosure and Executor.getnamecallmethod)
-				),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.ArchivesMain:AddToggle(
-		"AntiScribbles",
-		{
-			["Text"] = "No Scribbles Damage",
-			["Default"] = false,
-			["Tooltip"] = "Prevents scribbles from damaging you",
-			["Disabled"] = not (
-					Executor.hookmetamethod and (Executor.newcclosure and Executor.getnamecallmethod)
-				),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.ArchivesMain:AddToggle(
-		"ArchiveChairFly",
-		{
-			["Text"] = "Chair Anticheat Bypass",
-			["Default"] = false,
-			["Tooltip"] = "Allows you to bypass the anticheat by flying on a chair, allowing you to noclip and fly freely, drag an office chair, then sit in it and press the 'Start Bypass' button",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("AntiRansom", {
+		["Text"] = "Anti Ransom",
+		["Default"] = false,
+		["Tooltip"] = "Prevents ransom from attacking you even when moving",
+		["Disabled"] = not (Executor.hookmetamethod and (Executor.newcclosure and Executor.getnamecallmethod)),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.ArchivesMain:AddToggle("AntiScribbles", {
+		["Text"] = "No Scribbles Damage",
+		["Default"] = false,
+		["Tooltip"] = "Prevents scribbles from damaging you",
+		["Disabled"] = not (Executor.hookmetamethod and (Executor.newcclosure and Executor.getnamecallmethod)),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.ArchivesMain:AddToggle("ArchiveChairFly", {
+		["Text"] = "Chair Anticheat Bypass",
+		["Default"] = false,
+		["Tooltip"] = "Allows you to bypass the anticheat by flying on a chair, allowing you to noclip and fly freely, drag an office chair, then sit in it and press the 'Start Bypass' button",
+	})
 	Groupboxes.ArchivesMain:AddSlider(
 		"ArchiveChairFlySpeed",
 		{ ["Text"] = "Chair Speed", ["Min"] = 15, ["Max"] = 150, ["Default"] = 55, ["Rounding"] = 0 }
@@ -10039,14 +9555,11 @@ return (function(...)
 	local Wd = false
 	local pd = {}
 	local ld = {}
-	Groupboxes.ArchivesMain:AddToggle(
-		"ForgetMeNotSolver",
-		{
-			["Text"] = "Auto Skip ForgetMeNot",
-			["Default"] = false,
-			["Tooltip"] = "Automatically skips the ForgetMeNot minigame",
-		}
-	)
+	Groupboxes.ArchivesMain:AddToggle("ForgetMeNotSolver", {
+		["Text"] = "Auto Skip ForgetMeNot",
+		["Default"] = false,
+		["Tooltip"] = "Automatically skips the ForgetMeNot minigame",
+	})
 	Toggles.ForgetMeNotSolver:OnChanged(function(o)
 		if gd then
 			gd:Disconnect()
@@ -10217,14 +9730,11 @@ return (function(...)
 		scanVineSkipRooms()
 	end)
 	Groupboxes.StairwellMain = rT.Stairwell:AddLeftGroupbox("Stairwell")
-	Groupboxes.StairwellMain:AddToggle(
-		"StairwellChairFly",
-		{
-			["Text"] = "Chair Anticheat Bypass",
-			["Default"] = false,
-			["Tooltip"] = "Allows you to bypass the anticheat by flying on a chair, allowing you to noclip and fly freely, drag an office chair, then sit in it and press the 'Start Bypass' button",
-		}
-	)
+	Groupboxes.StairwellMain:AddToggle("StairwellChairFly", {
+		["Text"] = "Chair Anticheat Bypass",
+		["Default"] = false,
+		["Tooltip"] = "Allows you to bypass the anticheat by flying on a chair, allowing you to noclip and fly freely, drag an office chair, then sit in it and press the 'Start Bypass' button",
+	})
 	Groupboxes.StairwellMain:AddSlider(
 		"StairwellChairFlySpeed",
 		{ ["Text"] = "Chair Speed", ["Min"] = 15, ["Max"] = 150, ["Default"] = 55, ["Rounding"] = 0 }
@@ -10244,14 +9754,11 @@ return (function(...)
 			StopChairBypass()
 		end
 	end)
-	Groupboxes.StairwellMain:AddToggle(
-		"BreakNoiseTv",
-		{
-			["Text"] = "Break Noise TV",
-			["Default"] = false,
-			["Tooltip"] = "Breaks noise's TV when you are holding it (holy tuff)",
-		}
-	)
+	Groupboxes.StairwellMain:AddToggle("BreakNoiseTv", {
+		["Text"] = "Break Noise TV",
+		["Default"] = false,
+		["Tooltip"] = "Breaks noise's TV when you are holding it (holy tuff)",
+	})
 	BreakNoiseTvConn = nil
 	BreakNoiseTvRoomsConn = nil
 	NoiseTvDropHeight = 250
@@ -10324,22 +9831,17 @@ return (function(...)
 			end
 		end)
 	end)
-	Groupboxes.StairwellMain:AddToggle(
-		"CreakAggressionMeter",
-		{
-			["Text"] = "Creak Aggression Meter",
-			["Default"] = true,
-			["Tooltip"] = "Shows in the ESP text the percentage of creaks aggression/before he attacks (you need esp for this)",
-		}
-	)
+	Groupboxes.StairwellMain:AddToggle("CreakAggressionMeter", {
+		["Text"] = "Creak Aggression Meter",
+		["Default"] = true,
+		["Tooltip"] = "Shows in the ESP text the percentage of creaks aggression/before he attacks (you need esp for this)",
+	})
 	function GetCreakAggressionValue(o)
 		if not o then
 			return nil
 		end
 		local T = o:FindFirstChildOfClass("Animator")
-			or (o:FindFirstChild("AnimationController") and o.AnimationController:FindFirstChildOfClass(
-				"Animator"
-			))
+			or (o:FindFirstChild("AnimationController") and o.AnimationController:FindFirstChildOfClass("Animator"))
 			or o:FindFirstChildOfClass("AnimationController")
 		if not T then
 			return nil
@@ -10405,24 +9907,17 @@ return (function(...)
 				ESPLibrary:RemoveESP(o)
 			end)
 			pcall(function()
-				Functions.AddESP(
-					{
-						["Object"] = o,
-						["Text"] = T,
-						["Color"] = Options.EntitiesESPColor and Options.EntitiesESPColor.Value,
-					},
-					false
-				)
+				Functions.AddESP({
+					["Object"] = o,
+					["Text"] = T,
+					["Color"] = Options.EntitiesESPColor and Options.EntitiesESPColor.Value,
+				}, false)
 			end)
 		end
 	end)
 	Groupboxes.StairwellMain:AddToggle(
 		"AntiCrusher",
-		{
-			["Text"] = "Anti Crusher",
-			["Default"] = false,
-			["Tooltip"] = "Prevents you from getting hurt from crushers",
-		}
+		{ ["Text"] = "Anti Crusher", ["Default"] = false, ["Tooltip"] = "Prevents you from getting hurt from crushers" }
 	)
 	AntiCrusherConn = nil
 	CrusherConns = {}
@@ -10526,8 +10021,7 @@ return (function(...)
 		if not o then
 			return nil
 		end
-		local T = LocalPlayer
-			and (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
+		local T = LocalPlayer and (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart"))
 		local k, P = nil, math.huge
 		for o, w in ipairs(o:GetChildren()) do
 			local F = w:FindFirstChild("StairwellScrapper", true)
@@ -10607,93 +10101,64 @@ return (function(...)
 		["Callback"] = function()
 			local o, k = pcall(ScrapDroppedItems)
 			if not o then
-				UiLibrary:Notify({
-					["Title"] = "Scrap Dropped Items",
-					["Description"] = tostring(k),
-					["Time"] = 6,
-				})
+				UiLibrary:Notify({ ["Title"] = "Scrap Dropped Items", ["Description"] = tostring(k), ["Time"] = 6 })
 			end
 		end,
-	})):AddKeyPicker(
-		"ScrapDroppedItemsKeybind",
-		{
-			["Text"] = "Scrap Dropped Items",
-			["Default"] = "P",
-			["Mode"] = "Press",
-			["SyncToggleState"] = false,
-			["VisibleWhen"] = ScrapKeybindVisible,
-		}
-	)
+	})):AddKeyPicker("ScrapDroppedItemsKeybind", {
+		["Text"] = "Scrap Dropped Items",
+		["Default"] = "P",
+		["Mode"] = "Press",
+		["SyncToggleState"] = false,
+		["VisibleWhen"] = ScrapKeybindVisible,
+	})
 	Groupboxes.SubfloorsRooms = rT.Rooms:AddLeftGroupbox("Rooms")
-	Groupboxes.SubfloorsRooms:AddToggle(
-		"RoomsAutoWalk",
-		{
-			["Text"] = "Auto Rooms",
-			["Default"] = false,
-			["Tooltip"] = "Automatically moves and hides from entities in The Rooms (stops at A-1000)",
-		}
-	)
+	Groupboxes.SubfloorsRooms:AddToggle("RoomsAutoWalk", {
+		["Text"] = "Auto Rooms",
+		["Default"] = false,
+		["Tooltip"] = "Automatically moves and hides from entities in The Rooms (stops at A-1000)",
+	})
 	Groupboxes.SubfloorsRooms:AddSlider(
 		"RoomsAutoWalkPathfindTimeout",
 		{ ["Text"] = "Pathfind Timeout", ["Min"] = 0.5, ["Max"] = 3, ["Default"] = 1, ["Rounding"] = 1 }
 	)
-	Groupboxes.SubfloorsRooms:AddToggle(
-		"RoomsAutoWalkIgnoreA60",
-		{
-			["Text"] = "Ignore A-60",
-			["Default"] = false,
-			["Tooltip"] = "Continues to walk if A-60 spawns, enables godmode",
-		}
-	)
+	Groupboxes.SubfloorsRooms:AddToggle("RoomsAutoWalkIgnoreA60", {
+		["Text"] = "Ignore A-60",
+		["Default"] = false,
+		["Tooltip"] = "Continues to walk if A-60 spawns, enables godmode",
+	})
 	Groupboxes.SubfloorsRooms:AddToggle(
 		"RoomsAutoWalkShowPathToggle",
-		{
-			["Text"] = "Show Path",
-			["Default"] = false,
-			["Tooltip"] = "Shows the current path of rooms auto-walk",
-		}
+		{ ["Text"] = "Show Path", ["Default"] = false, ["Tooltip"] = "Shows the current path of rooms auto-walk" }
 	)
 	Toggles.RoomsAutoWalkShowPathToggle:AddColorPicker(
 		"RoomsAutoWalkShowPathColor",
 		{ ["Text"] = "Path", ["Default"] = Color3.fromRGB(0, 255, 0), ["Transparency"] = 0 }
 	)
-	Groupboxes.SubfloorsRooms:AddToggle(
-		"RoomsAutoWalkSpoofFootsteps",
-		{
-			["Text"] = "Spoof Footsteps",
-			["Default"] = false,
-			["Tooltip"] = "Makes it appear as if your character is walking normally",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.SubfloorsRooms:AddToggle("RoomsAutoWalkSpoofFootsteps", {
+		["Text"] = "Spoof Footsteps",
+		["Default"] = false,
+		["Tooltip"] = "Makes it appear as if your character is walking normally",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Groupboxes.SubfloorsRooms:AddDivider()
-	Groupboxes.SubfloorsRooms:AddToggle(
-		"RoomsPickupStardust",
-		{
-			["Text"] = "Pickup Stardust",
-			["Default"] = false,
-			["Tooltip"] = "Automatically pathfinds to stardust in the current room",
-		}
-	)
-	Groupboxes.SubfloorsRooms:AddToggle(
-		"RoomsPickupGold",
-		{
-			["Text"] = "Pickup Gold",
-			["Default"] = false,
-			["Tooltip"] = "Automatically pathfinds to gold piles in the current room",
-		}
-	)
+	Groupboxes.SubfloorsRooms:AddToggle("RoomsPickupStardust", {
+		["Text"] = "Pickup Stardust",
+		["Default"] = false,
+		["Tooltip"] = "Automatically pathfinds to stardust in the current room",
+	})
+	Groupboxes.SubfloorsRooms:AddToggle("RoomsPickupGold", {
+		["Text"] = "Pickup Gold",
+		["Default"] = false,
+		["Tooltip"] = "Automatically pathfinds to gold piles in the current room",
+	})
 	local Ld, Od
 	Groupboxes.SubfloorsOutdoors = rT.Garden:AddLeftGroupbox("Outdoors")
 	Groupboxes.SubfloorsMonument = rT.Garden:AddLeftGroupbox("Monument")
-	Groupboxes.SubfloorsMonument:AddToggle(
-		"BypassMonument",
-		{
-			["Text"] = "Anti Monument",
-			["Default"] = false,
-			["Tooltip"] = "Makes the server think you are looking at the closest monument, without turning your camera",
-		}
-	)
+	Groupboxes.SubfloorsMonument:AddToggle("BypassMonument", {
+		["Text"] = "Anti Monument",
+		["Default"] = false,
+		["Tooltip"] = "Makes the server think you are looking at the closest monument, without turning your camera",
+	})
 	Toggles.BypassMonument:OnChanged(function()
 		RefreshMonuments()
 		fireMonumentLookAngle()
@@ -10712,14 +10177,11 @@ return (function(...)
 			CheesyState.SurgeFrame.Name = o and "SurgeVignette_Disabled" or "SurgeVignette"
 		end
 	end)
-	Groupboxes.SubfloorsOutdoors:AddToggle(
-		"RemoveMandrake",
-		{
-			["Text"] = "Disable Mandrake (FE)",
-			["Default"] = false,
-			["Tooltip"] = "Prevents mandrakes from attacking you, but this is inconsistent",
-		}
-	)
+	Groupboxes.SubfloorsOutdoors:AddToggle("RemoveMandrake", {
+		["Text"] = "Disable Mandrake (FE)",
+		["Default"] = false,
+		["Tooltip"] = "Prevents mandrakes from attacking you, but this is inconsistent",
+	})
 	Toggles.RemoveMandrake:OnChanged(function(o)
 		for T, k in wT.Entities do
 			if k.Name == "Root" and k:IsA("BasePart") then
@@ -10739,14 +10201,11 @@ return (function(...)
 			end
 		end
 	end)
-	Groupboxes.SubfloorsOutdoors:AddToggle(
-		"ShowEyestalkPathToggle",
-		{
-			["Text"] = "Show Eyestalk Path",
-			["Default"] = false,
-			["Tooltip"] = "Shows you the correct path in the eyestalk chase",
-		}
-	)
+	Groupboxes.SubfloorsOutdoors:AddToggle("ShowEyestalkPathToggle", {
+		["Text"] = "Show Eyestalk Path",
+		["Default"] = false,
+		["Tooltip"] = "Shows you the correct path in the eyestalk chase",
+	})
 	Toggles.ShowEyestalkPathToggle:AddColorPicker(
 		"ShowEyestalkPathColor",
 		{ ["Text"] = "Eyestalk Path", ["Default"] = Color3.fromRGB(0, 255, 0), ["Transparency"] = 0 }
@@ -10891,8 +10350,7 @@ return (function(...)
 								k = true
 								local o = game.Players.LocalPlayer.Character
 								if o and o:FindFirstChild("HumanoidRootPart") then
-									o.HumanoidRootPart.CFrame = o.HumanoidRootPart.CFrame
-										* CFrame.new(0, 0, 10)
+									o.HumanoidRootPart.CFrame = o.HumanoidRootPart.CFrame * CFrame.new(0, 0, 10)
 								end
 								T = 0
 							end
@@ -10915,7 +10373,8 @@ return (function(...)
 						for o, T in k:GetDescendants() do
 							local k = T
 							if
-								T:IsA("BasePart") and pcall(function()
+								T:IsA("BasePart")
+								and pcall(function()
 									return Executor.isnetworkowner(k)
 								end)
 							then
@@ -10927,11 +10386,9 @@ return (function(...)
 							local k = T
 							if T:IsA("BasePart") then
 								T.CanCollide = false
-								if
-									pcall(function()
-										return Executor.isnetworkowner(k)
-									end)
-								then
+								if pcall(function()
+									return Executor.isnetworkowner(k)
+								end) then
 									k.Position = Vector3.new(
 										math.random(-29999, 29999),
 										math.random(-29999, 29999),
@@ -11371,10 +10828,7 @@ return (function(...)
 		if k >= 100 then
 			local k = nil
 			for o, T in o:GetDescendants() do
-				if
-					T.Name == "LiveBreakerPolePickup"
-					and (T.Parent and not CheesyState.HotelBreakersFired[T])
-				then
+				if T.Name == "LiveBreakerPolePickup" and (T.Parent and not CheesyState.HotelBreakersFired[T]) then
 					k = T
 					break
 				end
@@ -11631,18 +11085,15 @@ return (function(...)
 			while
 				CheesyState.HotelSeekActive
 				and (
-					Toggles.HotelAutoWalk.Value
-					and (not CheesyState.HotelSeekVoiding and tick() - o < HotelSeekTimeout)
+					Toggles.HotelAutoWalk.Value and (not CheesyState.HotelSeekVoiding and tick() - o < HotelSeekTimeout)
 				)
 			do
 				if not Character or not Humanoid or not HumanoidRootPart then
 					break
 				end
 				if
-					(
-						Character:GetAttribute("InCutscene") == nil
-						or Character:GetAttribute("InCutscene") == false
-					) and tick() - CheesyState.HotelSeekSince > 5
+					(Character:GetAttribute("InCutscene") == nil or Character:GetAttribute("InCutscene") == false)
+					and tick() - CheesyState.HotelSeekSince > 5
 				then
 					break
 				end
@@ -11657,14 +11108,11 @@ return (function(...)
 						if k and k >= d then
 							local o = getRoomDoorPart(T)
 							if o then
-								table.insert(
-									C,
-									{
-										["Part"] = o,
-										["Room"] = k,
-										["Dist"] = ((o.Position - HumanoidRootPart.Position)).Magnitude,
-									}
-								)
+								table.insert(C, {
+									["Part"] = o,
+									["Room"] = k,
+									["Dist"] = ((o.Position - HumanoidRootPart.Position)).Magnitude,
+								})
 							end
 						end
 					end
@@ -11747,10 +11195,8 @@ return (function(...)
 						break
 					end
 					if
-						(
-							Character:GetAttribute("InCutscene") == nil
-							or Character:GetAttribute("InCutscene") == false
-						) and tick() - CheesyState.HotelFigureSince > 5
+						(Character:GetAttribute("InCutscene") == nil or Character:GetAttribute("InCutscene") == false)
+						and tick() - CheesyState.HotelFigureSince > 5
 					then
 						break
 					end
@@ -11849,11 +11295,7 @@ return (function(...)
 		if CharacterCollisionPart:IsA("BasePart") then
 			local o = workspace:Raycast(CharacterCollisionPart.Position, Vector3.new(0, -60, 0), m)
 			if o then
-				r = Vector3.new(
-					CharacterCollisionPart.Position.X,
-					o.Position.Y,
-					CharacterCollisionPart.Position.Z
-				)
+				r = Vector3.new(CharacterCollisionPart.Position.X, o.Position.Y, CharacterCollisionPart.Position.Z)
 			end
 		end
 		local G = Vector3.new(F.X, r.Y, F.Z)
@@ -11986,8 +11428,7 @@ return (function(...)
 					if
 						A
 						and (
-							A.Parent
-							and (F and LocalPlayer:DistanceFromCharacter(F) < (A.MaxActivationDistance or 10))
+							A.Parent and (F and LocalPlayer:DistanceFromCharacter(F) < (A.MaxActivationDistance or 10))
 						)
 					then
 						Functions.ForceFirePrompt(A)
@@ -12101,9 +11542,7 @@ return (function(...)
 				end
 				task.wait(0.5)
 			end
-			if
-				not T and (Toggles.HotelAutoWalk.Value and (Character and (Humanoid and HumanoidRootPart)))
-			then
+			if not T and (Toggles.HotelAutoWalk.Value and (Character and (Humanoid and HumanoidRootPart))) then
 				local o = F - d
 				o = Vector3.new(o.X, 0, o.Z)
 				if o.Magnitude > 0.5 then
@@ -12243,10 +11682,7 @@ return (function(...)
 		then
 			local T = { ["Distance"] = math.huge, ["Object"] = nil }
 			for o, k in o:GetDescendants() do
-				if
-					k.Name == "GoldPile"
-					and (k:GetAttribute("GoldValue") and Toggles.RoomsPickupGold.Value)
-				then
+				if k.Name == "GoldPile" and (k:GetAttribute("GoldValue") and Toggles.RoomsPickupGold.Value) then
 					local o = (k:GetPivot()).Position
 					local P = LocalPlayer:DistanceFromCharacter(o)
 					if P < T.Distance then
@@ -12481,13 +11917,9 @@ return (function(...)
 					local P = T or k
 					T = k
 					local w = Instance.new("Beam")
-					local F = rawget(Toggles, "ShowEyestalkPathColor")
-							and Options.ShowEyestalkPathColor.Value
+					local F = rawget(Toggles, "ShowEyestalkPathColor") and Options.ShowEyestalkPathColor.Value
 						or Color3.fromRGB(0, 255, 0)
-					w.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0, F),
-						ColorSequenceKeypoint.new(1, F),
-					})
+					w.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, F), ColorSequenceKeypoint.new(1, F) })
 					w.FaceCamera = true
 					w.Width0 = 0.2
 					w.Width1 = 0.2
@@ -12495,13 +11927,10 @@ return (function(...)
 					w.LightInfluence = 0
 					w.LightEmission = 0
 					w.Enabled = true
-					local A = rawget(Toggles, "ShowEyestalkPathToggle")
-							and (Toggles.ShowEyestalkPathToggle.Value and 0)
+					local A = rawget(Toggles, "ShowEyestalkPathToggle") and (Toggles.ShowEyestalkPathToggle.Value and 0)
 						or 1
-					w.Transparency = NumberSequence.new({
-						NumberSequenceKeypoint.new(0, A),
-						NumberSequenceKeypoint.new(1, A),
-					})
+					w.Transparency =
+						NumberSequence.new({ NumberSequenceKeypoint.new(0, A), NumberSequenceKeypoint.new(1, A) })
 					w.Parent = CheesyState.SeekNodesFolder
 					local d = Instance.new("Attachment", k)
 					local C = Instance.new("Attachment", P)
@@ -12604,14 +12033,11 @@ return (function(...)
 			ESPLibrary:UpdateObjectColor(GetESPTarget(k, "Ladders"), o)
 		end
 	end)
-	Groupboxes.MinesLadder:AddToggle(
-		"ShowSeekPathToggle",
-		{
-			["Text"] = "Show Seek Path",
-			["Default"] = false,
-			["Tooltip"] = "Shows you the correct path in the seek chase",
-		}
-	)
+	Groupboxes.MinesLadder:AddToggle("ShowSeekPathToggle", {
+		["Text"] = "Show Seek Path",
+		["Default"] = false,
+		["Tooltip"] = "Shows you the correct path in the seek chase",
+	})
 	Toggles.ShowSeekPathToggle:AddColorPicker(
 		"ShowSeekPathColor",
 		{ ["Text"] = "Seek Path", ["Default"] = Color3.fromRGB(0, 255, 0), ["Transparency"] = 0 }
@@ -12623,14 +12049,11 @@ return (function(...)
 		Od(wT.SeekHighlights, o)
 	end)
 	Groupboxes.MinesAnticheat = rT.Mines:AddLeftGroupbox("Exploits")
-	Groupboxes.MinesAnticheat:AddToggle(
-		"DisableAnticheat",
-		{
-			["Text"] = "Anticheat Bypass",
-			["Default"] = false,
-			["Tooltip"] = "Completely disables the anticheat, after interacting with a ladder.",
-		}
-	)
+	Groupboxes.MinesAnticheat:AddToggle("DisableAnticheat", {
+		["Text"] = "Anticheat Bypass",
+		["Default"] = false,
+		["Tooltip"] = "Completely disables the anticheat, after interacting with a ladder.",
+	})
 	Toggles.DisableAnticheat:OnChanged(function(o)
 		if CheesyState.AnticheatDisabled == true and not o then
 			GameRemotes.ClimbLadder:FireServer()
@@ -12638,15 +12061,12 @@ return (function(...)
 		end
 	end)
 	Groupboxes.MinesAnticheat:AddDivider()
-	Groupboxes.MinesAnticheat:AddToggle(
-		"RemoveFigureMines",
-		{
-			["Text"] = "Delete Figure (FE)",
-			["Default"] = false,
-			["Tooltip"] = "Removes figure for everyone, however this is inconsistent",
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.MinesAnticheat:AddToggle("RemoveFigureMines", {
+		["Text"] = "Delete Figure (FE)",
+		["Default"] = false,
+		["Tooltip"] = "Removes figure for everyone, however this is inconsistent",
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Toggles.RemoveFigureMines:OnChanged(function(o)
 		if o and (Executor.isnetworkowner and workspace:FindFirstChild("Figure")) then
 			local o = detectFloor()
@@ -12656,7 +12076,8 @@ return (function(...)
 						for o, T in k:GetDescendants() do
 							local k = T
 							if
-								T:IsA("BasePart") and pcall(function()
+								T:IsA("BasePart")
+								and pcall(function()
 									return Executor.isnetworkowner(k)
 								end)
 							then
@@ -12668,11 +12089,9 @@ return (function(...)
 							local k = T
 							if T:IsA("BasePart") then
 								T.CanCollide = false
-								if
-									pcall(function()
-										return Executor.isnetworkowner(k)
-									end)
-								then
+								if pcall(function()
+									return Executor.isnetworkowner(k)
+								end) then
 									k.Position = Vector3.new(
 										math.random(-29999, 29999),
 										math.random(-29999, 29999),
@@ -12710,16 +12129,13 @@ return (function(...)
 		end
 	end
 	Groupboxes.MinesAutomation = rT.Mines:AddRightGroupbox("Automation")
-	Groupboxes.MinesAutomation:AddToggle(
-		"AutoSteerMinecart",
-		{
-			["Text"] = "Auto Minecart",
-			["Default"] = false,
-			["Tooltip"] = "Automatically completes the minecart section of the seek chase",
-			["Disabled"] = isSolara(),
-			["DisabledTooltip"] = "Solara sandboxes require(), so the PlayerModule controls hook would land on a dead object :(",
-		}
-	)
+	Groupboxes.MinesAutomation:AddToggle("AutoSteerMinecart", {
+		["Text"] = "Auto Minecart",
+		["Default"] = false,
+		["Tooltip"] = "Automatically completes the minecart section of the seek chase",
+		["Disabled"] = isSolara(),
+		["DisabledTooltip"] = "Solara sandboxes require(), so the PlayerModule controls hook would land on a dead object :(",
+	})
 	Groupboxes.MinesAutomation:AddSlider(
 		"AutoSteerMinecartTurnDistance",
 		{ ["Text"] = "Turn Distance", ["Min"] = 20, ["Max"] = 40, ["Default"] = 30, ["Rounding"] = 0 }
@@ -12728,24 +12144,18 @@ return (function(...)
 		"AutoSteerMinecartDuckDistance",
 		{ ["Text"] = "Crouch Distance", ["Min"] = 20, ["Max"] = 40, ["Default"] = 30, ["Rounding"] = 0 }
 	)
-	Groupboxes.MinesAutomation:AddToggle(
-		"AutoSolveAnchors",
-		{
-			["Text"] = "Auto Solve Anchors",
-			["Default"] = false,
-			["Tooltip"] = "Automatically enters the correct code into anchors when you are near them.",
-		}
-	)
-	Groupboxes.MinesAutomation:AddToggle(
-		"MinecartTeleport",
-		{
-			["Text"] = "Minecart Teleport",
-			["Default"] = false,
-			["Tooltip"] = "Teleports your minecart to complete the seek chase, do NOT use on high ping or low fps",
-			["Disabled"] = not (hasHookMeta and hasHookFunction),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.MinesAutomation:AddToggle("AutoSolveAnchors", {
+		["Text"] = "Auto Solve Anchors",
+		["Default"] = false,
+		["Tooltip"] = "Automatically enters the correct code into anchors when you are near them.",
+	})
+	Groupboxes.MinesAutomation:AddToggle("MinecartTeleport", {
+		["Text"] = "Minecart Teleport",
+		["Default"] = false,
+		["Tooltip"] = "Teleports your minecart to complete the seek chase, do NOT use on high ping or low fps",
+		["Disabled"] = not (hasHookMeta and hasHookFunction),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Toggles.MinecartTeleport:OnChanged(function(o)
 		if not MainHook then
 			return
@@ -12820,11 +12230,7 @@ return (function(...)
 				return
 			end
 			if not Character then
-				UiLibrary:Notify({
-					["Title"] = "Error",
-					["Description"] = "Character not found",
-					["Time"] = 3,
-				})
+				UiLibrary:Notify({ ["Title"] = "Error", ["Description"] = "Character not found", ["Time"] = 3 })
 				return
 			end
 			if LatestRoomValue and LatestRoomValue.Value < 99 then
@@ -12989,15 +12395,10 @@ return (function(...)
 				if not w then
 					continue
 				end
-				local d = T:FindFirstChild("ActivateEventPrompt")
-						and T.ActivateEventPrompt.MaxActivationDistance
-					or 20
+				local d = T:FindFirstChild("ActivateEventPrompt") and T.ActivateEventPrompt.MaxActivationDistance or 20
 				if
 					HumanoidRootPart
-					and (
-						HumanoidRootPart.Position
-						and ((HumanoidRootPart.Position - w.Position)).Magnitude <= d
-					)
+					and (HumanoidRootPart.Position and ((HumanoidRootPart.Position - w.Position)).Magnitude <= d)
 				then
 					local o = T:FindFirstChild("AnchorRemote")
 					if o then
@@ -13117,25 +12518,19 @@ return (function(...)
 	end
 	Toggles.AutoSteerMinecart:OnChanged(setupAutoMinecart)
 	Groupboxes.Visuals_Camera = rT.Visuals:AddRightGroupbox("Camera")
-	Groupboxes.Visuals_Camera:AddToggle(
-		"Fullbright",
-		{
-			["Text"] = "Fullbright",
-			["Default"] = false,
-			["Tooltip"] = "Makes your game very bright, and removes shadows",
-		}
-	)
-	Groupboxes.Visuals_Camera:AddSlider(
-		"FullbrightBrightness",
-		{
-			["Text"] = "Brightness Level",
-			["Default"] = 3,
-			["Min"] = 1,
-			["Max"] = 10,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("Fullbright", {
+		["Text"] = "Fullbright",
+		["Default"] = false,
+		["Tooltip"] = "Makes your game very bright, and removes shadows",
+	})
+	Groupboxes.Visuals_Camera:AddSlider("FullbrightBrightness", {
+		["Text"] = "Brightness Level",
+		["Default"] = 3,
+		["Min"] = 1,
+		["Max"] = 10,
+		["Rounding"] = 1,
+		["Compact"] = true,
+	})
 	local function applyFullbright()
 		local o = Options.FullbrightBrightness.Value
 		Lighting.Ambient = Color3.new(1, 1, 1)
@@ -13241,19 +12636,14 @@ return (function(...)
 	end)
 	Groupboxes.Visuals_Camera:AddToggle(
 		"AmbientToggle",
-		{
-			["Text"] = "Ambient",
-			["Default"] = false,
-			["Tooltip"] = "Changes the lighting color to the specified value",
-		}
+		{ ["Text"] = "Ambient", ["Default"] = false, ["Tooltip"] = "Changes the lighting color to the specified value" }
 	)
 	Toggles.AmbientToggle:AddColorPicker(
 		"AmbientColor",
 		{ ["Text"] = "Ambient", ["Default"] = Color3.fromRGB(255, 255, 255), ["Transparency"] = 0 }
 	)
 	Toggles.AmbientToggle:OnChanged(function(o)
-		local T = CurrentRooms
-			and CurrentRooms:FindFirstChild(tostring(LocalPlayer:GetAttribute("CurrentRoom")))
+		local T = CurrentRooms and CurrentRooms:FindFirstChild(tostring(LocalPlayer:GetAttribute("CurrentRoom")))
 		local k = T and T:GetAttribute("Ambient");
 		(TweenService:Create(
 			Lighting,
@@ -13271,32 +12661,22 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"FOVChanger",
-		{
-			["Text"] = "Field of View",
-			["Default"] = false,
-			["Tooltip"] = "Applies the field of view value from the slider below",
-		}
-	)
-	Groupboxes.Visuals_Camera:AddSlider(
-		"FieldOfView",
-		{
-			["Text"] = "Field of View",
-			["Min"] = 70,
-			["Max"] = 120,
-			["Default"] = 70,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("FOVChanger", {
+		["Text"] = "Field of View",
+		["Default"] = false,
+		["Tooltip"] = "Applies the field of view value from the slider below",
+	})
+	Groupboxes.Visuals_Camera:AddSlider("FieldOfView", {
+		["Text"] = "Field of View",
+		["Min"] = 70,
+		["Max"] = 120,
+		["Default"] = 70,
+		["Rounding"] = 0,
+		["Compact"] = true,
+	})
 	Groupboxes.Visuals_Camera:AddToggle(
 		"ThirdPerson",
-		{
-			["Text"] = "Third Person",
-			["Default"] = false,
-			["Tooltip"] = "Puts your camera in a third person view",
-		}
+		{ ["Text"] = "Third Person", ["Default"] = false, ["Tooltip"] = "Puts your camera in a third person view" }
 	)
 	Toggles.ThirdPerson:AddKeyPicker(
 		"ThirdPersonKeybind",
@@ -13304,146 +12684,82 @@ return (function(...)
 	)
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ThirdPersonOffsetX",
-		{
-			["Text"] = "X Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 0,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "X Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 0, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ThirdPersonOffsetY",
-		{
-			["Text"] = "Y Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 0.5,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Y Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 0.5, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ThirdPersonOffsetZ",
-		{
-			["Text"] = "Z Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 7.5,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Z Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 7.5, ["Rounding"] = 1, ["Compact"] = true }
 	)
-	Groupboxes.Visuals_Camera:AddToggle(
-		"ThirdPersonWallCheck",
-		{
-			["Text"] = "Wall Check",
-			["Default"] = false,
-			["Tooltip"] = "Prevents third person camera from going through walls",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("ThirdPersonWallCheck", {
+		["Text"] = "Wall Check",
+		["Default"] = false,
+		["Tooltip"] = "Prevents third person camera from going through walls",
+	})
 	Toggles.ThirdPerson:OnChanged(updateThirdPerson)
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"ViewmodelOffsetToggle",
-		{
-			["Text"] = "Viewmodel Offset",
-			["Default"] = false,
-			["Tooltip"] = "Changes the offset of your viewmodel while holding an item.",
-			["Disabled"] = (not hasRequire) or isSolara(),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("ViewmodelOffsetToggle", {
+		["Text"] = "Viewmodel Offset",
+		["Default"] = false,
+		["Tooltip"] = "Changes the offset of your viewmodel while holding an item.",
+		["Disabled"] = (not hasRequire) or isSolara(),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ViewmodelOffsetX",
-		{
-			["Text"] = "X Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 0,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "X Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 0, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ViewmodelOffsetY",
-		{
-			["Text"] = "Y Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 0,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Y Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 0, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddSlider(
 		"ViewmodelOffsetZ",
-		{
-			["Text"] = "Z Offset",
-			["Min"] = -10,
-			["Max"] = 10,
-			["Default"] = 0,
-			["Rounding"] = 1,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Z Offset", ["Min"] = -10, ["Max"] = 10, ["Default"] = 0, ["Rounding"] = 1, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddToggle(
 		"FreecamToggle",
-		{
-			["Text"] = "Freecam",
-			["Default"] = false,
-			["Tooltip"] = "Enables freecam with WASD movement and mouse look",
-		}
+		{ ["Text"] = "Freecam", ["Default"] = false, ["Tooltip"] = "Enables freecam with WASD movement and mouse look" }
 	)
 	Toggles.FreecamToggle:AddKeyPicker(
 		"FreecamKeybind",
 		{ ["Text"] = "Freecam", ["Default"] = "Q", ["Mode"] = "Toggle", ["SyncToggleState"] = true }
 	)
-	Groupboxes.Visuals_Camera:AddSlider(
-		"FreecamSpeed",
-		{
-			["Text"] = "Freecam Speed",
-			["Min"] = 10,
-			["Max"] = 300,
-			["Default"] = 75,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
-	)
+	Groupboxes.Visuals_Camera:AddSlider("FreecamSpeed", {
+		["Text"] = "Freecam Speed",
+		["Min"] = 10,
+		["Max"] = 300,
+		["Default"] = 75,
+		["Rounding"] = 0,
+		["Compact"] = true,
+	})
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"RemoveCameraBobbing",
-		{
-			["Text"] = "Remove Camera Bobbing",
-			["Default"] = false,
-			["Tooltip"] = "Removes camera 'bobbing'",
-			["Disabled"] = (not hasRequire) or isSolara(),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
-	Groupboxes.Visuals_Camera:AddToggle(
-		"RemoveCameraShake",
-		{
-			["Text"] = "Remove Camera Shake",
-			["Default"] = false,
-			["Tooltip"] = "Removes camera shake",
-			["Disabled"] = (not hasRequire) or isSolara(),
-			["DisabledTooltip"] = "Your executor doesn't support this feature :(",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("RemoveCameraBobbing", {
+		["Text"] = "Remove Camera Bobbing",
+		["Default"] = false,
+		["Tooltip"] = "Removes camera 'bobbing'",
+		["Disabled"] = (not hasRequire) or isSolara(),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
+	Groupboxes.Visuals_Camera:AddToggle("RemoveCameraShake", {
+		["Text"] = "Remove Camera Shake",
+		["Default"] = false,
+		["Tooltip"] = "Removes camera shake",
+		["Disabled"] = (not hasRequire) or isSolara(),
+		["DisabledTooltip"] = "Your executor doesn't support this feature :(",
+	})
 	Groupboxes.Visuals_Camera:AddToggle(
 		"RemoveCameraFog",
 		{ ["Text"] = "Remove Fog", ["Default"] = false, ["Tooltip"] = "Removes camera fog" }
 	)
-	Groupboxes.Visuals_Camera:AddToggle(
-		"DisableFiredampEffect",
-		{
-			["Text"] = "Remove Firedamp Effect",
-			["Default"] = false,
-			["Tooltip"] = "Removes the firedamp fog/effect when inside a room",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("DisableFiredampEffect", {
+		["Text"] = "Remove Firedamp Effect",
+		["Default"] = false,
+		["Tooltip"] = "Removes the firedamp fog/effect when inside a room",
+	})
 	FreecamConnection = nil
 	local function stopFreecam()
 		local o = workspace:FindFirstChild("FreecamPart")
@@ -13523,69 +12839,38 @@ return (function(...)
 		end
 	end)
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"NotifyOxygen",
-		{
-			["Text"] = "Oxygen Notifications",
-			["Default"] = false,
-			["Tooltip"] = "Shows a notification when your oxygen level changes",
-		}
-	)
-	Groupboxes.Visuals_Camera:AddToggle(
-		"NotifyHasteTime",
-		{
-			["Text"] = "Haste/Time Notifications",
-			["Default"] = false,
-			["Tooltip"] = "Shows a notification of the remaining time before Haste spawns",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("NotifyOxygen", {
+		["Text"] = "Oxygen Notifications",
+		["Default"] = false,
+		["Tooltip"] = "Shows a notification when your oxygen level changes",
+	})
+	Groupboxes.Visuals_Camera:AddToggle("NotifyHasteTime", {
+		["Text"] = "Haste/Time Notifications",
+		["Default"] = false,
+		["Tooltip"] = "Shows a notification of the remaining time before Haste spawns",
+	})
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"TransparentHidingSpotsToggle",
-		{
-			["Text"] = "Transparent Hiding Spots",
-			["Default"] = false,
-			["Tooltip"] = "Makes a hiding spot transparent when you enter it",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("TransparentHidingSpotsToggle", {
+		["Text"] = "Transparent Hiding Spots",
+		["Default"] = false,
+		["Tooltip"] = "Makes a hiding spot transparent when you enter it",
+	})
 	Groupboxes.Visuals_Camera:AddSlider(
 		"TransparentHidingSpotsSlider",
-		{
-			["Text"] = "Transparency",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0.5,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Transparency", ["Min"] = 0, ["Max"] = 1, ["Default"] = 0.5, ["Rounding"] = 2, ["Compact"] = true }
 	)
 	Groupboxes.Visuals_Camera:AddDivider()
-	Groupboxes.Visuals_Camera:AddToggle(
-		"DisableJumpscares",
-		{
-			["Text"] = "Disable Jumpscares",
-			["Default"] = false,
-			["Tooltip"] = "Removes jumpscares from the chosen entities",
-		}
-	)
-	Groupboxes.Visuals_Camera:AddDropdown(
-		"JumpscaresList",
-		{
-			["Text"] = "Jumpscares To Disable",
-			["Values"] = {
-				"Glitch",
-				"Timothy",
-				"Void",
-				"Rush",
-				"Ambush",
-				"Screech",
-				"Figure",
-				"Seek",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("DisableJumpscares", {
+		["Text"] = "Disable Jumpscares",
+		["Default"] = false,
+		["Tooltip"] = "Removes jumpscares from the chosen entities",
+	})
+	Groupboxes.Visuals_Camera:AddDropdown("JumpscaresList", {
+		["Text"] = "Jumpscares To Disable",
+		["Values"] = { "Glitch", "Timothy", "Void", "Rush", "Ambush", "Screech", "Figure", "Seek" },
+		["Multi"] = true,
+		["AllowNull"] = true,
+	})
 	Groupboxes.Visuals_Camera:AddDivider()
 	CutsceneNames = {
 		"Figure",
@@ -13601,14 +12886,11 @@ return (function(...)
 		"GrumbleNestEnd",
 		"EyestalkIntro",
 	}
-	Groupboxes.Visuals_Camera:AddToggle(
-		"RemoveCutscenes",
-		{
-			["Text"] = "Remove Cutscenes",
-			["Default"] = false,
-			["Tooltip"] = "Removes cutscenes that aren't needed for progression",
-		}
-	)
+	Groupboxes.Visuals_Camera:AddToggle("RemoveCutscenes", {
+		["Text"] = "Remove Cutscenes",
+		["Default"] = false,
+		["Tooltip"] = "Removes cutscenes that aren't needed for progression",
+	})
 	Toggles.RemoveCutscenes:OnChanged(function(o)
 		local T = LocalPlayer:FindFirstChildOfClass("PlayerGui")
 		local k = T and T:FindFirstChild("MainUI")
@@ -13623,8 +12905,7 @@ return (function(...)
 			for T, k in pairs(A:GetChildren()) do
 				if
 					TableFind(CutsceneNames, k.Name) and k:IsA("ModuleScript")
-					or TableFind(CutsceneNames, k:GetAttribute("OriginalName"))
-						and k:IsA("ModuleScript")
+					or TableFind(CutsceneNames, k:GetAttribute("OriginalName")) and k:IsA("ModuleScript")
 				then
 					k.Name = (o and k.Name .. "_Disabled" or k:GetAttribute("OriginalName") or k.Name)
 				end
@@ -13635,8 +12916,7 @@ return (function(...)
 			for T, k in pairs(d:GetChildren()) do
 				if
 					TableFind(CutsceneNames, k.Name) and k:IsA("ModuleScript")
-					or TableFind(CutsceneNames, k:GetAttribute("OriginalName"))
-						and k:IsA("ModuleScript")
+					or TableFind(CutsceneNames, k:GetAttribute("OriginalName")) and k:IsA("ModuleScript")
 				then
 					k.Name = (o and k.Name .. "_Disabled" or k:GetAttribute("OriginalName") or k.Name)
 				end
@@ -13670,335 +12950,274 @@ return (function(...)
 		{ ["Text"] = "Tracer Origin", ["Values"] = { "Top", "Middle", "Bottom" }, ["Default"] = 3 }
 	)
 	Groupboxes.Visuals_Settings:AddToggle("ESPShowText", { ["Text"] = "Show ESP Text", ["Default"] = true })
-	Groupboxes.Visuals_Settings:AddToggle(
-		"ESPShowDistance",
-		{ ["Text"] = "Show Distance", ["Default"] = true }
-	)
+	Groupboxes.Visuals_Settings:AddToggle("ESPShowDistance", { ["Text"] = "Show Distance", ["Default"] = true })
 	Groupboxes.Visuals_Settings:AddSlider(
 		"ESPTextSize",
-		{
-			["Text"] = "Text Size",
-			["Min"] = 8,
-			["Max"] = 24,
-			["Default"] = 15,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
+		{ ["Text"] = "Text Size", ["Min"] = 8, ["Max"] = 24, ["Default"] = 15, ["Rounding"] = 0, ["Compact"] = true }
 	)
-	Groupboxes.Visuals_Settings:AddDropdown(
-		"ESPTextFont",
-		{
-			["Text"] = "Text Font",
-			["Values"] = {
-				"Legacy",
-				"Arial",
-				"ArialBold",
-				"SourceSans",
-				"SourceSansBold",
-				"SourceSansLight",
-				"SourceSansItalic",
-				"Bodoni",
-				"Garamond",
-				"Cartoon",
-				"Code",
-				"Highway",
-				"SciFi",
-				"Arcade",
-				"Fantasy",
-				"Antique",
-				"SourceSansSemibold",
-				"Gotham",
-				"GothamMedium",
-				"GothamBold",
-				"GothamBlack",
-				"AmaticSC",
-				"Bangers",
-				"Creepster",
-				"DenkOne",
-				"Fondamento",
-				"FredokaOne",
-				"GrenzeGotisch",
-				"IndieFlower",
-				"JosefinSans",
-				"Jura",
-				"Kalam",
-				"LuckiestGuy",
-				"Merriweather",
-				"Michroma",
-				"Nunito",
-				"Oswald",
-				"PatrickHand",
-				"PermanentMarker",
-				"Roboto",
-				"RobotoCondensed",
-				"RobotoMono",
-				"Sarpanch",
-				"SpecialElite",
-				"TitilliumWeb",
-				"Ubuntu",
-			},
-			["Default"] = 11,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPRenderLimit",
-		{
-			["Text"] = "ESP Highlight Limit",
-			["Min"] = 30,
-			["Max"] = 240,
-			["Default"] = 240,
-			["Rounding"] = 0,
-			["Compact"] = true,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPMaxDistance",
-		{
-			["Text"] = "ESP Distance",
-			["Min"] = 50,
-			["Max"] = 500,
-			["Default"] = 250,
-			["Rounding"] = 0,
-			["Compact"] = true,
-			["Suffix"] = " studs",
-		}
-	)
+	Groupboxes.Visuals_Settings:AddDropdown("ESPTextFont", {
+		["Text"] = "Text Font",
+		["Values"] = {
+			"Legacy",
+			"Arial",
+			"ArialBold",
+			"SourceSans",
+			"SourceSansBold",
+			"SourceSansLight",
+			"SourceSansItalic",
+			"Bodoni",
+			"Garamond",
+			"Cartoon",
+			"Code",
+			"Highway",
+			"SciFi",
+			"Arcade",
+			"Fantasy",
+			"Antique",
+			"SourceSansSemibold",
+			"Gotham",
+			"GothamMedium",
+			"GothamBold",
+			"GothamBlack",
+			"AmaticSC",
+			"Bangers",
+			"Creepster",
+			"DenkOne",
+			"Fondamento",
+			"FredokaOne",
+			"GrenzeGotisch",
+			"IndieFlower",
+			"JosefinSans",
+			"Jura",
+			"Kalam",
+			"LuckiestGuy",
+			"Merriweather",
+			"Michroma",
+			"Nunito",
+			"Oswald",
+			"PatrickHand",
+			"PermanentMarker",
+			"Roboto",
+			"RobotoCondensed",
+			"RobotoMono",
+			"Sarpanch",
+			"SpecialElite",
+			"TitilliumWeb",
+			"Ubuntu",
+		},
+		["Default"] = 11,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPRenderLimit", {
+		["Text"] = "ESP Highlight Limit",
+		["Min"] = 30,
+		["Max"] = 240,
+		["Default"] = 240,
+		["Rounding"] = 0,
+		["Compact"] = true,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPMaxDistance", {
+		["Text"] = "ESP Distance",
+		["Min"] = 50,
+		["Max"] = 500,
+		["Default"] = 250,
+		["Rounding"] = 0,
+		["Compact"] = true,
+		["Suffix"] = " studs",
+	})
 	Groupboxes.Visuals_Settings:AddDivider()
-	Groupboxes.Visuals_Settings:AddToggle(
-		"UseESPOutlineColour",
-		{
-			["Text"] = "Use ESP Outline (colour)",
-			["Default"] = false,
-			["Tooltip"] = "Makes the outline of all ESP the same colour as the ESP itself",
-		}
-	)
+	Groupboxes.Visuals_Settings:AddToggle("UseESPOutlineColour", {
+		["Text"] = "Use ESP Outline (colour)",
+		["Default"] = false,
+		["Tooltip"] = "Makes the outline of all ESP the same colour as the ESP itself",
+	})
 	Toggles.UseESPOutlineColour:AddColorPicker(
 		"ESPOutline",
 		{ ["Text"] = "ESP Outline", ["Default"] = Color3.fromRGB(255, 255, 255) }
 	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPFillTransparency",
-		{
-			["Text"] = "Fill Transparency",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0.75,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPOutlineTransparency",
-		{
-			["Text"] = "Outline Transparency",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPTextTransparency",
-		{
-			["Text"] = "Text Transparency",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPTextOutlineTransparency",
-		{
-			["Text"] = "Text Outline Transparency",
-			["Min"] = 0,
-			["Max"] = 1,
-			["Default"] = 0,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
-	)
-	Groupboxes.Visuals_Settings:AddSlider(
-		"ESPTracerThickness",
-		{
-			["Text"] = "Tracer Thickness",
-			["Min"] = 0.5,
-			["Max"] = 2,
-			["Default"] = 0.75,
-			["Rounding"] = 2,
-			["Compact"] = true,
-		}
-	)
+	Groupboxes.Visuals_Settings:AddSlider("ESPFillTransparency", {
+		["Text"] = "Fill Transparency",
+		["Min"] = 0,
+		["Max"] = 1,
+		["Default"] = 0.75,
+		["Rounding"] = 2,
+		["Compact"] = true,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPOutlineTransparency", {
+		["Text"] = "Outline Transparency",
+		["Min"] = 0,
+		["Max"] = 1,
+		["Default"] = 0,
+		["Rounding"] = 2,
+		["Compact"] = true,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPTextTransparency", {
+		["Text"] = "Text Transparency",
+		["Min"] = 0,
+		["Max"] = 1,
+		["Default"] = 0,
+		["Rounding"] = 2,
+		["Compact"] = true,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPTextOutlineTransparency", {
+		["Text"] = "Text Outline Transparency",
+		["Min"] = 0,
+		["Max"] = 1,
+		["Default"] = 0,
+		["Rounding"] = 2,
+		["Compact"] = true,
+	})
+	Groupboxes.Visuals_Settings:AddSlider("ESPTracerThickness", {
+		["Text"] = "Tracer Thickness",
+		["Min"] = 0.5,
+		["Max"] = 2,
+		["Default"] = 0.75,
+		["Rounding"] = 2,
+		["Compact"] = true,
+	})
 	Groupboxes.Visuals_Notifs = rT.Visuals:AddLeftGroupbox("Entity Notifications")
-	Groupboxes.Visuals_Notifs:AddToggle(
-		"NotifyEntities",
-		{
-			["Text"] = "Entity Notifications",
-			["Default"] = false,
-			["Tooltip"] = "Receive notifications/popups when entities spawn",
-		}
-	)
-	Groupboxes.Visuals_Notifs:AddDropdown(
-		"EntityList",
-		{
-			["Text"] = "Entity List",
-			["Values"] = {
-				"Rush",
-				"Ambush",
-				"A-60",
-				"A-120",
-				"Blitz",
-				"Eyes",
-				"Lookman",
-				"Monument",
-				"Sally",
-				"Gloombat Swarm",
-				"Glitch Rush",
-				"Glitch Ambush",
-				"Drones",
-				"Bash",
-				"Electric Puddle",
-				"Scribbles",
-				"Noise",
-				"Creak",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-			["Tooltip"] = "Only notify for selected entities (leave empty to notify all)",
-		}
-	)
+	Groupboxes.Visuals_Notifs:AddToggle("NotifyEntities", {
+		["Text"] = "Entity Notifications",
+		["Default"] = false,
+		["Tooltip"] = "Receive notifications/popups when entities spawn",
+	})
+	Groupboxes.Visuals_Notifs:AddDropdown("EntityList", {
+		["Text"] = "Entity List",
+		["Values"] = {
+			"Rush",
+			"Ambush",
+			"A-60",
+			"A-120",
+			"Blitz",
+			"Eyes",
+			"Lookman",
+			"Monument",
+			"Sally",
+			"Gloombat Swarm",
+			"Glitch Rush",
+			"Glitch Ambush",
+			"Drones",
+			"Bash",
+			"Electric Puddle",
+			"Scribbles",
+			"Noise",
+			"Creak",
+		},
+		["Multi"] = true,
+		["AllowNull"] = true,
+		["Tooltip"] = "Only notify for selected entities (leave empty to notify all)",
+	})
 	Groupboxes.Visuals_Notifs:AddDropdown(
 		"NotifyStyle",
 		{ ["Text"] = "Notification Style", ["Values"] = { "Obsidian", "Achievement" }, ["Default"] = 1 }
 	)
-	Groupboxes.Visuals_Notifs:AddDropdown(
-		"NotifySound",
-		{
-			["Text"] = "Notification Sound",
-			["Values"] = { "Achievement", "Tone", "Alert", "Windows XP", "GTA Cell" },
-			["Default"] = 5,
-		}
-	)
+	Groupboxes.Visuals_Notifs:AddDropdown("NotifySound", {
+		["Text"] = "Notification Sound",
+		["Values"] = { "Achievement", "Tone", "Alert", "Windows XP", "GTA Cell" },
+		["Default"] = 5,
+	})
 	Groupboxes.Visuals_Notifs:AddDivider()
-	Groupboxes.Visuals_Notifs:AddToggle(
-		"EntityChatToggle",
-		{
-			["Text"] = "Notify Chat",
-			["Default"] = false,
-			["Tooltip"] = "Sends a message in the chat when an entity spawns",
-		}
-	)
+	Groupboxes.Visuals_Notifs:AddToggle("EntityChatToggle", {
+		["Text"] = "Notify Chat",
+		["Default"] = false,
+		["Tooltip"] = "Sends a message in the chat when an entity spawns",
+	})
 	Groupboxes.Visuals_Notifs:AddInput(
 		"EntityChatMessage",
 		{ ["Text"] = "Message", ["Default"] = "spawned!", ["Numeric"] = false, ["Placeholder"] = "Message" }
 	)
 	Groupboxes.Visuals_ItemNotifs = rT.Visuals:AddLeftGroupbox("Item Notifications")
-	Groupboxes.Visuals_ItemNotifs:AddToggle(
-		"NotifyItems",
-		{
-			["Text"] = "Item Notifications",
-			["Default"] = false,
-			["Tooltip"] = "Receive notifications/popups when items spawn (shows distance)",
-		}
-	)
-	Groupboxes.Visuals_ItemNotifs:AddDropdown(
-		"ItemList",
-		{
-			["Text"] = "Item List",
-			["Values"] = {
-				"Alcohol Bottles",
-				"Alarm Clock",
-				"Aloe Vera",
-				"Bandage",
-				"Bandage Pack",
-				"Battery",
-				"Battery Pack",
-				"Big Bomb",
-				"Big Shield Potion",
-				"Bomb",
-				"Boxing Gloves",
-				"Briefcase",
-				"Bread",
-				"Broken Monitor",
-				"Candle",
-				"Candy",
-				"CD Disc",
-				"Cheese",
-				"Compass",
-				"Crucifix",
-				"Donut",
-				"Flashlight",
-				"Fih Food",
-				"Glitch Fragment",
-				"Glowstick",
-				"Golden Gun",
-				"Gummy Flashlight",
-				"Gween Soda",
-				"Gween Soda Pack",
-				"Hiding Box",
-				"Holy Hand Grenade",
-				"Honey Pot",
-				"Iron Key",
-				"Jerry Can",
-				"Knockbomb",
-				"Lamp",
-				"Lantern",
-				"Laser Pointer",
-				"Lighter",
-				"Lockpicks",
-				"Lotus",
-				"Lotus Petal",
-				"Mini Shield Potion",
-				"Moonlight Candle",
-				"Moonlight Smoothie",
-				"Multitool",
-				"Nanner",
-				"Paper Plane",
-				"Pizza",
-				"Lunch Box",
-				"Rift Jar",
-				"Sally Toy",
-				"Shears",
-				"Skeleton Key",
-				"Smoothie",
-				"Spotlight",
-				"Starlight Barrel",
-				"Starlight Bottle",
-				"Starlight Vial",
-				"Stop Sign",
-				"Straplight",
-				"Tablet",
-				"Tip Jar",
-				"Vitamins",
-			},
-			["Multi"] = true,
-			["AllowNull"] = true,
-			["Tooltip"] = "Only notify for selected items (leave empty to notify all)",
-		}
-	)
+	Groupboxes.Visuals_ItemNotifs:AddToggle("NotifyItems", {
+		["Text"] = "Item Notifications",
+		["Default"] = false,
+		["Tooltip"] = "Receive notifications/popups when items spawn (shows distance)",
+	})
+	Groupboxes.Visuals_ItemNotifs:AddDropdown("ItemList", {
+		["Text"] = "Item List",
+		["Values"] = {
+			"Alcohol Bottles",
+			"Alarm Clock",
+			"Aloe Vera",
+			"Bandage",
+			"Bandage Pack",
+			"Battery",
+			"Battery Pack",
+			"Big Bomb",
+			"Big Shield Potion",
+			"Bomb",
+			"Boxing Gloves",
+			"Briefcase",
+			"Bread",
+			"Broken Monitor",
+			"Candle",
+			"Candy",
+			"CD Disc",
+			"Cheese",
+			"Compass",
+			"Crucifix",
+			"Donut",
+			"Flashlight",
+			"Fih Food",
+			"Glitch Fragment",
+			"Glowstick",
+			"Golden Gun",
+			"Gummy Flashlight",
+			"Gween Soda",
+			"Gween Soda Pack",
+			"Hiding Box",
+			"Holy Hand Grenade",
+			"Honey Pot",
+			"Iron Key",
+			"Jerry Can",
+			"Knockbomb",
+			"Lamp",
+			"Lantern",
+			"Laser Pointer",
+			"Lighter",
+			"Lockpicks",
+			"Lotus",
+			"Lotus Petal",
+			"Mini Shield Potion",
+			"Moonlight Candle",
+			"Moonlight Smoothie",
+			"Multitool",
+			"Nanner",
+			"Paper Plane",
+			"Pizza",
+			"Lunch Box",
+			"Rift Jar",
+			"Sally Toy",
+			"Shears",
+			"Skeleton Key",
+			"Smoothie",
+			"Spotlight",
+			"Starlight Barrel",
+			"Starlight Bottle",
+			"Starlight Vial",
+			"Stop Sign",
+			"Straplight",
+			"Tablet",
+			"Tip Jar",
+			"Vitamins",
+		},
+		["Multi"] = true,
+		["AllowNull"] = true,
+		["Tooltip"] = "Only notify for selected items (leave empty to notify all)",
+	})
 	Groupboxes.Visuals_ItemNotifs:AddDropdown(
 		"ItemNotifyStyle",
 		{ ["Text"] = "Notification Style", ["Values"] = { "Obsidian", "Achievement" }, ["Default"] = 1 }
 	)
-	Groupboxes.Visuals_ItemNotifs:AddDropdown(
-		"ItemNotifySound",
-		{
-			["Text"] = "Notification Sound",
-			["Values"] = { "Achievement", "Tone", "Alert", "Windows XP", "GTA Cell" },
-			["Default"] = 4,
-		}
-	)
+	Groupboxes.Visuals_ItemNotifs:AddDropdown("ItemNotifySound", {
+		["Text"] = "Notification Sound",
+		["Values"] = { "Achievement", "Tone", "Alert", "Windows XP", "GTA Cell" },
+		["Default"] = 4,
+	})
 	Groupboxes.Visuals_ItemNotifs:AddDivider()
-	Groupboxes.Visuals_ItemNotifs:AddToggle(
-		"ItemChatToggle",
-		{
-			["Text"] = "Notify Chat",
-			["Default"] = false,
-			["Tooltip"] = "Sends a message in the chat when an item spawns",
-		}
-	)
+	Groupboxes.Visuals_ItemNotifs:AddToggle("ItemChatToggle", {
+		["Text"] = "Notify Chat",
+		["Default"] = false,
+		["Tooltip"] = "Sends a message in the chat when an item spawns",
+	})
 	Groupboxes.Visuals_ItemNotifs:AddInput(
 		"ItemChatMessage",
 		{ ["Text"] = "Message", ["Default"] = "spawned!", ["Numeric"] = false, ["Placeholder"] = "Message" }
@@ -14260,27 +13479,16 @@ return (function(...)
 			["Alias"] = "Sally",
 			["Text"] = "Sally has spawned, grab her horse and hold it out or hold out an item of your own!",
 		},
-		["GloombatSwarm"] = {
-			["Alias"] = "Gloombat Swarm",
-			["Text"] = "Gloombats have spawned, turn off lights!",
-		},
+		["GloombatSwarm"] = { ["Alias"] = "Gloombat Swarm", ["Text"] = "Gloombats have spawned, turn off lights!" },
 		["RNIUSHCG=="] = { ["Alias"] = "Glitch Rush", ["Danger"] = true },
 		["AR0xMBUSH"] = { ["Alias"] = "Glitch Ambush", ["Danger"] = true },
 		["GlitchRush"] = { ["Alias"] = "Glitch Rush", ["Danger"] = true },
 		["GlitchAmbush"] = { ["Alias"] = "Glitch Ambush", ["Danger"] = true },
 		["GiggleCeiling"] = { ["Alias"] = "Giggle" },
 		["GrumbleRig"] = { ["Alias"] = "Grumble" },
-		["DronesStampede"] = {
-			["Alias"] = "Drones",
-			["Danger"] = true,
-			["Text"] = "Drones are stampeding, hide!",
-		},
+		["DronesStampede"] = { ["Alias"] = "Drones", ["Danger"] = true, ["Text"] = "Drones are stampeding, hide!" },
 		["BashMoving"] = { ["Alias"] = "Bash", ["Danger"] = true },
-		["Water"] = {
-			["Alias"] = "Electric Puddle",
-			["Danger"] = false,
-			["Text"] = "Electric Puddle nearby!",
-		},
+		["Water"] = { ["Alias"] = "Electric Puddle", ["Danger"] = false, ["Text"] = "Electric Puddle nearby!" },
 		["TellerRig"] = { ["Alias"] = "Teller", ["Danger"] = true, ["NoNotify"] = true },
 		["Scribbles"] = { ["Alias"] = "Scribbles", ["Danger"] = true },
 		["NoiseModel"] = {
@@ -14582,12 +13790,7 @@ return (function(...)
 			UiLibrary:Notify({ ["Title"] = "Entity detected", ["Description"] = w, ["Time"] = 5 })
 		else
 			task.spawn(function()
-				rd.ShowAchievement(
-					"Entity detected",
-					w,
-					nil,
-					"Entity '" .. ((k.Alias or "") .. "' has spawned")
-				)
+				rd.ShowAchievement("Entity detected", w, nil, "Entity '" .. ((k.Alias or "") .. "' has spawned"))
 			end)
 		end
 		if Toggles.EntityChatToggle.Value then
@@ -14703,14 +13906,12 @@ return (function(...)
 					end
 				end
 				if
-					Toggles
-					and (Toggles.InstantInteract and (Toggles.InstantInteract.Value and T.HoldDuration ~= 0))
+					Toggles and (Toggles.InstantInteract and (Toggles.InstantInteract.Value and T.HoldDuration ~= 0))
 				then
 					T.HoldDuration = 0
 				end
 				if
-					Toggles
-					and (Toggles.PromptClip and (Toggles.PromptClip.Value and T.RequiresLineOfSight ~= false))
+					Toggles and (Toggles.PromptClip and (Toggles.PromptClip.Value and T.RequiresLineOfSight ~= false))
 				then
 					T.RequiresLineOfSight = false
 				end
@@ -14725,9 +13926,7 @@ return (function(...)
 				end
 			end
 		end
-		if
-			Toggles and (Toggles.NotifyVulnerable and (Toggles.NotifyVulnerable.Value and HumanoidRootPart))
-		then
+		if Toggles and (Toggles.NotifyVulnerable and (Toggles.NotifyVulnerable.Value and HumanoidRootPart)) then
 			local o = HumanoidRootPart.Position.Y
 			if VulnerableLastY then
 				if o - VulnerableLastY >= 3 and tick() - VulnerableNotifCooldown >= 3 then
@@ -15202,8 +14401,7 @@ return (function(...)
 			if #F == 0 then
 				showAddonWarning(
 					"User Addons",
-					"Your addons folder is currently empty. Insert a .lua file into '"
-						.. (AddonFolderPath .. "'.")
+					"Your addons folder is currently empty. Insert a .lua file into '" .. (AddonFolderPath .. "'.")
 				)
 				return
 			end
@@ -15272,7 +14470,8 @@ return (function(...)
 					elseif #(P[F.name] or {}) == 0 then
 						local o = A
 						if not o or o == "" then
-							o = "the addon finished without erroring but it never built any ui, it probably stopped early or swallowed its own error"
+							o =
+								"the addon finished without erroring but it never built any ui, it probably stopped early or swallowed its own error"
 						end
 						displayAddonError(F.name, o, 0)
 					end
@@ -15345,11 +14544,7 @@ return (function(...)
 		["Func"] = function()
 			if RefreshAddons then
 				RefreshAddons()
-				UiLibrary:Notify({
-					["Title"] = "Addons",
-					["Description"] = "Addons reloaded",
-					["Time"] = 3,
-				})
+				UiLibrary:Notify({ ["Title"] = "Addons", ["Description"] = "Addons reloaded", ["Time"] = 3 })
 			end
 		end,
 	})
@@ -15387,10 +14582,7 @@ return (function(...)
 			end
 		end
 		o:AddDivider()
-		o:AddLabel({
-			["Text"] = "Changing the language reloads the UI in the new language",
-			["DoesWrap"] = true,
-		})
+		o:AddLabel({ ["Text"] = "Changing the language reloads the UI in the new language", ["DoesWrap"] = true })
 		local F = false
 		local A
 		A = o:AddDropdown("CheesyLanguage", {
@@ -15456,14 +14648,11 @@ return (function(...)
 			end,
 		})
 		o:AddDivider()
-		o:AddToggle(
-			"QueueOnTeleport",
-			{
-				["Text"] = "Queue On Teleport",
-				["Default"] = false,
-				["Tooltip"] = "Re-executes the script on teleport (recommended not to use)",
-			}
-		)
+		o:AddToggle("QueueOnTeleport", {
+			["Text"] = "Queue On Teleport",
+			["Default"] = false,
+			["Tooltip"] = "Re-executes the script on teleport (recommended not to use)",
+		})
 		Toggles.QueueOnTeleport:OnChanged(function(o)
 			if o then
 				CheesyQueueOnTeleport()
@@ -15550,12 +14739,8 @@ return (function(...)
 			end
 		end
 	end
-	ScriptCreatedObjectLists = {
-		["SeekNodes"] = true,
-		["SeekHighlights"] = true,
-		["EyestalkHighlights"] = true,
-		["PathLights"] = true,
-	}
+	ScriptCreatedObjectLists =
+		{ ["SeekNodes"] = true, ["SeekHighlights"] = true, ["EyestalkHighlights"] = true, ["PathLights"] = true }
 	local function unloadCheesy()
 		_Unloading = true
 		pcall(restoreGodmodeCharacter)
@@ -15595,8 +14780,12 @@ return (function(...)
 		if NoclipConnection then
 			NoclipConnection:Disconnect()
 			NoclipConnection = nil
-			pcall(setNoclipPartsCollision, true)
 		end
+		if noclipDescendantConnection then
+			noclipDescendantConnection:Disconnect()
+			noclipDescendantConnection = nil
+		end
+		pcall(setNoclipPartsCollision, true, true)
 		if ET then
 			ET:Disconnect()
 			ET = nil
@@ -15709,10 +14898,8 @@ return (function(...)
 					o:Destroy()
 					if T.Parent then
 						T.HoldDuration = T:GetAttribute("HoldDuration_Old") or T.HoldDuration
-						T.RequiresLineOfSight = T:GetAttribute("RequiresLineOfSight_Old")
-							or T.RequiresLineOfSight
-						T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
-							or T.MaxActivationDistance
+						T.RequiresLineOfSight = T:GetAttribute("RequiresLineOfSight_Old") or T.RequiresLineOfSight
+						T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old") or T.MaxActivationDistance
 					end
 				end)
 			end
@@ -15728,10 +14915,8 @@ return (function(...)
 				pcall(function()
 					if T.Parent then
 						T.HoldDuration = T:GetAttribute("HoldDuration_Old") or T.HoldDuration
-						T.RequiresLineOfSight = T:GetAttribute("RequiresLineOfSight_Old")
-							or T.RequiresLineOfSight
-						T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old")
-							or T.MaxActivationDistance
+						T.RequiresLineOfSight = T:GetAttribute("RequiresLineOfSight_Old") or T.RequiresLineOfSight
+						T.MaxActivationDistance = T:GetAttribute("MaxActivationDistance_Old") or T.MaxActivationDistance
 					end
 				end)
 			end
@@ -15844,12 +15029,7 @@ return (function(...)
 				CheesyState.HotelSeekConn = nil
 			end
 			pcall(function()
-				(game:GetService("VirtualInputManager")):SendKeyEvent(
-					false,
-					Enum.KeyCode.LeftControl,
-					false,
-					game
-				)
+				(game:GetService("VirtualInputManager")):SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
 			end)
 			CheesyState.HotelCrouchHeld = false
 		end
@@ -16029,7 +15209,8 @@ return (function(...)
 		["Description"] = "discord.gg/CuZJQaCquK",
 		["Time"] = 5,
 	})
-	CreditText = 'PLEASE READ: This script is ONLY made by one person, and the official discord server is "dsc.gg/cheesyscript" or "discord.gg/CuZJQaCquK", if you have gotten it from anywhere else, please leave the server and join our one instead. Executing from a different github repo may aswell contain a logger if they have enough info to know how to. This will only pop up the first time you execute, and will not pop up from now on'
+	CreditText =
+		'PLEASE READ: This script is ONLY made by one person, and the official discord server is "dsc.gg/cheesyscript" or "discord.gg/CuZJQaCquK", if you have gotten it from anywhere else, please leave the server and join our one instead. Executing from a different github repo may aswell contain a logger if they have enough info to know how to. This will only pop up the first time you execute, and will not pop up from now on'
 	local function showCreditSplash()
 		pcall(function()
 			local o = (gethui and gethui()) or CoreGui
