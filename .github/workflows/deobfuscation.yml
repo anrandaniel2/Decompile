@@ -19,6 +19,11 @@ jobs:
       # Executes ONLY extracted decoder, guard/bootstrap, and pure helpers; never the Roblox body.
       - name: Differentially validate original decoder and readable reconstruction
         run: python tools/validate_hybrid.py --luau /tmp/luau/build/release/luau
+      - name: Rebuild and check optional movement repairs with isolated mocks
+        run: |
+          python tools/patch_movement.py
+          git diff --exit-code -- cheesy.movement-repaired.luau
+          python tools/validate_movement.py --luau /tmp/luau/build/release/luau
       - run: python -m unittest discover -s tests -v
       - name: Compile reconstructed Luau without executing the game script
         run: /tmp/luau/build/release/luau-compile --null cheesy.deobfuscated.luau
