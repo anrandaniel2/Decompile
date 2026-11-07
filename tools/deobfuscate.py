@@ -112,7 +112,30 @@ def luau_quote(raw):
         else: result.append(char)
     return '"' + ''.join(result) + '"'
 
-# Drop the table decoder, anti-tamper scaffolding, and the decryption runtime.
+# Keep the anti-tamper guard and its math.random side effects. The decoded
+# string table/cipher can be removed, but their initialization is observable:
+# the cipher's 256-entry shuffle consumes one random value per entry.
+anti_start = source.index('do local o=uu(564465+-512174)')
+cipher_start = source.index('local xu,bu do', anti_start)
+anti = source[anti_start:cipher_start]
+anti_refs = re.compile(r'uu\(((?:[^()]|\([^()]*\))*)\)')
+anti, anti_replaced = anti_refs.subn(
+    lambda match: luau_quote(uu(int(number(match[1])))), anti)
+assert anti_replaced == 17 and not anti_refs.search(anti)
+
+# In the original one-line payload the two deliberate errors have the same
+# source line, which the guard checks. Formatting separates the two functions.
+# Define both error probes on one ignored line instead; the rest of the guard
+# remains readable and its line-number equality test remains meaningful.
+probes = re.findall(r'pcall\((function\(\)local o=.*?end)\)', anti)
+assert len(probes) == 2
+for index, probe in enumerate(probes):
+    anti = anti.replace('pcall(' + probe + ')',
+                        'pcall(' + ('firstErrorProbe' if index == 0 else 'secondErrorProbe') + ')', 1)
+anti = ("do\n\t\t-- Both intentional errors must originate on the same source line.\n"
+        "\t\t-- stylua: ignore\n\t\tlocal firstErrorProbe, secondErrorProbe = "
+        + probes[0] + ', ' + probes[1] + '\n' + anti[len('do'):].rstrip())
+
 body = source[source.index('if not game:IsLoaded()'):]
 assert body.endswith('end)(...)\n')
 body = body[:-len('end)(...)\n')]
@@ -143,6 +166,7 @@ tree=parser.parse(raw_body)
 print('parse error before folding:',tree.root_node.has_error)
 
 folds=[]
+fold_records=[]  # original pure expression and its proposed folded numeric value
 def visit(node):
     if node.type in ('binary_expression','unary_expression','parenthesized_expression'):
         text=raw_body[node.start_byte:node.end_byte].decode('utf-8')
@@ -153,6 +177,7 @@ def visit(node):
                 if value.is_integer(): value=int(value)
             if not folds or node.start_byte>=folds[-1][1]:
                 folds.append((node.start_byte,node.end_byte,'('+str(value)+')'))
+                fold_records.append((text,value))
                 return
         except (ValueError, SyntaxError, OverflowError, ZeroDivisionError): pass
     for child in node.children: visit(child)
@@ -204,14 +229,25 @@ for a,b,v in sorted(indexes,reverse=True): raw_body=raw_body[:a]+v.encode()+raw_
 body=raw_body.decode('utf-8')
 print('Normalised property accesses:',len(indexes),'parse error:',parser.parse(raw_body).root_node.has_error)
 
-OUT.write_text('-- Reconstructed from cheesy.obfuscated.luau.txt by tools/deobfuscate.py.\n-- Static analysis only; NOT executed or verified in Roblox.\n'+body+'\n')
+OUT.write_text('-- Reconstructed from cheesy.obfuscated.luau.txt by tools/deobfuscate.py.\n'
+               '-- Decoder, bootstrap side effects and selected helpers validated offline; NOT executed in Roblox.\n'
+               '-- Preserve the original call frame and anti-tamper guard before the game body.\n'
+               + 'return (function(...)\n'
+               + anti + '\n'
+               + '-- The removed cipher initialized a 256-entry shuffled lookup table.\n'
+               + '-- Its entries were deterministic, but its random draws were observable.\n'
+               + 'for remaining = 256, 1, -1 do\n'
+               + '\tmath.random(1, remaining)\n'
+               + 'end\n'
+               + body + '\nend)(...)\n')
 print('Output:',OUT,'bytes:',OUT.stat().st_size, 'NUL-bearing literals:',len(failures))
 
 notes = [
     '# Reconstruction verification and limitations', '',
-    'The supplied script is not safe to execute. It fetches and `loadstring`s remote UI code,',
-    'installs executor hooks and can POST to `127.0.0.1:43594/rpc`. No code from the',
-    'attachment was executed during this reconstruction.', '',
+    'The full script is not safe to execute. It fetches and `loadstring`s remote UI code,',
+    'installs executor hooks and can POST to `127.0.0.1:43594/rpc`. Only its isolated',
+    'decoder, guard/bootstrap, and selected pure functions were executed offline;',
+    'no Roblox body or downloaded library was executed during this reconstruction.', '',
     f'{replaced:,} encrypted references were statically decoded. '
     f'{len(unresolved)} decoded strings are invalid UTF-8; {len(failures)} contain NUL bytes.',
     'The previous reconstruction had 100 broken strings because its key-stream',
@@ -221,10 +257,13 @@ notes = [
     'Top-level and nested local-function names, plus service/state aliases in',
     '`tools/function_names.py`, were inferred from behavior and resolved through',
     'lexical scopes; they are not recovered original source-level symbols.', '',
-    'The result is syntax-checked but not runtime-verified. It still loads external',
-    'libraries at runtime, and its nested callbacks and many parameters retain',
-    'short local identifiers. These are remaining readability/runtime-verification',
-    'limits, not proof of corrupt string decoding.', '',
+    'Offline Luau VM checks compare every decoded reference and literal byte-for-byte,',
+    'every folded numeric expression, and three vetted pure helpers. The isolated',
+    'original and readable guards and all RNG calls agree at three tested seeds;',
+    'the removed table shuffle still consumes its 256 random draws. The generated',
+    'and formatted versions also compile to identical instruction listings.',
+    'This does not test the full Roblox/executor runtime or its external libraries.',
+    'Many anonymous callback parameters retain short local identifiers.', '',
 ]
 (Path(__file__).resolve().parents[1] / 'deobfuscation_notes.md').write_text('\n'.join(notes)+'\n')
 print('Non-UTF-8 references:',len(unresolved))

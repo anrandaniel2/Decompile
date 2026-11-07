@@ -1,8 +1,9 @@
 # Reconstruction verification and limitations
 
-The supplied script is not safe to execute. It fetches and `loadstring`s remote UI code,
-installs executor hooks and can POST to `127.0.0.1:43594/rpc`. No code from the
-attachment was executed during this reconstruction.
+The full script is not safe to execute. It fetches and `loadstring`s remote UI code,
+installs executor hooks and can POST to `127.0.0.1:43594/rpc`. Only its isolated
+decoder, guard/bootstrap, and selected pure functions were executed offline;
+no Roblox body or downloaded library was executed during this reconstruction.
 
 11,771 encrypted references were statically decoded. 0 decoded strings are invalid UTF-8; 0 contain NUL bytes.
 The previous reconstruction had 100 broken strings because its key-stream
@@ -14,8 +15,11 @@ Top-level and nested local-function names, plus service/state aliases in
 `tools/function_names.py`, were inferred from behavior and resolved through
 lexical scopes; they are not recovered original source-level symbols.
 
-The result is syntax-checked but not runtime-verified. It still loads external
-libraries at runtime, and its nested callbacks and many parameters retain
-short local identifiers. These are remaining readability/runtime-verification
-limits, not proof of corrupt string decoding.
+Offline Luau VM checks compare every decoded reference and literal byte-for-byte,
+every folded numeric expression, and three vetted pure helpers. The isolated
+original and readable guards and all RNG calls agree at three tested seeds;
+the removed table shuffle still consumes its 256 random draws. The generated
+and formatted versions also compile to identical instruction listings.
+This does not test the full Roblox/executor runtime or its external libraries.
+Many anonymous callback parameters retain short local identifiers.
 
