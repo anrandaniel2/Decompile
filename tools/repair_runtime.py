@@ -17,6 +17,7 @@ BOUNDARIES = (
     ('godmode_should', r'local function shouldUseGodmode\(\)', r'local function trackThreat\(o\)'),
     ('godmode_toggle', r'Toggles\s*\.\s*Godmode\s*:\s*OnChanged\(function\(o\)', r'Groupboxes\s*\.\s*Other\s*:\s*AddDropdown\('),
     ('godmode_apply', r'local function applyGodmode\(\)', r'local function restoreGodmode\(\)'),
+    ('godmode_restore', r'local function restoreGodmode\(\)', r'local function saveCharacterPhysics\(\)'),
     ('godmode_render', r'Connections\s*\.\s*GodmodeEnforce\s*=\s*RunService\s*\.\s*RenderStepped\s*:\s*Connect\(function\(\)', r'VulnerableLastY\s*=\s*nil'),
     ('crouch', r'Functions\s*\.\s*IsCrouching\s*=\s*function\(\)', r'ESP_FIGURE_NAMES\s*=\s*\{'),
     ('unload', r'if\s+NoclipConnection\s+then', r'if\s+ET\s+then'),
@@ -270,14 +271,22 @@ FRAGMENTS = {
 		if CurrentFloor == "Fools" or CurrentFloor == "OldHotel" then
 			return
 		end
-		if CheesyState and not CheesyState.OriginalC1 then
-			local o = Character:FindFirstChild("LowerTorso")
-			local T = o and o:FindFirstChild("Root")
-			if T then
-				CheesyState.OriginalC1 = T.C1
+		-- The root moves down for the server, but the torso must move up
+		-- relative to it in the SAME update so the local avatar stays level.
+		local lowerTorso = Character:FindFirstChild("LowerTorso")
+		local rootJoint = lowerTorso and lowerTorso:FindFirstChild("Root")
+		if not rootJoint then
+			if not GodmodeState.MissingVisualJointWarned then
+				GodmodeState.MissingVisualJointWarned = true
+				warn("Godmode unavailable: LowerTorso.Root joint is missing; cannot hide the visual sink")
 			end
+			return
+		end
+		if not CheesyState.OriginalC1 then
+			CheesyState.OriginalC1 = rootJoint.C1
 		end
 		if not Character:GetAttribute("GodmodeSunk") then
+			rootJoint.C1 = CheesyState.OriginalC1 * CFrame.new(0, -2.346, 0)
 			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0, -2.346, 0)
 			Humanoid.HipHeight = 0.05
 			Character:SetAttribute("GodmodeSunk", true)
@@ -296,6 +305,33 @@ FRAGMENTS = {
 			end
 		end
 	end
+""",
+    'godmode_restore': """local function restoreGodmode()
+        if not Character or not Humanoid or not HumanoidRootPart then
+            return
+        end
+        if Character:GetAttribute("GodmodeSunk") then
+            -- Undo both halves together; waiting for RenderStepped can make
+            -- the local avatar visibly drop or jump for a frame.
+            local lowerTorso = Character:FindFirstChild("LowerTorso")
+            local rootJoint = lowerTorso and lowerTorso:FindFirstChild("Root")
+            if rootJoint and CheesyState.OriginalC1 then
+                rootJoint.C1 = CheesyState.OriginalC1
+            end
+            HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0, 2.346, 0)
+            Character:SetAttribute("GodmodeSunk", nil)
+        end
+        Humanoid.HipHeight = CheesyState.OriginalHipHeight or 2.396
+        CheesyState.SkipGodmodeCrouchForce = true
+        pcall(function()
+            local crouch = GameRemotes and GameRemotes:FindFirstChild("Crouch")
+            if crouch then
+                crouch:FireServer(false, false)
+            end
+            Character:SetAttribute("Crouching", false)
+        end)
+        CheesyState.SkipGodmodeCrouchForce = false
+    end
 """,
     'godmode_render': """Connections.GodmodeEnforce = RunService.RenderStepped:Connect(function()
 		if _Unloading then

@@ -43,6 +43,14 @@ def validate(luau: str) -> None:
 local attrs = {}
 local calls = {}
 local failRemote = false
+local warnings = {}
+local frameMeta = {}
+function frameMeta.__mul(a,b)
+    return setmetatable({offset=a.offset+b.offset}, frameMeta)
+end
+local rootJoint = {C1=setmetatable({offset=0}, frameMeta)}
+local lowerTorso = {FindFirstChild=function(_,name) if name=="Root" then return rootJoint end end}
+CFrame = {new=function(_,y) return setmetatable({offset=y}, frameMeta) end}
 local crouchRemote = {FireServer = function(_,value,fromScript)
     calls[#calls + 1] = {value, fromScript}
     assert(CheesyState.SkipGodmodeCrouchForce == true, "bypass only around direct call")
@@ -52,7 +60,7 @@ Character = {
     Parent = true,
     GetAttribute = function(_,key) return attrs[key] end,
     SetAttribute = function(_,key,value) attrs[key] = value end,
-    FindFirstChild = function() return nil end,
+    FindFirstChild = function(_,name) if name=="LowerTorso" then return lowerTorso end end,
 }
 Humanoid = {HipHeight=2.5}
 HumanoidRootPart = {CFrame=0}
@@ -63,7 +71,7 @@ Options = {GodmodeMethod={Value="Always enabled"}}
 CurrentFloor = "Hotel"
 GameRemotes = {FindFirstChild=function(_,key) if key=="Crouch" then return crouchRemote end end}
 GodmodeState = {ActiveThreats={}}
-warn = function() end
+warn = function(message) warnings[#warnings+1] = message end
 local notices = {}
 UiLibrary = {Notify=function(_,message) notices[#notices+1]=message.Description end}
 Toggles.Godmode.OnChanged=function(_,callback) Toggles.Godmode.callback=callback end
@@ -73,17 +81,27 @@ assert(shouldUseGodmode())
 applyGodmode()
 assert(Character:GetAttribute("GodmodeSunk") == true)
 assert(Humanoid.HipHeight == 0.05 and HumanoidRootPart.CFrame == -2.346)
+assert(rootJoint.C1.offset == -2.346, "visual counter-offset must apply immediately")
+assert(HumanoidRootPart.CFrame - rootJoint.C1.offset == 0, "visible torso must stay level")
 assert(#calls == 1 and calls[1][1] == true)
 assert(CheesyState.SkipGodmodeCrouchForce == false, "state must reset after success")
 restoreGodmode()
 assert(Character:GetAttribute("GodmodeSunk") == nil)
 assert(Humanoid.HipHeight == 2.5 and HumanoidRootPart.CFrame == 0)
+assert(rootJoint.C1.offset == 0, "visual counter-offset must restore immediately")
 assert(#calls == 2 and calls[2][1] == false)
 failRemote = true
 applyGodmode()
 assert(CheesyState.SkipGodmodeCrouchForce == false, "state must reset after failure")
 failRemote = false
 restoreGodmode()
+lowerTorso.FindFirstChild = function() return nil end
+local callsBeforeMissingJoint = #calls
+applyGodmode()
+applyGodmode()
+assert(#calls == callsBeforeMissingJoint and HumanoidRootPart.CFrame == 0)
+assert(Character:GetAttribute("GodmodeSunk") == nil and #warnings == 2)
+lowerTorso.FindFirstChild = function(_,name) if name=="Root" then return rootJoint end end
 Options.GodmodeMethod.Value = "On entity spawn"
 assert(not shouldUseGodmode())
 local threat = {Parent=true}
@@ -105,7 +123,7 @@ Functions = {}
 assert(Functions.IsCrouching() == false)
 CharacterCollisionPart = {CollisionGroup="PlayerCrouching"}
 assert(Functions.IsCrouching() == true)
-print("PASS: godmode apply/restore, transient remote guard, threat method, missing collision part")
+print("PASS: godmode visual counter-offset, joint guard, apply/restore, remote guard, threat method")
 '''
     with tempfile.TemporaryDirectory(prefix='godmode-isolated-') as folder:
         path = Path(folder) / 'godmode.luau'
