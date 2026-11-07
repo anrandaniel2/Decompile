@@ -83,3 +83,71 @@ VARIABLE_NAMES = {
     'oT': 'updateInfiniteJump', 'TT': 'updateNoclip',
     'kT': 'updateThirdPerson', 'PT': 'updatePhase',
 }
+
+# Nested *local function* declarations in source order. The original spelling
+# is asserted before renaming to prevent a source edit from silently retargeting
+# a name. These labels are descriptive inferences, not recovered debug symbols.
+NESTED_FUNCTION_NAMES = [
+    ('A', 'adaptLinoriaSource'),                 # 01
+    ('T', 'readHexPair'),                        # 02
+    ('o', 'makeVisibilitySetter'),               # 03
+    ('T', 'addTranslationIndexEntry'),           # 04
+    ('P', 'setTranslatedText'),                   # 05
+    ('w', 'translateWidgetInfo'),                 # 06
+    ('F', 'translateWidgetCollection'),           # 07
+    ('A', 'translateTextGuiObject'),              # 08
+    ('P', 'watchHumanoidDeath'),                  # 09
+    ('T', 'trackSeekObstaclePart'),              # 10
+    ('T', 'isMinecartNodeFacingForward'),         # 11
+    ('k', 'getMinecartNodeTurnDirection'),        # 12
+    ('P', 'findNextMinecartNode'),               # 13
+    ('w', 'highlightSeekGuidingLight'),          # 14
+    ('k', 'handleBreakerBoxAutoSolve'),           # 15
+    ('k', 'updateNetworkPingEstimate'),          # 16
+    ('f', 'getThreatBasePart'),                  # 17
+    ('m', 'getCharacterCollisionPart'),          # 18
+    ('G', 'findCrucifixThreat'),                 # 19
+    ('y', 'findThreatInCrucifixRange'),           # 20
+    ('X', 'findDroppedCrucifix'),                # 21
+    ('k', 'getFigureModelRoot'),                 # 22
+    ('P', 'getGroundskeeperModelRoot'),           # 23
+    ('w', 'trackFigureOrGroundskeeper'),          # 24
+    ('F', 'untrackFigureOrGroundskeeper'),        # 25
+    ('d', 'refreshFigureCameraReference'),       # 26
+    ('C', 'captureFigureCamera'),                # 27
+    ('f', 'clearFigureGodmodeState'),            # 28
+    ('m', 'getFigureCameraOffset'),              # 29
+    ('r', 'offsetCameraNearFigure'),             # 30
+    ('G', 'startFigureGodmodeWatcher'),          # 31
+    ('y', 'stopFigureGodmodeWatcher'),           # 32
+    ('P', 'considerNearbyOfficeChair'),          # 33
+    ('o', 'disableAlmaAggression'),              # 34
+    ('T', 'processAlmaModel'),                   # 35
+    ('k', 'getCharacterForSkip'),                # 36
+    ('P', 'waitForFutureRoom'),                  # 37
+    ('w', 'fireRoomLookAtRemotes'),              # 38
+    ('F', 'processVineSkipRoom'),                # 39
+    ('A', 'scanVineSkipRooms'),                  # 40
+    ('k', 'getHorizontalUnitVector'),            # 41
+    ('k', 'createSeekPathNode'),                 # 42
+    ('F', 'installMinecartDecodeHook'),          # 43
+    ('w', 'waitUntilCutscene'),                  # 44
+    ('F', 'teleportCharacterToNode'),            # 45
+    ('T', 'cacheNotificationSound'),            # 46
+    ('X', 'createAchievementTextLabel'),         # 47
+    ('C', 'playNotificationSound'),              # 48
+    ('A', 'normalizeFloorName'),                 # 49
+    ('d', 'matchesAddonFloorFilter'),           # 50
+    ('C', 'setAddonGroupboxVisible'),            # 51
+    ('f', 'setAddonTabVisible'),                 # 52
+    ('m', 'refreshAddonFloorVisibility'),        # 53
+    ('r', 'showAddonWarning'),                  # 54
+    ('G', 'normalizeAddonSide'),                 # 55
+    ('y', 'trackAddonGroupbox'),                # 56
+    ('X', 'trackOwnedAddonGroupbox'),            # 57
+    ('I', 'createAddonGroupbox'),               # 58
+    ('V', 'displayAddonError'),                  # 59
+    ('q', 'createAddonContext'),                # 60
+    ('M', 'disconnectAddonConnections'),         # 61
+    ('i', 'loadUserAddons'),                     # 62
+]

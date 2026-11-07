@@ -4,7 +4,7 @@
 
 **Correction to the earlier version:** The previous unpacker handled the key-stream generator's retry condition incorrectly. It must skip state **1**, not 0. That one error produced 100 broken strings, including `string.split` and portions of the injected UI code. Those references now decode cleanly; [`deobfuscation_notes.md`](deobfuscation_notes.md) explains the correction.
 
-The unpacker is [`tools/deobfuscate.py`](tools/deobfuscate.py), with lexical-scope renaming in [`tools/rename_scoped.py`](tools/rename_scoped.py) and inferred names in [`tools/function_names.py`](tools/function_names.py). Original source-level identifier names are not available; names were chosen based on behavior. Some short nested callback variables and parameters remain.
+The unpacker is [`tools/deobfuscate.py`](tools/deobfuscate.py), with lexical-scope renaming in [`tools/rename_scoped.py`](tools/rename_scoped.py) and inferred names in [`tools/function_names.py`](tools/function_names.py). All 176 local function declarations now have descriptive names, including 62 nested functions renamed in this pass. Original source-level identifier names are not available; names were chosen based on behavior. Some callback variables and parameters remain short. [`RECOVERY_SCOPE.md`](RECOVERY_SCOPE.md) distinguishes what is statically recovered from what the attachment cannot reveal.
 
 **Limits:** This is **not runtime-verified in Roblox**. It still downloads and executes external libraries, uses executor-specific APIs, installs hooks and can contact a local RPC endpoint. The attachment and reconstructed Luau were *not executed*. A syntax check and known-plaintext checks establish static decoding consistency, not correct behavior in a game or with a particular executor.
 

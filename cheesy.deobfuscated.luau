@@ -103,15 +103,15 @@ local function loadLinoriaUiLibrary()
 	local o = "https://raw.githubusercontent.com/doram44/linorialib/refs/heads/main/"
 	local w = "_istable=function(v)if typeof(v)~='table'then return false end return not pcall(string.sub,v,1,1)end;"
 	local F = "local function _cheesyhex(v) if typeof(v)~='string'then return false end return v:match('^#?%x%x%x%x%x%x$')~=nil end;"
-	local function A(o)
+	local function adaptLinoriaSource(o)
 		o = w .. o
 		o = o:gsub('typeof%s*%((%w+)%)%s*==%s*"table"', "_istable(%1)")
 		o = o:gsub('typeof%s*%((%w+)%)%s*~=%s*"table"', "not _istable(%1)")
 		return o
 	end
-	UiLibrary = (loadstring(A(game:HttpGet(o .. "Library.lua"))))()
-	SaveManager = (loadstring(A(game:HttpGet(o .. "addons/SaveManager.lua"))))()
-	local d = A(game:HttpGet(o .. "addons/ThemeManager.lua"))
+	UiLibrary = (loadstring(adaptLinoriaSource(game:HttpGet(o .. "Library.lua"))))()
+	SaveManager = (loadstring(adaptLinoriaSource(game:HttpGet(o .. "addons/SaveManager.lua"))))()
+	local d = adaptLinoriaSource(game:HttpGet(o .. "addons/ThemeManager.lua"))
 	d = d:gsub(
 		"\t\t\t\tself%.Library%[idx%] = Color3%.fromHex%(col%)",
 		"\t\t\t\tif _cheesyhex(col) then\n\t\t\t\t\tself.Library[idx] = Color3.fromHex(col)\n\t\t\t\tend"
@@ -132,7 +132,7 @@ function hexToColor3(o)
 			return k
 		end
 	end
-	local function T(T)
+	local function readHexPair(T)
 		local k, P = pcall(string.sub, o, T, T + 1)
 		if not k then
 			return 0
@@ -140,7 +140,7 @@ function hexToColor3(o)
 		local w, F = pcall(tonumber, P, 16)
 		return w and F or 0
 	end
-	return Color3.fromRGB(T(1), T(3), T(5))
+	return Color3.fromRGB(readHexPair(1), readHexPair(3), readHexPair(5))
 end
 local HttpService = game:GetService("HttpService")
 function toRealString(o)
@@ -268,7 +268,7 @@ local function patchUiLibrary()
 					table.insert(UiLibrary.TabButtons, { ["Frame"] = r, ["Label"] = G })
 				end
 				if not F.SetVisible then
-					local function o(o, T)
+					local function makeVisibilitySetter(o, T)
 						return function(k, P)
 							if T then
 								T.Visible = P
@@ -278,7 +278,7 @@ local function patchUiLibrary()
 							end
 						end
 					end
-					F.SetVisible = o(d, r)
+					F.SetVisible = makeVisibilitySetter(d, r)
 				end
 				return F
 			end
@@ -684,7 +684,7 @@ end
 function CheesyBuildTranslateIndex(o)
 	CheesyConcatWords = {}
 	CheesyWordIndex = {}
-	local function T(o, T, k)
+	local function addTranslationIndexEntry(o, T, k)
 		local P = o[T]
 		if not P then
 			P = {}
@@ -697,9 +697,9 @@ function CheesyBuildTranslateIndex(o)
 		if type(k) == "string" and k ~= "" then
 			local P = string.match(k, "^(%S+)")
 			if P then
-				T(CheesyWordIndex, P, k)
+				addTranslationIndexEntry(CheesyWordIndex, P, k)
 				if k ~= o then
-					T(CheesyConcatWords, P, k)
+					addTranslationIndexEntry(CheesyConcatWords, P, k)
 				end
 			end
 		end
@@ -809,7 +809,7 @@ function ApplyCheesyTranslations()
 	end
 	local o = 0
 	local k = {}
-	local function P(o, T)
+	local function setTranslatedText(o, T)
 		if type(o.SetText) == "function" then
 			local k = pcall(function()
 				o:SetText(T)
@@ -825,7 +825,7 @@ function ApplyCheesyTranslations()
 		end
 		return false
 	end
-	local function w(T)
+	local function translateWidgetInfo(T)
 		if type(T) ~= "table" or k[T] then
 			return
 		end
@@ -833,7 +833,7 @@ function ApplyCheesyTranslations()
 		if type(T.Text) == "string" then
 			local k = CheesyTranslate(T.Text)
 			if k then
-				if P(T, k) then
+				if setTranslatedText(T, k) then
 					o = o + 1
 				end
 			end
@@ -867,18 +867,18 @@ function ApplyCheesyTranslations()
 			end
 		end
 	end
-	local function F(o)
+	local function translateWidgetCollection(o)
 		if type(o) ~= "table" then
 			return
 		end
 		for o, T in pairs(o) do
-			w(T)
+			translateWidgetInfo(T)
 		end
 	end
-	F(UiLibrary and UiLibrary.Toggles)
-	F(UiLibrary and UiLibrary.Options)
-	F(CheesyTrackedWidgets)
-	local function A(T)
+	translateWidgetCollection(UiLibrary and UiLibrary.Toggles)
+	translateWidgetCollection(UiLibrary and UiLibrary.Options)
+	translateWidgetCollection(CheesyTrackedWidgets)
+	local function translateTextGuiObject(T)
 		if not (T:IsA("TextLabel") or T:IsA("TextBox")) then
 			return
 		end
@@ -896,14 +896,14 @@ function ApplyCheesyTranslations()
 	if type(Groupboxes) == "table" then
 		for o, T in pairs(Groupboxes) do
 			if type(T) == "table" then
-				w(T)
-				F(T)
+				translateWidgetInfo(T)
+				translateWidgetCollection(T)
 			end
 		end
 	end
 	if type(CheesyTextNodes) == "table" then
 		for o, T in ipairs(CheesyTextNodes) do
-			A(T)
+			translateTextGuiObject(T)
 		end
 	end
 	if type(UiLibrary) == "table" and type(UiLibrary.TabButtons) == "table" then
@@ -929,7 +929,7 @@ function ApplyCheesyTranslations()
 	end
 	for o, T in ipairs(d) do
 		if type(T) == "table" then
-			w(T)
+			translateWidgetInfo(T)
 			local o
 			if type(T.BoxHolder) == "Instance" then
 				o = T.BoxHolder
@@ -938,7 +938,7 @@ function ApplyCheesyTranslations()
 			end
 			if o then
 				for o, T in ipairs(o:GetDescendants()) do
-					A(T)
+					translateTextGuiObject(T)
 				end
 			end
 		end
@@ -947,13 +947,13 @@ function ApplyCheesyTranslations()
 	local f = type(C) == "table" and (C.MainFrame or C.Holder) or nil
 	if type(f) == "Instance" then
 		for o, T in ipairs(f:GetDescendants()) do
-			A(T)
+			translateTextGuiObject(T)
 		end
 		if not f.__CheesyHooked then
 			f.__CheesyHooked = true
 			f.DescendantAdded:Connect(function(o)
 				if CheesyTranslations then
-					A(o)
+					translateTextGuiObject(o)
 				end
 			end)
 		end
@@ -3117,7 +3117,7 @@ Groupboxes.Exploits:AddButton({
 		task.spawn(function()
 			local o = workspace.Gravity
 			local k
-			local function P()
+			local function watchHumanoidDeath()
 				local T = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
 					or LocalPlayer.Character:WaitForChild("Humanoid")
 				if k then
@@ -3171,9 +3171,9 @@ Groupboxes.Exploits:AddButton({
 					)
 				)
 			if w and w >= 1 then
-				P()
+				watchHumanoidDeath()
 				LocalPlayer.CharacterAdded:Connect(function()
-					P()
+					watchHumanoidDeath()
 				end)
 				task.wait(1)
 				if Executor.replicatesignal then
@@ -3566,16 +3566,16 @@ local function processEntity(o)
 		table.insert(wT.EventTriggers, o)
 		table.insert(wT.Entities, o)
 	elseif T == "Seek_Arm" or T == "ChandelierObstruction" then
-		local function T(o)
+		local function trackSeekObstaclePart(o)
 			if o:IsA("BasePart") then
 				o.CanTouch = not Toggles.BypassSeekObstructions.Value
 				table.insert(wT.SeekObstructions, o)
 			end
 		end
 		for o, k in o:GetDescendants() do
-			T(k)
+			trackSeekObstaclePart(k)
 		end
-		Connections[o] = o.DescendantAdded:Connect(T)
+		Connections[o] = o.DescendantAdded:Connect(trackSeekObstaclePart)
 		o.Destroying:Connect(function()
 			local T = Connections[o]
 			if T then
@@ -3616,22 +3616,22 @@ local function processEntity(o)
 	elseif T == "MinecartRig" then
 		CheesyState.Minecart = o
 	elseif T == "RunnerNodes" then
-		local function T(o, T)
+		local function isMinecartNodeFacingForward(o, T)
 			local k = ((o.CFrame + o.CFrame.LookVector)).Position
 			local P = ((o.CFrame + o.CFrame.LookVector * -1)).Position
 			return ((k - T.Position)).Magnitude > ((P - T.Position)).Magnitude
 		end
-		local function k(o, k)
+		local function getMinecartNodeTurnDirection(o, k)
 			local P = o.CFrame.RightVector:Dot(o.Position - k.Position)
 			if P > 0.5 then
-				return T(o, k) and "Right" or "Left"
+				return isMinecartNodeFacingForward(o, k) and "Right" or "Left"
 			end
 			if P < -0.5 then
-				return T(o, k) and "Left" or "Right"
+				return isMinecartNodeFacingForward(o, k) and "Left" or "Right"
 			end
 			return "Straight"
 		end
-		local function P(T)
+		local function findNextMinecartNode(T)
 			local k, P = nil, math.huge
 			local w = tonumber((T.Name:split("MinecartNode"))[2])
 			for o, F in o:GetChildren() do
@@ -3665,9 +3665,9 @@ local function processEntity(o)
 		end
 		for o, T in o:GetChildren() do
 			if T:GetAttribute("ForceConnect") then
-				local o = P(T)
+				local o = findNextMinecartNode(T)
 				if o then
-					T:SetAttribute("Turn", k(T, o))
+					T:SetAttribute("Turn", getMinecartNodeTurnDirection(T, o))
 					table.insert(wT.SeekNodes, T)
 				end
 			end
@@ -3684,7 +3684,7 @@ local function processEntity(o)
 			table.insert(T, k)
 		end
 		local P
-		local function w(o)
+		local function highlightSeekGuidingLight(o)
 			if o.Name ~= "SeekGuidingLight" or o:GetAttribute("Highlighted") then
 				return
 			end
@@ -3724,7 +3724,7 @@ local function processEntity(o)
 			while task.wait() do
 				local o = table.remove(T, 1)
 				if o then
-					w(o)
+					highlightSeekGuidingLight(o)
 				end
 			end
 		end)
@@ -5112,7 +5112,7 @@ local function processRoom(o)
 			CheesyState.BreakerBoxNotified = true
 		end
 		local T = ((o:WaitForChild("SurfaceGui")):WaitForChild("Frame")):WaitForChild("Code")
-		local function k()
+		local function handleBreakerBoxAutoSolve()
 			if Toggles.AutoBreakerBox.Value then
 				local k = Options.BreakerBoxMethod and Options.BreakerBoxMethod.Value or "Instant"
 				if k == "Instant" then
@@ -5178,8 +5178,10 @@ local function processRoom(o)
 			end
 			CheesyState.BreakerBoxInteracted = true
 		end
-		Connections.BreakerConnection = (T:GetPropertyChangedSignal("Text")):Connect(k)
-		CheesyState.RunBreakerFunc = k
+		Connections.BreakerConnection = (T:GetPropertyChangedSignal("Text")):Connect(
+			handleBreakerBoxAutoSolve
+		)
+		CheesyState.RunBreakerFunc = handleBreakerBoxAutoSolve
 		o.Destroying:Once(function()
 			CheesyState.RunBreakerFunc = nil
 		end)
@@ -5272,7 +5274,7 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 			["BackdoorRush"] = 49,
 		}
 		local T = 0.05
-		local function k()
+		local function updateNetworkPingEstimate()
 			local o, k = pcall(function()
 				return LocalPlayer:GetNetworkPing()
 			end)
@@ -5291,13 +5293,13 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 			end
 			return false
 		end
-		local P = k()
+		local P = updateNetworkPingEstimate()
 		local w = {}
 		local F = 0
 		local A = Vector3.zero
 		local d = 0
 		local C = nil
-		local function f(o)
+		local function getThreatBasePart(o)
 			if not o then
 				return nil
 			end
@@ -5309,7 +5311,7 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 			end
 			return nil
 		end
-		local function m()
+		local function getCharacterCollisionPart()
 			local o = LocalPlayer.Character
 			if not o then
 				return nil
@@ -5321,7 +5323,7 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 		local r = RaycastParams.new()
 		r.FilterType = Enum.RaycastFilterType.Include
 		r.RespectCanCollide = true
-		local function G()
+		local function findCrucifixThreat()
 			for o in pairs(o) do
 				local T = workspace:FindFirstChild(o) or workspace:FindFirstChild(o, true)
 				if T and (T:IsA("BasePart") or T:IsA("Model")) then
@@ -5329,13 +5331,13 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 				end
 			end
 		end
-		local function y()
-			local k, P = G()
+		local function findThreatInCrucifixRange()
+			local k, P = findCrucifixThreat()
 			if not k then
 				return nil
 			end
-			local y = f(k)
-			local X = m()
+			local y = getThreatBasePart(k)
+			local X = getCharacterCollisionPart()
 			if not y or not X or not y.Parent or not X.Parent then
 				return nil
 			end
@@ -5377,7 +5379,7 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 			end
 			return nil
 		end
-		local function X(o)
+		local function findDroppedCrucifix(o)
 			local T = workspace:FindFirstChild("Drops")
 			if T then
 				for o, T in T:GetChildren() do
@@ -5403,13 +5405,13 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 				local o = os.clock()
 				if o - I >= 1 then
 					I = o
-					k()
+					updateNetworkPingEstimate()
 				end
 			end
 			local o = LocalPlayer.Character
 			local T = o and o:FindFirstChildOfClass("Tool")
 			if T and T.Name == "Crucifix" then
-				local k, P = y()
+				local k, P = findThreatInCrucifixRange()
 				if k then
 					local k = o:FindFirstChild("HumanoidRootPart")
 					local P = detectFloor()
@@ -5418,7 +5420,7 @@ Toggles.InfiniteCrucifix:OnChanged(function(o)
 						task.wait(0.1)
 						local o
 						for T = 1, 40, 1 do
-							o = X(k)
+							o = findDroppedCrucifix(k)
 							if o then
 								break
 							end
@@ -5680,13 +5682,13 @@ do
 	GroundskeeperRange = 90
 	GroundskeeperReduction = 3
 	local T = { ["Active"] = false, ["BaseY"] = 0, ["Hum"] = nil, ["SavedOffset"] = nil }
-	local function k(o)
+	local function getFigureModelRoot(o)
 		if not o or not o:IsA("Model") then
 			return nil
 		end
 		return o.PrimaryPart or o:FindFirstChild("Root") or o:FindFirstChildWhichIsA("BasePart", true)
 	end
-	local function P(o)
+	local function getGroundskeeperModelRoot(o)
 		if not o or not o:IsA("Model") then
 			return nil
 		end
@@ -5694,17 +5696,17 @@ do
 			or o.PrimaryPart
 			or o:FindFirstChildWhichIsA("BasePart", true)
 	end
-	local function w(T)
+	local function trackFigureOrGroundskeeper(T)
 		if not T then
 			return
 		end
 		if T:IsA("Model") and T.Name == "Groundskeeper" then
-			local o = P(T)
+			local o = getGroundskeeperModelRoot(T)
 			if o then
 				GroundskeeperRigs[T] = o
 			end
 		elseif T:IsA("Model") and FigureNames[T.Name] then
-			local P = k(T)
+			local P = getFigureModelRoot(T)
 			if P then
 				o[T] = P
 			end
@@ -5715,28 +5717,28 @@ do
 			end
 		end
 	end
-	local function F(T)
+	local function untrackFigureOrGroundskeeper(T)
 		o[T] = nil
 		GroundskeeperRigs[T] = nil
 	end
 	local A = workspace.CurrentCamera
-	local function d()
+	local function refreshFigureCameraReference()
 		local o = workspace.CurrentCamera
 		if o ~= A then
 			A = o
 		end
 	end
-	local function C()
+	local function captureFigureCamera()
 		T.Cam = workspace.CurrentCamera
 	end
-	local function f(o)
+	local function clearFigureGodmodeState(o)
 		if not T.Active then
 			return
 		end
 		T.Cam = nil
 		T.Active = false
 	end
-	local function m(o)
+	local function getFigureCameraOffset(o)
 		local T = FigureOffset
 		local k = GroundskeeperRange * GroundskeeperRange
 		for P, w in pairs(GroundskeeperRigs) do
@@ -5758,12 +5760,12 @@ do
 		end
 		return T
 	end
-	local function r(o)
+	local function offsetCameraNearFigure(o)
 		if not T.Active then
 			T.Active = true
-			C()
+			captureFigureCamera()
 		end
-		local k = m(o.Position)
+		local k = getFigureCameraOffset(o.Position)
 		local P = o.CFrame
 		o.CFrame = P * CFrame.new(0, k, 0)
 		RunService.RenderStepped:Wait()
@@ -5773,7 +5775,7 @@ do
 			w.CFrame = w.CFrame - Vector3.new(0, k, 0)
 		end
 	end
-	local function G()
+	local function startFigureGodmodeWatcher()
 		if Connections.FigureGodmode then
 			return
 		end
@@ -5782,17 +5784,17 @@ do
 			return
 		end
 		for o, T in T:GetDescendants() do
-			w(T)
+			trackFigureOrGroundskeeper(T)
 		end
-		Connections.FigureGodmodeFig = T.DescendantAdded:Connect(w)
-		Connections.FigureGodmodeFigGone = T.DescendantRemoving:Connect(F)
+		Connections.FigureGodmodeFig = T.DescendantAdded:Connect(trackFigureOrGroundskeeper)
+		Connections.FigureGodmodeFigGone = T.DescendantRemoving:Connect(untrackFigureOrGroundskeeper)
 		Connections.FigureGodmode = RunService.Heartbeat:Connect(function()
 			if _Unloading then
 				return
 			end
 			local T = HumanoidRootPart
 			if not T or not T.Parent then
-				f(T)
+				clearFigureGodmodeState(T)
 				return
 			end
 			local k = T.Position
@@ -5812,14 +5814,14 @@ do
 				end
 			end
 			if w then
-				d()
-				r(T)
+				refreshFigureCameraReference()
+				offsetCameraNearFigure(T)
 			else
-				f(T)
+				clearFigureGodmodeState(T)
 			end
 		end)
 	end
-	local function y()
+	local function stopFigureGodmodeWatcher()
 		for o, T in ipairs({ "FigureGodmode", "FigureGodmodeFig", "FigureGodmodeFigGone" }) do
 			if Connections[T] then
 				pcall(function()
@@ -5828,15 +5830,15 @@ do
 				Connections[T] = nil
 			end
 		end
-		f(HumanoidRootPart)
+		clearFigureGodmodeState(HumanoidRootPart)
 		TableClear(o)
 		TableClear(GroundskeeperRigs)
 	end
 	Toggles.FigureGodmode:OnChanged(function(o)
 		if o then
-			G()
+			startFigureGodmodeWatcher()
 		else
-			y()
+			stopFigureGodmodeWatcher()
 		end
 	end)
 end
@@ -6099,7 +6101,7 @@ local function findNearbyOfficeChair()
 		return nil
 	end
 	local T, k = nil, math.huge
-	local function P(P)
+	local function considerNearbyOfficeChair(P)
 		if (P.Name == "ArchivesOfficeChair" or P.Name == "StairwellOfficeChair") and P:IsA("Model") then
 			local w = P:FindFirstChild("Collider") or P.PrimaryPart or P:FindFirstChildWhichIsA("BasePart")
 			if w and w:IsA("BasePart") then
@@ -6114,7 +6116,7 @@ local function findNearbyOfficeChair()
 	local w = workspace:FindFirstChild("Misc")
 	if w then
 		for o, T in ipairs(w:GetDescendants()) do
-			P(T)
+			considerNearbyOfficeChair(T)
 		end
 	end
 	local F = workspace:FindFirstChild("CurrentRooms")
@@ -6123,7 +6125,7 @@ local function findNearbyOfficeChair()
 			local k = T:FindFirstChild("Assets")
 			if k then
 				for o, T in ipairs(k:GetChildren()) do
-					P(T)
+					considerNearbyOfficeChair(T)
 				end
 			end
 		end
@@ -9614,7 +9616,7 @@ Groupboxes.ArchivesMain:AddToggle(
 Toggles.NoAlmaDamage:OnChanged(function(o)
 	if o and not CheesyState.NoAlmaDamageRunning then
 		CheesyState.NoAlmaDamageRunning = true
-		local function o(o)
+		local function disableAlmaAggression(o)
 			local T = o:WaitForChild("Config", 5)
 			if not T then
 				return
@@ -9644,14 +9646,14 @@ Toggles.NoAlmaDamage:OnChanged(function(o)
 				end
 			end
 		end
-		local function T(T)
+		local function processAlmaModel(T)
 			if T:IsA("Model") and T.Name == "Alma" then
-				o(T)
+				disableAlmaAggression(T)
 			end
 		end
-		Connections.NoAlmaDamage = workspace.ChildAdded:Connect(T)
+		Connections.NoAlmaDamage = workspace.ChildAdded:Connect(processAlmaModel)
 		for o, k in ipairs(workspace:GetChildren()) do
-			T(k)
+			processAlmaModel(k)
 		end
 	elseif not o then
 		CheesyState.NoAlmaDamageRunning = false
@@ -9838,10 +9840,10 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 		return
 	end
 	Wd = true
-	local function k()
+	local function getCharacterForSkip()
 		return game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
 	end
-	local function P(o)
+	local function waitForFutureRoom(o)
 		while Wd do
 			for o = o + 1, o + 5, 1 do
 				local T = workspace:FindFirstChild("CurrentRooms")
@@ -9854,7 +9856,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 		end
 		return nil
 	end
-	local function w(o)
+	local function fireRoomLookAtRemotes(o)
 		for T = 1, 6, 1 do
 			local k = o:FindFirstChild(tostring(T))
 			if k then
@@ -9867,7 +9869,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			end
 		end
 	end
-	local function F(o)
+	local function processVineSkipRoom(o)
 		if not Wd or pd[o] then
 			return
 		end
@@ -9881,8 +9883,8 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			pd[o] = nil
 			return
 		end
-		w(o)
-		local F = P(tonumber(o.Name))
+		fireRoomLookAtRemotes(o)
+		local F = waitForFutureRoom(tonumber(o.Name))
 		if not F then
 			pd[o] = nil
 			return
@@ -9928,7 +9930,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			return
 		end
 		while Wd and (F.Parent and A:GetAttribute("Opened") ~= true) do
-			local o = k()
+			local o = getCharacterForSkip()
 			if o then
 				if d:IsA("BasePart") then
 					o:PivotTo(d.CFrame)
@@ -9945,7 +9947,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			task.wait()
 		end
 		if Wd and A:GetAttribute("Opened") == true then
-			local T = k()
+			local T = getCharacterForSkip()
 			if T then
 				T:PivotTo(CFrame.new(0, -120, 0))
 				T:PivotTo(CFrame.new(0, -120, 0))
@@ -9956,7 +9958,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 		end
 		pd[o] = nil
 	end
-	local function A()
+	local function scanVineSkipRooms()
 		if not LatestRoomValue then
 			return
 		end
@@ -9969,7 +9971,7 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			local T = workspace:FindFirstChild("CurrentRooms")
 			local k = T and T:FindFirstChild(tostring(o))
 			if k and not pd[k] then
-				task.spawn(F, k)
+				task.spawn(processVineSkipRoom, k)
 			end
 		end
 	end
@@ -9982,18 +9984,18 @@ Toggles.ForgetMeNotSolver:OnChanged(function(o)
 			task.spawn(function()
 				task.wait(2)
 				if Wd and o.Parent then
-					task.spawn(F, o)
+					task.spawn(processVineSkipRoom, o)
 				end
 			end)
 		end)
 	end
 	task.spawn(function()
 		while Wd do
-			A()
+			scanVineSkipRooms()
 			task.wait(2)
 		end
 	end)
-	A()
+	scanVineSkipRooms()
 end)
 Groupboxes.StairwellMain = rT.Stairwell:AddLeftGroupbox("Stairwell")
 Groupboxes.StairwellMain:AddToggle(
@@ -10919,15 +10921,15 @@ local function faceTravelDirection(o, T)
 	if not HumanoidRootPart then
 		return
 	end
-	local function k(o)
+	local function getHorizontalUnitVector(o)
 		o = Vector3.new(o.X, 0, o.Z)
 		if o.Magnitude < 0.01 then
 			return nil
 		end
 		return o.Unit
 	end
-	local P = k(T - HumanoidRootPart.Position)
-	local w = k(HumanoidRootPart.CFrame.LookVector)
+	local P = getHorizontalUnitVector(T - HumanoidRootPart.Position)
+	local w = getHorizontalUnitVector(HumanoidRootPart.CFrame.LookVector)
 	local F = false
 	for T, k in ipairs({ P, w }) do
 		if k then
@@ -12231,7 +12233,7 @@ if CurrentRooms then
 		end
 		if o:GetAttribute("RawName") and string.find(o:GetAttribute("RawName"), "Eyestalk") then
 			local T
-			local function k(o)
+			local function createSeekPathNode(o)
 				local k = Instance.new("Part")
 				k.Size = Vector3.one
 				k.Transparency = 1
@@ -12286,7 +12288,7 @@ if CurrentRooms then
 					if T.Status == Enum.PathStatus.Success then
 						o:SetAttribute("PathFound", true)
 						for o, T in T:GetWaypoints() do
-							k(T.Position)
+							createSeekPathNode(T.Position)
 							task.wait()
 						end
 						break
@@ -12535,7 +12537,7 @@ Toggles.MinecartTeleport:OnChanged(function(o)
 			local o = CurrentRooms and CurrentRooms:FindFirstChild(tostring(w.LatestRoom))
 			return o and o:FindFirstChild("Door")
 		end
-		local function F()
+		local function installMinecartDecodeHook()
 			if not P or not w.Decode then
 				return
 			end
@@ -12550,7 +12552,7 @@ Toggles.MinecartTeleport:OnChanged(function(o)
 			task.wait()
 			w.LatestRoom = tonumber(tostring(LatestRoomValue.Value)) or 0
 		end)
-		pcall(F)
+		pcall(installMinecartDecodeHook)
 		CheesyState.MinecartTeleportState = w
 	else
 		local o = CheesyState.MinecartTeleportState
@@ -12612,7 +12614,7 @@ Groupboxes.MinesAutomation:AddButton({
 			})
 			return
 		end
-		local function w(o)
+		local function waitUntilCutscene(o)
 			for o = 1, (o or 40), 1 do
 				if not Character then
 					return
@@ -12623,7 +12625,7 @@ Groupboxes.MinesAutomation:AddButton({
 				task.wait(0.25)
 			end
 		end
-		local function F(o, T)
+		local function teleportCharacterToNode(o, T)
 			if not o or not Character then
 				return
 			end
@@ -12635,7 +12637,7 @@ Groupboxes.MinesAutomation:AddButton({
 			end
 			task.wait(0.25)
 		end
-		w()
+		waitUntilCutscene()
 		local A = P:FindFirstChild("_DamHandler")
 		local d = 0
 		if A then
@@ -12647,22 +12649,22 @@ Groupboxes.MinesAutomation:AddButton({
 					for o, T in ipairs(P:GetChildren()) do
 						local k = T:FindFirstChild("Wheel", true)
 						if k then
-							F(k, "ValvePrompt")
+							teleportCharacterToNode(k, "ValvePrompt")
 							d = d + 1
 						end
 					end
 				end
-				w()
+				waitUntilCutscene()
 				task.wait(0.5)
 			end
 		end
-		w()
+		waitUntilCutscene()
 		local C = P:FindFirstChild("MinesGenerator", true)
 		if C then
 			local o = C:FindFirstChild("Lever", true)
 			if o then
 				local T = C.PrimaryPart or o
-				F(T, "LeverPrompt")
+				teleportCharacterToNode(T, "LeverPrompt")
 			end
 		end
 		Character:PivotTo(o)
@@ -14050,7 +14052,7 @@ pcall(function()
 		if not isfolder(o) then
 			makefolder(o)
 		end
-		local function T(T, k)
+		local function cacheNotificationSound(T, k)
 			local P = k:match("%.([a-zA-Z0-9]+)$") or "mp3"
 			local w = o .. ("/" .. (T .. ("." .. P)))
 			if not isfile(w) then
@@ -14058,19 +14060,19 @@ pcall(function()
 			end
 			return getcustomasset(w)
 		end
-		rd.SoundAssets.Tone = T(
+		rd.SoundAssets.Tone = cacheNotificationSound(
 			"tone",
 			"https://raw.githubusercontent.com/doram44/cheesy/main/notif%20sounds/tone%20notification.mp3"
 		)
-		rd.SoundAssets.Alert = T(
+		rd.SoundAssets.Alert = cacheNotificationSound(
 			"alert",
 			"https://raw.githubusercontent.com/doram44/cheesy/main/notif%20sounds/alert%20notification.mp3"
 		)
-		rd.SoundAssets["Windows XP"] = T(
+		rd.SoundAssets["Windows XP"] = cacheNotificationSound(
 			"xp",
 			"https://raw.githubusercontent.com/doram44/cheesy/main/notif%20sounds/windows%20xp%20exclamation.ogg"
 		)
-		rd.SoundAssets["GTA Cell"] = T(
+		rd.SoundAssets["GTA Cell"] = cacheNotificationSound(
 			"gta",
 			"https://raw.githubusercontent.com/doram44/cheesy/main/notif%20sounds/gta%20notification.ogg"
 		)
@@ -14157,7 +14159,7 @@ rd.CustomAchievement = function(o, T, k)
 	y.Position = UDim2.new(0, 96, 0, 10)
 	y.Size = UDim2.new(1, -106, 1, -20)
 	y.Parent = m
-	local function X(o, T, k, P, w)
+	local function createAchievementTextLabel(o, T, k, P, w)
 		local F = Instance.new("TextLabel")
 		F.Name = o
 		F.BackgroundTransparency = 1
@@ -14174,10 +14176,10 @@ rd.CustomAchievement = function(o, T, k)
 		F.TextStrokeTransparency = 0.8
 		F.Parent = y
 	end
-	X("Title", o, 0, 18, Enum.Font.GothamBold)
-	X("Desc", T, 34, 14, Enum.Font.Gotham)
+	createAchievementTextLabel("Title", o, 0, 18, Enum.Font.GothamBold)
+	createAchievementTextLabel("Desc", T, 34, 14, Enum.Font.Gotham)
 	if k then
-		X("Reason", k, 64, 14, Enum.Font.Gotham)
+		createAchievementTextLabel("Reason", k, 64, 14, Enum.Font.Gotham)
 	end
 	task.spawn(function()
 		(TweenService:Create(
@@ -14215,7 +14217,7 @@ rd.ShowAchievement = function(o, T, k, P)
 		rd.CustomAchievement(o, T, k)
 		return
 	end
-	local function C(o, T, k)
+	local function playNotificationSound(o, T, k)
 		local P = Instance.new("Sound")
 		P.SoundId = T
 		P.Volume = k or 1
@@ -14246,7 +14248,7 @@ rd.ShowAchievement = function(o, T, k, P)
 	f.Frame.UIStroke.Color = m
 	f.Frame.Glow.ImageColor3 = m
 	f.Parent = A
-	C(A, "rbxassetid://10469938989", 1)
+	playNotificationSound(A, "rbxassetid://10469938989", 1)
 	task.spawn(function()
 		f:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
 		task.wait(0.8)
@@ -14640,7 +14642,7 @@ do
 		["archives"] = "Archives",
 		["stairwell"] = "Stairwell",
 	}
-	local function A(o)
+	local function normalizeFloorName(o)
 		if typeof(o) ~= "string" then
 			return nil
 		end
@@ -14650,7 +14652,7 @@ do
 		end
 		return F[T] or o
 	end
-	local function d(o, T)
+	local function matchesAddonFloorFilter(o, T)
 		if o == nil then
 			return true
 		end
@@ -14658,11 +14660,11 @@ do
 			if o == "*" then
 				return true
 			end
-			return A(o) == T
+			return normalizeFloorName(o) == T
 		end
 		if typeof(o) == "table" then
 			for o, k in ipairs(o) do
-				if d(k, T) then
+				if matchesAddonFloorFilter(k, T) then
 					return true
 				end
 			end
@@ -14670,7 +14672,7 @@ do
 		end
 		return true
 	end
-	local function C(o, T)
+	local function setAddonGroupboxVisible(o, T)
 		if not o then
 			return
 		end
@@ -14678,7 +14680,7 @@ do
 			o:SetVisible(T)
 		end)
 	end
-	local function f(o, T)
+	local function setAddonTabVisible(o, T)
 		if not o then
 			return
 		end
@@ -14686,26 +14688,26 @@ do
 			o:SetVisible(T)
 		end)
 	end
-	local function m()
-		local o = A(detectFloor())
+	local function refreshAddonFloorVisibility()
+		local o = normalizeFloorName(detectFloor())
 		for T, k in pairs(AddonFilters) do
 			if k ~= nil then
-				local w = d(k, o)
+				local w = matchesAddonFloorFilter(k, o)
 				for o, T in ipairs(AddonTabsByOwner[T] or {}) do
-					f(T, w)
+					setAddonTabVisible(T, w)
 				end
 				for o, T in ipairs(P[T] or {}) do
-					C(T, w)
+					setAddonGroupboxVisible(T, w)
 				end
 			end
 		end
 	end
-	local function r(T, k)
+	local function showAddonWarning(T, k)
 		pcall(function()
 			o:UpdateWarningBox({ ["Visible"] = true, ["IsNormal"] = true, ["Title"] = T, ["Text"] = k })
 		end)
 	end
-	local function G(o)
+	local function normalizeAddonSide(o)
 		if type(o) == "string" then
 			local T = o:lower()
 			if T == "right" or T == "2" then
@@ -14717,13 +14719,13 @@ do
 		end
 		return "Left"
 	end
-	local function y(o)
+	local function trackAddonGroupbox(o)
 		if o then
 			table.insert(LoadedAddonGroupboxes, o)
 		end
 		return o
 	end
-	local function X(o)
+	local function trackOwnedAddonGroupbox(o)
 		if o and w then
 			if not P[w] then
 				P[w] = {}
@@ -14732,12 +14734,12 @@ do
 		end
 		return o
 	end
-	local function I(T, k, P)
+	local function createAddonGroupbox(T, k, P)
 		local w = T or o
 		if not w then
 			return nil
 		end
-		local F = G(P)
+		local F = normalizeAddonSide(P)
 		local A
 		pcall(function()
 			if F == "Right" then
@@ -14746,9 +14748,9 @@ do
 				A = w:AddLeftGroupbox(k)
 			end
 		end)
-		return X(y(A))
+		return trackOwnedAddonGroupbox(trackAddonGroupbox(A))
 	end
-	local function V(k, P, w)
+	local function displayAddonError(k, P, w)
 		local F = tostring(P)
 		local A, d, C = F:match("([^%s:]+):(%d+):(.+)")
 		local f
@@ -14757,7 +14759,7 @@ do
 		else
 			f = F
 		end
-		local m = I(o, k .. " Error", "Left")
+		local m = createAddonGroupbox(o, k .. " Error", "Left")
 		if not m then
 			return
 		end
@@ -14777,7 +14779,7 @@ do
 			end)
 		end
 	end
-	local function q()
+	local function createAddonContext()
 		local o = {
 			["AddonInfo"] = nil,
 			["_queue"] = {},
@@ -14808,16 +14810,16 @@ do
 			return F
 		end
 		function o.AddLeftGroupbox(k, o, T)
-			return I(T, o or "Addon", "Left")
+			return createAddonGroupbox(T, o or "Addon", "Left")
 		end
 		function o.AddRightGroupbox(k, o, T)
-			return I(T, o or "Addon", "Right")
+			return createAddonGroupbox(T, o or "Addon", "Right")
 		end
 		function o.SetGroupboxVisible(k, o, T)
-			C(o, T)
+			setAddonGroupboxVisible(o, T)
 		end
 		function o.SetTabVisible(k, o, T)
-			f(o, T)
+			setAddonTabVisible(o, T)
 		end
 		function o.Connect(k, T)
 			if T then
@@ -14859,7 +14861,7 @@ do
 		o.Library = UiLibrary
 		return o
 	end
-	local function M()
+	local function disconnectAddonConnections()
 		for o, T in ipairs(AddonConnections) do
 			if T then
 				pcall(function()
@@ -14886,14 +14888,17 @@ do
 		end
 		LoadedAddonGroupboxes = {}
 	end
-	CheesyState.ClearAddonGroupboxes = M
-	local function i()
+	CheesyState.ClearAddonGroupboxes = disconnectAddonConnections
+	local function loadUserAddons()
 		if not o then
 			return
 		end
-		M()
+		disconnectAddonConnections()
 		if not isfolder or not makefolder or not listfiles or not readfile then
-			r("User Addons", "Your executor does not support the required filesystem functions for addons.")
+			showAddonWarning(
+				"User Addons",
+				"Your executor does not support the required filesystem functions for addons."
+			)
 			return
 		end
 		pcall(function()
@@ -14905,7 +14910,7 @@ do
 			end
 		end)
 		if not isfolder(AddonFolderPath) then
-			r(
+			showAddonWarning(
 				"User Addons",
 				"Your addons folder is currently empty. Create .lua files in your executor workspace at '"
 					.. (AddonFolderPath .. "'.")
@@ -14921,21 +14926,21 @@ do
 			end
 		end
 		if #F == 0 then
-			r(
+			showAddonWarning(
 				"User Addons",
 				"Your addons folder is currently empty. Insert a .lua file into '"
 					.. (AddonFolderPath .. "'.")
 			)
 			return
 		end
-		r(
+		showAddonWarning(
 			"User Addons",
 			"Share your addons in the discord! Addons that aren't checked or aren't open source could be malicious or untrustworthy. Be careful with what you decide to use."
 		)
 		for k, F in ipairs(F) do
 			local A, d = pcall(readfile, F.path)
 			if A and (d and d ~= "") then
-				local k = q()
+				local k = createAddonContext()
 				P[F.name] = {}
 				AddonFilters[F.name] = nil
 				w = F.name
@@ -14972,12 +14977,12 @@ do
 					warn = C
 				end)
 				if not G then
-					V(F.name, y, 1)
+					displayAddonError(F.name, y, 1)
 				elseif k.AddonInfo then
 					local T = k.AddonInfo
 					AddonFilters[F.name] = T.Floor or T.Game
 					local P = T.Title or T.Name or F.name
-					local w = I(o, P)
+					local w = createAddonGroupbox(o, P)
 					if w then
 						if T.Description and T.Description ~= "" then
 							pcall(function()
@@ -14995,24 +15000,24 @@ do
 					if not o or o == "" then
 						o = "the addon finished without erroring but it never built any ui, it probably stopped early or swallowed its own error"
 					end
-					V(F.name, o, 0)
+					displayAddonError(F.name, o, 0)
 				end
 				if G and (A and A ~= "") then
-					V(F.name, A, 0)
+					displayAddonError(F.name, A, 0)
 				end
 				w = nil
 			end
 		end
-		m()
+		refreshAddonFloorVisibility()
 	end
-	CheesyState.RefreshAddonFloors = m
+	CheesyState.RefreshAddonFloors = refreshAddonFloorVisibility
 	RefreshAddons = function()
-		i()
+		loadUserAddons()
 		CheesyApplyTranslationsReport("after addons reload")
 	end
 	rT.UserAddons = dT:AddTab("User Addons", "user-star")
 	o = rT.UserAddons
-	i()
+	loadUserAddons()
 end
 local ju = dT:AddTab("Settings", "palette")
 local Du = ju:AddLeftGroupbox("Menu")

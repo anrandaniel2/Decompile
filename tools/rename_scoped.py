@@ -8,7 +8,8 @@ from __future__ import annotations
 
 
 def rename_top_level_bindings(source: bytes, parser, function_names: dict[str, str],
-                              variable_names: dict[str, str]) -> tuple[bytes, int]:
+                              variable_names: dict[str, str],
+                              nested_names: list[tuple[str, str]] | None = None) -> tuple[bytes, int]:
     tree = parser.parse(source)
     if tree.root_node.has_error:
         raise ValueError('Cannot safely rename code that does not parse')
@@ -16,6 +17,8 @@ def rename_top_level_bindings(source: bytes, parser, function_names: dict[str, s
     scopes: list[dict[str, str | None]] = [{}]
     root = tree.root_node
     defined: set[str] = set()
+    nested_index = 0
+    nested_names = nested_names or []
 
     def text(node):
         return source[node.start_byte:node.end_byte].decode('utf-8')
@@ -50,6 +53,7 @@ def rename_top_level_bindings(source: bytes, parser, function_names: dict[str, s
                         scopes[-1][text(identifier)] = None
 
     def walk(node):
+        nonlocal nested_index
         kind = node.type
         if kind in ('chunk', 'block'):
             if kind == 'block':
@@ -67,10 +71,21 @@ def rename_top_level_bindings(source: bytes, parser, function_names: dict[str, s
                 name = text(name_node)
                 if local:
                     top_level = node.parent == root
-                    target = function_names.get(name) if top_level else None
+                    if top_level:
+                        target = function_names.get(name)
+                    elif nested_names and len(name) <= 3:
+                        if nested_index >= len(nested_names):
+                            raise ValueError(f'Unexpected nested function {name!r}')
+                        expected, target = nested_names[nested_index]
+                        nested_index += 1
+                        if name != expected:
+                            raise ValueError(f'Nested function {nested_index}: expected {expected!r}, got {name!r}')
+                    else:
+                        target = None
                     scopes[-1][name] = target
                     if target:
-                        defined.add(name)
+                        if top_level:
+                            defined.add(name)
                         changes.append((name_node.start_byte, name_node.end_byte,
                                         target.encode()))
                 else:
@@ -151,6 +166,8 @@ def rename_top_level_bindings(source: bytes, parser, function_names: dict[str, s
     expected = set(function_names) | set(variable_names)
     if defined != expected:
         raise ValueError(f'Unexpected top-level declarations: missing={expected-defined}')
+    if nested_names and nested_index != len(nested_names):
+        raise ValueError(f'Expected {len(nested_names)} nested functions, saw {nested_index}')
     for start, end, replacement in sorted(changes, reverse=True):
         source = source[:start] + replacement + source[end:]
     if parser.parse(source).root_node.has_error:

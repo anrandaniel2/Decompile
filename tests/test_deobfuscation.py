@@ -5,6 +5,7 @@ from pathlib import Path
 import tree_sitter
 import tree_sitter_luau
 from tools.rename_scoped import rename_top_level_bindings
+from tools.function_names import NESTED_FUNCTION_NAMES
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -44,10 +45,28 @@ class ReconstructionTests(unittest.TestCase):
                      b'local function setupCategoryESP',
                      b'local function unloadCheesy',
                      b'local function loadObsidianUiLibrary',
+                     b'local function adaptLinoriaSource',
+                     b'local function startFigureGodmodeWatcher',
+                     b'local function loadUserAddons',
                      b'local ReplicatedStorage',
                      b'local UiLibrary']:
             self.assertIn(name, self.output)
         self.assertNotIn(b'\\135\\153\\157<S', self.output)
+
+    def test_all_short_local_functions_have_inferred_names(self):
+        parser = tree_sitter.Parser(tree_sitter.Language(tree_sitter_luau.language()))
+        tree = parser.parse(self.output)
+        short = []
+        def visit(node):
+            if node.type == 'function_declaration' and node.children[0].type == 'local':
+                name = node.child_by_field_name('name').text.decode()
+                if len(name) <= 3:
+                    short.append(name)
+            for child in node.named_children:
+                visit(child)
+        visit(tree.root_node)
+        self.assertEqual(short, [])
+        self.assertEqual(len(NESTED_FUNCTION_NAMES), 62)
 
     def test_bootstrap_shuffle_bounds(self):
         self.assertEqual(self.env['number']('56055597%824347'), 1)
@@ -68,6 +87,18 @@ class ReconstructionTests(unittest.TestCase):
         self.assertIn(b'function(w) return w end', result)
         self.assertIn(b'for w=1,2 do print(w) end', result)
         self.assertIn(b'return loadUi() + UiLibrary', result)
+
+    def test_nested_function_names_preserve_shadowed_variables(self):
+        parser = tree_sitter.Parser(tree_sitter.Language(tree_sitter_luau.language()))
+        source = (b'local function w()\n'
+                  b'  local function k(x) local k=x; return k end\n'
+                  b'  return k(1)\n'
+                  b'end\n')
+        result, count = rename_top_level_bindings(
+            source, parser, {'w': 'outer'}, {}, [('k', 'inner')])
+        self.assertEqual(count, 3)
+        self.assertIn(b'local function inner(x) local k=x; return k end', result)
+        self.assertIn(b'return inner(1)', result)
 
 
 if __name__ == '__main__':

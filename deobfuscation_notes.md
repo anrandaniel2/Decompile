@@ -10,9 +10,9 @@ implementation skipped PRNG state 0 instead of 1. The bootstrap explicitly
 repeats while `P == 1`. Correcting that state recovers `string.split`,
 `HumanoidRootPart`, `LatestRoom`, and the complete injected UI source.
 
-Top-level function names and service/state aliases in `tools/function_names.py`
-were inferred from behavior and resolved through lexical scopes, not recovered
-from original source-level symbol names.
+Top-level and nested local-function names, plus service/state aliases in
+`tools/function_names.py`, were inferred from behavior and resolved through
+lexical scopes; they are not recovered original source-level symbols.
 
 The result is syntax-checked but not runtime-verified. It still loads external
 libraries at runtime, and its nested callbacks and many parameters retain

@@ -162,10 +162,11 @@ body=raw_body.decode('utf-8')
 print('Folded constant expressions:',len(folds),'parse error after folding:',parser.parse(raw_body).root_node.has_error)
 # Resolve one-letter top-level function names through lexical scopes. They
 # are often shadowed by parameters and inner locals, so a global regex is unsafe.
-from function_names import SHORT_FUNCTION_NAMES, VARIABLE_NAMES
+from function_names import SHORT_FUNCTION_NAMES, VARIABLE_NAMES, NESTED_FUNCTION_NAMES
 from rename_scoped import rename_top_level_bindings
 raw_body,count = rename_top_level_bindings(body.encode('utf-8'), parser,
-                                           SHORT_FUNCTION_NAMES, VARIABLE_NAMES)
+                                           SHORT_FUNCTION_NAMES, VARIABLE_NAMES,
+                                           NESTED_FUNCTION_NAMES)
 body=raw_body.decode('utf-8')
 print('Renamed scoped top-level identifiers:',count)
 
@@ -217,9 +218,9 @@ notes = [
     'implementation skipped PRNG state 0 instead of 1. The bootstrap explicitly',
     'repeats while `P == 1`. Correcting that state recovers `string.split`,',
     '`HumanoidRootPart`, `LatestRoom`, and the complete injected UI source.', '',
-    'Top-level function names and service/state aliases in `tools/function_names.py`',
-    'were inferred from behavior and resolved through lexical scopes, not recovered',
-    'from original source-level symbol names.', '',
+    'Top-level and nested local-function names, plus service/state aliases in',
+    '`tools/function_names.py`, were inferred from behavior and resolved through',
+    'lexical scopes; they are not recovered original source-level symbols.', '',
     'The result is syntax-checked but not runtime-verified. It still loads external',
     'libraries at runtime, and its nested callbacks and many parameters retain',
     'short local identifiers. These are remaining readability/runtime-verification',
